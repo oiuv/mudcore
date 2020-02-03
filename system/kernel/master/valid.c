@@ -66,8 +66,7 @@ int valid_override(string file, string efun_name, string main_file)
         debug_message("[MASTER_OB]->valid_override()!");
         debug_message("([file : " + file + ", efun_name : " + efun_name + ", main_file : " + main_file + "])");
     }
-    if (file == SIMUL_EFUN_OB)
-        return 1;
+
     if (efun_name == "destruct")
         return 0;
     if (efun_name == "shutdown")
@@ -76,6 +75,7 @@ int valid_override(string file, string efun_name, string main_file)
         return 0;
     if (efun_name == "exec")
         return 0;
+
     return 1;
 }
 

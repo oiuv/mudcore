@@ -7,9 +7,11 @@ object connect(int port)
 {
     object login_ob;
     mixed err;
-
+#ifdef LOGIN_OB
     err = catch (login_ob = new (LOGIN_OB));
-
+#else
+    err = catch (login_ob = new (CORE_LOGIN_OB));
+#endif
     if (err)
     {
         write("服务器维护中，请稍候……\n");
@@ -95,18 +97,21 @@ mixed compile_object(string str)
     if (DEBUG)
         debug_message("[MASTER_OB]->compile_object() : " + str);
 
+#ifdef WORLD_DIR
     if (sscanf(str, WORLD_DIR + "%*s", str))
     {
-        return call_other(VIRTUAL_D, "compile_area", str);
+        return call_other(CORE_VIRTUAL_D, "compile_area", str);
     }
-    else if (sscanf(str, MOB_DIR + "%*s", str))
+#endif
+
+#ifdef MOB_DIR
+    if (sscanf(str, MOB_DIR + "%*s", str))
     {
-        return call_other(VIRTUAL_D, "compile_mob", str);
+        return call_other(CORE_VIRTUAL_D, "compile_mob", str);
     }
-    else
-    {
-        return 0;
-    }
+#endif
+
+    return 0;
 }
 
 string object_name(object ob)
