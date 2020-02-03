@@ -13,7 +13,7 @@ Date: 2019-03-12
 #endif
 #define E2C_DICTIONARY DATA_DIR + "e2c_dict"
 
-inherit SAVE;
+inherit CORE_SAVE;
 
 nosave string *c_digit = ({"零", "十", "百", "千", "万", "亿", "兆"});
 nosave string *c_num = ({"零", "一", "二", "三", "四", "五", "六", "七", "八", "九", "十"});

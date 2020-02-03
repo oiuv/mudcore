@@ -11,8 +11,8 @@ Date: 2019-03-12
 // 函数用来接收保存在数据库中的数据。 当对象保存的时候，则必须有save_dbase_data函数返回需要保存的数据。
 #include <ansi.h>
 
-inherit DBASE;
-inherit SAVE;
+inherit CORE_DBASE;
+inherit CORE_SAVE;
 
 // 保存数据的映射变量
 mapping save_dbase;
@@ -48,7 +48,7 @@ string query_save_file() { return DATA_DIR + "dbase_d"; }
 // 数据库对象析构函数
 int remove(string euid)
 {
-    if (previous_object() != find_object(SIMUL_EFUN_OB))
+    if (previous_object() != find_object(CORE_SIMUL_EFUN_OB))
     {
         // Must be called from simul_efun object
         return 0;

@@ -9,7 +9,7 @@ Date: 2019-04-01
 #include <ansi.h>
 #include <localtime.h>
 
-inherit OBSAVE;
+inherit CORE_OBSAVE;
 
 // 游戏时间
 private int gametime;
@@ -197,7 +197,7 @@ string realtime_digital_clock()
 
 string time_description(string title, int *t)
 {
-    return sprintf(NOR WHT + title + NOR "%s年﹐%s﹐%s月%s日﹐星期%s﹐%s%s时%s分" NOR, t[LT_YEAR] == 1 ? "元" : CHINESE_D->chinese_number(t[LT_YEAR]), season_period(t[LT_MON]), !t[LT_MON] ? "元" : CHINESE_D->chinese_number(t[LT_MON] + 1), CHINESE_D->chinese_number(t[LT_MDAY]), week_period(t[LT_WDAY]), hour_period(t[LT_HOUR]), CHINESE_D->chinese_number(t[LT_HOUR] > 12 ? t[LT_HOUR] % 12 : t[LT_HOUR]), CHINESE_D->chinese_number(t[LT_MIN]));
+    return sprintf(NOR WHT + title + NOR "%s年﹐%s﹐%s月%s日﹐星期%s﹐%s%s时%s分" NOR, t[LT_YEAR] == 1 ? "元" : chinese_number(t[LT_YEAR]), season_period(t[LT_MON]), !t[LT_MON] ? "元" : chinese_number(t[LT_MON] + 1), chinese_number(t[LT_MDAY]), week_period(t[LT_WDAY]), hour_period(t[LT_HOUR]), chinese_number(t[LT_HOUR] > 12 ? t[LT_HOUR] % 12 : t[LT_HOUR]), chinese_number(t[LT_MIN]));
 }
 
 string game_time_description()

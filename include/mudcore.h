@@ -1,4 +1,4 @@
-// 本文件必须包含在 <globals.h> 中
+// 本文件必须包含在 <globals.h> **底部**
 #ifndef MUDCORE_H
 #define MUDCORE_H
 

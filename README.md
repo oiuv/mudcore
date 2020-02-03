@@ -15,10 +15,14 @@ include directories : /mudcore/include:/include
 2. 全局包含头文件<globals.h>中做如下配置：
 
 ```c
-// 引用框架头文件
-#include <mudcore.h>
 // 定义日志目录
 #define LOG_DIR "/log/"
+
+// 定义存档目录
+#define DATA_DIR "/data/"
+
+// 引用框架头文件(放在最后)
+#include <mudcore.h>
 ```
 
 3. 主控对象文件继承框架对象：
@@ -32,6 +36,8 @@ inherit CORE_MASTER_OB;
 ```
 inherit CORE_SIMUL_EFUN_OB;
 ```
+
+对新MUD开发，请定义连线对象`LOGIN_OB` 和 `USER_OB` 并自己实现功能，如果不定义会使用框架自带的登录功能。
 
 ## 框架功能介绍
 
