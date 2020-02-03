@@ -13,7 +13,7 @@
 
 private void create()
 {
-    debug_message("[" + ctime() + "]SIMUL_EFUN_OB->create()!");
+    debug_message("[" + ctime() + "]CORE_SIMUL_EFUN_OB->create()!");
 }
 
 /**

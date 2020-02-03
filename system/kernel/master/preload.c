@@ -3,7 +3,7 @@
 string *epilog(int load_empty)
 {
     string *items = ({});
-    debug_message("[" + ctime() + "]MASTER_OB->epilog()!");
+    debug_message("[" + ctime() + "]CORE_MASTER_OB->epilog()!");
 #ifdef PRELOAD
     items = update_file(PRELOAD);
 #endif
