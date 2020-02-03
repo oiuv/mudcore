@@ -14,12 +14,12 @@ string *epilog(int load_empty)
 void preload(string file)
 {
     string err;
-    // debug_message("[MASTER_OB]->preload()!");
+
     if (file_size(file + ".c") == -1)
         return;
 
     err = catch(call_other(file, "??"));
     if (err != 0) {
-        write("[MASTER_OB]->preload():Error " + err + " when loading " + file + "\n");
+        write("[CORE_MASTER_OB]->preload() : Error " + err + " when loading " + file + "\n");
     }
 }

@@ -22,39 +22,39 @@ object connect(int port)
 
 private void create()
 {
-    debug_message("[" + ctime() + "]MASTER_OB->create()!");
+    debug_message("[" + ctime() + "]CORE_MASTER_OB->create()!");
 }
 
 string creator_file(string str)
 {
     if (DEBUG)
-        debug_message("[MASTER_OB]->creator_file() : " + str);
-    return (string)call_other(SINGLE_DIR + "/simul_efun", "creator_file", str);
+        debug_message("[CORE_MASTER_OB]->creator_file() : " + str);
+    return (string)call_other(__DIR__ "simul_efun", "creator_file", str);
 }
 
 string domain_file(string str)
 {
     if (DEBUG)
-        debug_message("[MASTER_OB]->domain_file() : " + str);
-    return (string)call_other(SINGLE_DIR + "/simul_efun", "domain_file", str);
+        debug_message("[CORE_MASTER_OB]->domain_file() : " + str);
+    return (string)call_other(__DIR__ "simul_efun", "domain_file", str);
 }
 
 string author_file(string str)
 {
     if (DEBUG)
-        debug_message("[MASTER_OB]->author_file() : " + str);
-    return (string)call_other(SINGLE_DIR + "/simul_efun", "author_file", str);
+        debug_message("[CORE_MASTER_OB]->author_file() : " + str);
+    return (string)call_other(__DIR__ "simul_efun", "author_file", str);
 }
 
 string get_bb_uid()
 {
-    debug_message("[" + ctime() + "]MASTER_OB->get_bb_uid()!");
+    debug_message("[" + ctime() + "]CORE_MASTER_OB->get_bb_uid()!");
     return BACKBONE_UID;
 }
 
 string get_root_uid()
 {
-    debug_message("[" + ctime() + "]MASTER_OB->get_root_uid()!");
+    debug_message("[" + ctime() + "]CORE_MASTER_OB->get_root_uid()!");
     return ROOT_UID;
 }
 
@@ -62,7 +62,7 @@ string get_root_uid()
 mixed get_include_path(string object_path)
 {
     if (DEBUG)
-        debug_message("[MASTER_OB]->get_include_path() : " + object_path);
+        debug_message("[CORE_MASTER_OB]->get_include_path() : " + object_path);
 
     return ({":DEFAULT:"});
 }
@@ -71,7 +71,7 @@ mixed get_include_path(string object_path)
 void crash(string crash_message, object command_giver, object current_object)
 {
     foreach (object ob in users())
-        tell_object(ob, "[MASTER_OB]->crash() : Damn!\nThe game is crashing.\n");
+        tell_object(ob, "[CORE_MASTER_OB]->crash() : Damn!\nThe game is crashing.\n");
 }
 
 // driver 启动测试
@@ -83,7 +83,7 @@ void flag(string str)
         DEBUG = 1;
         break;
     default:
-        write(HIR "[MASTER_OB]->flag() : The only supproted flag is 'debug', got '" + str + "'.\n" NOR);
+        write(HIR "[CORE_MASTER_OB]->flag() : The only supproted flag is 'debug', got '" + str + "'.\n" NOR);
     }
     // otherwise wait for auto shutdown
 }
@@ -95,7 +95,7 @@ void flag(string str)
 mixed compile_object(string str)
 {
     if (DEBUG)
-        debug_message("[MASTER_OB]->compile_object() : " + str);
+        debug_message("[CORE_MASTER_OB]->compile_object() : " + str);
 
 #ifdef WORLD_DIR
     if (sscanf(str, WORLD_DIR + "%*s", str))
@@ -117,7 +117,7 @@ mixed compile_object(string str)
 string object_name(object ob)
 {
     if (DEBUG)
-        debug_message("[MASTER_OB]->object_name() : " + file_name(ob));
+        debug_message("[CORE_MASTER_OB]->object_name() : " + file_name(ob));
     if (ob)
         return ob->short();
     return "未知对象";

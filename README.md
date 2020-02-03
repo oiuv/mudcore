@@ -39,9 +39,9 @@ inherit CORE_SIMUL_EFUN_OB;
 
 目录|说明
 -|-
-docs|游戏开发者文档，包括系统规范和模拟外部函数说明文档
-include|游戏头文件
-inherit|游戏特性继承文件
+docs|开发者文档，包括框架模拟外部函数说明文档等
+include|框架头文件
+inherit|框架特性继承文件
 system|系统文件目录
 
 #### system系统目录
@@ -58,8 +58,8 @@ system/object|系统核心对象，包括登录对象、基本玩家对象和 VO
 -|-|-
 CORE_MASTER_OB|/system/kernel/master|主控对象，负责接收玩家连接请求、安全验证、日志记录等核心功能
 CORE_SIMUL_EFUN_OB|/system/kernel/simul_efun|模拟外部函数对象，负责实现模拟外部函数功能
-CORE_LOGIN_OB|/system/object/login|玩家登陆对象
-CORE_USER_OB|/system/object/user|玩家对象
+CORE_LOGIN_OB|/system/object/login|示例玩家登陆对象
+CORE_USER_OB|/system/object/user|示例玩家对象
 CORE_VOID_OB|/system/object/void|临时环境，系统异常时会移动玩家到这个环境
 
 #### 守护进程(Daemons)
