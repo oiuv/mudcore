@@ -2,6 +2,39 @@
 
 LPMUD游戏开发框架核心代码，仅仅包括核心代码，可以在此基础上开发任何MUD，本框架需配合 FluffOS v2019使用。
 
+## 框架使用说明
+
+把本框架放在你的MUD项目中，推荐保持默认目录名称 `mudcore`，并做如下配置：
+
+1. 运行时配置文件<config.ini>中定义包含文件目录：
+
+```ini
+include directories : /mudcore/include:/include
+```
+
+2. 全局包含头文件<globals.h>中做如下配置：
+
+```c
+// 引用框架头文件
+#include <mudcore.h>
+// 定义日志目录
+#define LOG_DIR "/log/"
+```
+
+3. 主控对象文件继承框架对象：
+
+```
+inherit CORE_MASTER_OB;
+```
+
+4. 模拟外部函数文件继承框架对象：
+
+```
+inherit CORE_SIMUL_EFUN_OB;
+```
+
+## 框架功能介绍
+
 ### 目录结构
 
 目录|说明
