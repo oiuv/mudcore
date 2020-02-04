@@ -39,7 +39,9 @@ int move(mixed dest)
 
     if (interactive(me) && living(me))
     {
-        // command("look"); // LOOK_CMD->look_room(me, environment(me));
+#ifdef CMD_LOOK
+        command("look");
+#endif
     }
     return 1;
 }

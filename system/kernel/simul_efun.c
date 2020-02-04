@@ -37,6 +37,7 @@ string creator_file(string file)
     string *path;
 
     path = explode(file, "/") - ({0});
+    path -= ({"mudcore"});
     switch (path[0])
     {
     case "system":

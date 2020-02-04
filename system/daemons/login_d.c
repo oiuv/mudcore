@@ -42,7 +42,7 @@ string short()
 void login(object ob)
 {
     write("\n");
-    if( query_ip_port() == 8000)
+    if( query_ip_port() == HTTP_PORT)
     {
         welcome(ob);
     }
@@ -140,8 +140,9 @@ object make_body(object ob)
         return 0;
     }
 
-    seteuid(ob->query("id"));
-    export_uid(user);
+    seteuid(ob->query("id")); // 设置当前对象 euid 为玩家ID
+    export_uid(user); // 设置玩家 uid
+    seteuid(getuid()); // 设置当前对象 euid 为对象uid
     // user->set("id", ob->query("id"));
     user->set_name(ob->query("name"), ({ob->query("id")}));
     return user;
@@ -287,7 +288,7 @@ private void confirm_id(string yn, object ob)
         return;
     }
 
-    write("\n您的" HIY "名字" NOR "(不要超过10个字符)：");
+    write("\n您的" HIY "名字" NOR "(不要超过10个汉字)：");
     input_to("get_name", ob);
 }
 
