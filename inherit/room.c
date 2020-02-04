@@ -117,14 +117,6 @@ varargs void setArea(int area, int x, int y, int z)
     ]));
 }
 
-// 设置环境区域怪物种类、每种数量上限、等级范围(0、1、2、3)
-varargs void setMob(int mob, int max, int range)
-{
-    set("mob", mob);
-    set("mob_max", max);
-    set("mob_range", range);
-}
-
 void removeExit(string dir)
 {
     mapping exits = query("exits");

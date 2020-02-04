@@ -5,7 +5,6 @@ Description: 聊天频道系统守护进程 CHANNEL_D 提供游戏聊天频道�
 Author: xuefeng
 Version: v1.0
 Date: 2019-03-12
-History:
 *****************************************************************************/
 #include <ansi.h>
 #include <localtime.h>

@@ -35,24 +35,28 @@ void log_file(string file, string text)
 
 void assure_file(string file)
 {
-    string path, *dir;
-    int i;
+    string path, dir, *dirs;
 
     if (file_size(file) != -1) return;
 
-    dir = explode(file, "/");
+    dirs = explode(file, "/");
 
     if (file[strlen(file) - 1] != '/')
-        dir = dir[0..sizeof(dir)-2];
+        dirs = dirs[0..sizeof(dir)-2];
 
-    path = "/";
-    for (i = 0; i < sizeof(dir); i++)
+    path = "";
+
+    foreach(dir in dirs)
     {
-        path += dir[i];
-        mkdir(path);
-        path += "/";
+        if (dir == "") continue;
+        path += "/" + dir;
+        switch(file_size(path))
+        {
+            case -1 : mkdir(path); break;
+            case -2 : continue;
+            default : return;
+        }
     }
-    dir = 0;
 }
 
 void cat(string file)
