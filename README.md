@@ -67,8 +67,8 @@ inherit CORE_SIMUL_EFUN_OB;
 // 玩家指令路径
 #define CMD_PATH_STD ({"/cmds/std/"})
 
-// 核心指令 look
-#define CMD_LOOK "/cmds/std/look"
+// 进入房间后自动look
+#define AUTO_LOOK
 ```
 
 指令需要实现以下方法：
@@ -149,12 +149,9 @@ CORE_DBASE|/inherit/dbase.c|数据存取功能接口，实现对象参数的增�
 CORE_MESSAGE|/inherit/message.c|玩家信息处理功能接口，实现分页显示
 CORE_MOVE|/inherit/move.c|对象移动接口，由角色、物品对象继承，方便移动
 CORE_NAME|/inherit/name.c|ID和名称接口，让对象可以被看见(查找)和命名
-CORE_NPC|/inherit/npc.c|NPC角色接口，配合环境实现自动回归功能
 CORE_OBSAVE|/inherit/obsave.c|系统数据存取接口，配合 DBASE_D 使用
-CORE_ROOM|/inherit/room.c|游戏环境标准接口，实现房间核心功能
+CORE_ROOM|/inherit/room.c|游戏环境标准接口，实现房间核心功能，需要继承CORE_DBASE/CORE_NAME/CORE_CLEAN_UP
 CORE_SAVE|/inherit/save.c|对象数据存取接口，主要是玩家角色使用存档和读档
-CORE_USER|/inherit/user.c|玩家角色接口，玩家对象需继承本接口
-
 
 #### 守护进程(Daemons)
 
@@ -166,7 +163,7 @@ CORE_CHANNEL_D|/system/daemons/channel_d.c|负责处理玩家聊天功能和频�
 CORE_CHINESE_D|/system/daemons/chinese_d.c|负责处理中、英文对照，以及一些与中文相关的功能。
 CORE_DBASE_D|/system/daemons/dbase_d.c|负责系统数据存档处理，默认存储位置 /data/dbase_d.o
 CORE_EMOTE_D|/system/daemons/emote_d.c|负责管理游戏表情动作和相应功能
-CORE_LOGIN_D|/system/daemons/login_d.c|框架示例登录管理功能，可参考
+CORE_LOGIN_D|/system/daemons/login_d.c|框架示例登录管理功能，可做开发参考
 CORE_TIME_D|/system/daemons/time_d.c|负责控制游戏系统时间和计划任务
 CORE_VIRTUAL_D|/system/daemons/virtual_d.c|负责虚拟对象处理
 
