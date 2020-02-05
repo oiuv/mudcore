@@ -23,9 +23,8 @@ private void create()
 // domain_file should return the domain associated with a given file.
 string domain_file(string file)
 {
-    string domain;
-
 #ifdef WORLD_DIR
+    string domain;
     if (sscanf(file, WORLD_DIR "%s/%*s", domain))
         return capitalize(domain);
 #endif
