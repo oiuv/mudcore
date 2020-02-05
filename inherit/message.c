@@ -5,17 +5,11 @@ Description: 玩家角色信息显示控制接口
 Author: xuefeng
 Version: v1.0
 Date: 2019-03-14
-History:
 *****************************************************************************/
 #include <ansi.h>
-#include <dbase.h>
 
 void receive_message(string type, string str)
 {
-    // 特定情况屏蔽消息用
-    if (query_temp("block_msg/all") || query_temp("block_msg/" + type))
-        return;
-
     switch (type)
     {
     case "info":
@@ -30,21 +24,15 @@ void receive_message(string type, string str)
     case "danger":
         receive(HIR + str + NOR "\n");
         return;
-
-    case "vision":
-        receive(MAG + str + NOR "\n");
-        return;
-    case "combat":
-        receive(CYN + str + NOR "\n");
-        return;
-    case "team":
+    case "HIM":
         receive(HIM + str + NOR "\n");
         return;
-
-    case "debug":
-        receive("\n" BRED "[" + str + "]" NOR "\n");
+    case "MAG":
+        receive(MAG + str + NOR "\n");
         return;
-
+    case "CYN":
+        receive(CYN + str + NOR "\n");
+        return;
     case "RED":
         receive(RED + str + NOR "\n");
         return;
@@ -58,15 +46,9 @@ void receive_message(string type, string str)
         receive(YEL + str + NOR "\n");
         return;
 
-    case "chat":
     default:
         receive(str + "\n");
     }
-}
-
-void write_prompt()
-{
-
 }
 
 void receive_snoop(string message)
@@ -74,9 +56,14 @@ void receive_snoop(string message)
     receive(BBLU + remove_ansi(message) + NOR);
 }
 
-nomask void finish_input()
+void write_prompt()
 {
-    // todo 显示暂存信息
+    // 显示玩家提示,由MUD自己实现
+}
+
+void finish_input()
+{
+    // 显示暂存信息,由MUD自己实现
 }
 
 /**

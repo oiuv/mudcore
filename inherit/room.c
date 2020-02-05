@@ -7,13 +7,14 @@ Version: v1.0
 Date: 2019-03-12
 *****************************************************************************/
 #include <ansi.h>
+#include <dbase.h>
 
 #define DOOR_CLOSED 1
 #define DOOR_LOCKED 2
 
-inherit CORE_CLEAN_UP;
-inherit CORE_DBASE;
-inherit CORE_NAME;
+// inherit CORE_CLEAN_UP;
+// inherit CORE_DBASE;
+// inherit CORE_NAME;
 
 nosave mapping doors;
 

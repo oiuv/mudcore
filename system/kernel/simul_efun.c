@@ -25,9 +25,10 @@ string domain_file(string file)
 {
     string domain;
 
-    if (sscanf(file, "/world/%s/%*s", domain))
+#ifdef WORLD_DIR
+    if (sscanf(file, WORLD_DIR "%s/%*s", domain))
         return capitalize(domain);
-
+#endif
     return ROOT_UID;
 }
 

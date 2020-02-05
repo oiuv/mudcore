@@ -20,6 +20,6 @@ void preload(string file)
 
     err = catch(call_other(file, "??"));
     if (err != 0) {
-        write("[CORE_MASTER_OB]->preload() : Error " + err + " when loading " + file + "\n");
+        write("[CORE_MASTER_OB]->preload():Error " + err + " when loading " + file + "\n");
     }
 }

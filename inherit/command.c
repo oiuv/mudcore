@@ -94,7 +94,7 @@ private nomask void set_path(string *p)
     path = p;
 }
 
-private nomask void add_alias(mapping list)
+protected nomask void add_alias(mapping list)
 {
     alias += list;
 }
