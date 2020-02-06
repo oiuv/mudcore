@@ -129,11 +129,9 @@ private void get_passwd(string pass, object ob)
 object make_body(object ob)
 {
     object user;
-#ifdef USER_OB
+
     user = new(USER_OB);
-#else
-    user = new(CORE_USER_OB);
-#endif
+
     if (!user)
     {
         write(RED "\nUSER_OB 出现异常，无法初始化你的角色。\n" NOR);
@@ -212,8 +210,8 @@ void enter_world(object ob, object user)
     user->save(); // 保存玩家数据
     ob->save();   // 保存账号数据
 
-    user->move(CORE_VOID_OB);
-    tell_room(CORE_VOID_OB, user->query("name") + "连线进入这个世界。\n", ({user}));
+    user->move(VOID_OB);
+    tell_room(VOID_OB, user->query("name") + "连线进入这个世界。\n", ({user}));
 }
 
 // 断线重连

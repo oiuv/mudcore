@@ -8,11 +8,7 @@ object connect(int port)
     object login_ob;
     mixed err;
 
-#ifdef LOGIN_OB
     err = catch (login_ob = new(LOGIN_OB));
-#else
-    err = catch (login_ob = new(CORE_LOGIN_OB));
-#endif
 
     if (err)
     {

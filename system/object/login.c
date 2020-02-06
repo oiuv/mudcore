@@ -10,11 +10,8 @@ void logon()
 
     if (interactive(this_object()))
         set_temp("ip_number", query_ip_number(this_object()));
-#ifdef LOGIN_D
+
     LOGIN_D->login(this_object());
-#else
-    CORE_LOGIN_D->login(this_object());
-#endif
 }
 
 void net_dead()

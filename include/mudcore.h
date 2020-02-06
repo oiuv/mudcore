@@ -29,6 +29,7 @@
 /* 守护进程 */
 #define CORE_CHANNEL_D      CORE_DIR "system/daemons/channel_d"
 #define CORE_CHINESE_D      CORE_DIR "system/daemons/chinese_d"
+#define CORE_COMMAND_D      CORE_DIR "system/daemons/command_d"
 #define CORE_DBASE_D        CORE_DIR "system/daemons/dbase_d"
 #define CORE_EMOTE_D        CORE_DIR "system/daemons/emote_d"
 #define CORE_LOGIN_D        CORE_DIR "system/daemons/login_d"
@@ -36,7 +37,6 @@
 #define CORE_TIME_D         CORE_DIR "system/daemons/time_d"
 
 /* inherit 特性文件 */
-#define CORE_CHAR           CORE_DIR "inherit/char"
 #define CORE_CLEAN_UP       CORE_DIR "inherit/clean_up"
 #define CORE_COMMAND        CORE_DIR "inherit/command"
 #define CORE_DBASE          CORE_DIR "inherit/dbase"
@@ -46,19 +46,54 @@
 #define CORE_OBSAVE         CORE_DIR "inherit/obsave"
 #define CORE_ROOM           CORE_DIR "inherit/room"
 #define CORE_SAVE           CORE_DIR "inherit/save"
-#define CORE_USER           CORE_DIR "inherit/user"
 
 /* 其他 */
-#ifndef MOTD
-#define MOTD    CORE_DIR "system/etc/motd"
-#endif
-
 #ifndef HTTP_PORT
 #define HTTP_PORT   8000
 #endif
 
 #ifndef WIZARD
 #define WIZARD  "ivy"
+#endif
+
+#ifndef MOTD
+#define MOTD    CORE_DIR "system/etc/motd"
+#endif
+
+#ifndef COMMAND_D
+#define COMMAND_D   CORE_COMMAND_D
+#endif
+
+#ifndef EMOTE_D
+#define EMOTE_D     CORE_EMOTE_D
+#endif
+
+#ifndef CHANNEL_D
+#define CHANNEL_D   CORE_CHANNEL_D
+#endif
+
+#ifndef DBASE_D
+#define DBASE_D     CORE_DBASE_D
+#endif
+
+#ifndef LOGIN_D
+#define LOGIN_D     CORE_LOGIN_D
+#endif
+
+#ifndef VOID_OB
+#define VOID_OB     CORE_VOID_OB
+#endif
+
+#ifndef USER_OB
+#define USER_OB     CORE_USER_OB
+#endif
+
+#ifndef LOGIN_OB
+#define LOGIN_OB    CORE_LOGIN_OB
+#endif
+
+#ifndef SIMUL_EFUN_OB
+#define SIMUL_EFUN_OB    CORE_SIMUL_EFUN_OB
 #endif
 
 #endif

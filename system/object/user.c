@@ -19,9 +19,6 @@ void create()
     seteuid(0); // export_uid
 }
 
-// 判断是否 user 对象，和 efun userp() 稍有区别
-int is_user() { return 1; }
-
 // 判断是否是有生命的，包括 disable_living 的角色
 int is_character() { return 1; }
 
@@ -42,8 +39,10 @@ void remove()
     destruct(this_object());
 }
 
-string get_id();
+// 判断是否 user 对象，和 efun userp() 稍有区别
+int is_user() { return 1; }
 
+// 玩家断线处理
 void net_dead()
 {
     set_temp("net_dead", 1);
@@ -53,7 +52,7 @@ void net_dead()
 }
 
 /**
- * 以下为自定义方法
+ * 以下为玩家相关自定义方法
  */
 string get_id()
 {

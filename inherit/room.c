@@ -12,6 +12,9 @@ Date: 2019-03-12
 #define DOOR_CLOSED 1
 #define DOOR_LOCKED 2
 
+/**
+ * 本接口需要继承CORE_DBASE、CORE_NAME接口才能正常使用
+ */
 // inherit CORE_CLEAN_UP;
 // inherit CORE_DBASE;
 // inherit CORE_NAME;
@@ -19,7 +22,6 @@ Date: 2019-03-12
 nosave mapping doors;
 
 object make_inventory(string file);
-void setup();
 
 // void create(){}
 
