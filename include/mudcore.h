@@ -60,40 +60,56 @@
 #define MOTD    CORE_DIR "system/etc/motd"
 #endif
 
-#ifndef COMMAND_D
-#define COMMAND_D   CORE_COMMAND_D
-#endif
-
-#ifndef EMOTE_D
-#define EMOTE_D     CORE_EMOTE_D
-#endif
-
 #ifndef CHANNEL_D
 #define CHANNEL_D   CORE_CHANNEL_D
+#endif
+
+#ifndef CHINESE_D
+#define CHINESE_D   CORE_CHINESE_D
+#endif
+
+#ifndef COMMAND_D
+#define COMMAND_D   CORE_COMMAND_D
 #endif
 
 #ifndef DBASE_D
 #define DBASE_D     CORE_DBASE_D
 #endif
 
+#ifndef EMOTE_D
+#define EMOTE_D     CORE_EMOTE_D
+#endif
+
 #ifndef LOGIN_D
 #define LOGIN_D     CORE_LOGIN_D
 #endif
 
-#ifndef VOID_OB
-#define VOID_OB     CORE_VOID_OB
+#ifndef TIME_D
+#define TIME_D      CORE_TIME_D
 #endif
 
-#ifndef USER_OB
-#define USER_OB     CORE_USER_OB
+#ifndef VIRTUAL_D
+#define VIRTUAL_D   CORE_VIRTUAL_D
+#endif
+
+#ifndef SIMUL_EFUN_OB
+#define SIMUL_EFUN_OB    CORE_SIMUL_EFUN_OB
+#endif
+
+#ifndef MASTER_OB
+#define MASTER_OB   CORE_MASTER_OB
 #endif
 
 #ifndef LOGIN_OB
 #define LOGIN_OB    CORE_LOGIN_OB
 #endif
 
-#ifndef SIMUL_EFUN_OB
-#define SIMUL_EFUN_OB    CORE_SIMUL_EFUN_OB
+#ifndef USER_OB
+#define USER_OB     CORE_USER_OB
+#endif
+
+#ifndef VOID_OB
+#define VOID_OB     CORE_VOID_OB
 #endif
 
 #endif

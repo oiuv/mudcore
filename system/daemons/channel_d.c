@@ -183,7 +183,7 @@ varargs int do_channel(object me, string verb, string arg, int emote)
         if (!stringp(arg))
             return 0;
 
-        return CORE_EMOTE_D->do_emote(me, vb, emote_arg, obs, channels[verb]["msg_emote"]);
+        return EMOTE_D->do_emote(me, vb, emote_arg, obs, channels[verb]["msg_emote"]);
     }
     else
     {

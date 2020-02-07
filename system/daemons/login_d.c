@@ -10,17 +10,17 @@ History:
 #include <ansi.h>
 
 // 内部调用的函数
-private void welcome(object ob);
-private void get_encoding(string arg, object ob);
-private void get_id(string arg, object ob);
-private void get_passwd(string pass, object ob);
-private void check_ok(object ob);
-private void confirm_id(string yn, object ob);
-private void get_name(string arg, object ob);
-private void new_password(string pass, object ob);
-private void confirm_password(string pass, object ob);
-private void get_gender(string gender, object ob);
-private void init_new_player(object user);
+protected void welcome(object ob);
+protected void get_encoding(string arg, object ob);
+protected void get_id(string arg, object ob);
+protected void get_passwd(string pass, object ob);
+protected void check_ok(object ob);
+protected void confirm_id(string yn, object ob);
+protected void get_name(string arg, object ob);
+protected void new_password(string pass, object ob);
+protected void confirm_password(string pass, object ob);
+protected void get_gender(string gender, object ob);
+protected void init_new_player(object user);
 
 // 可以被外部调用的函数
 void login(object ob);
@@ -28,7 +28,7 @@ object make_body(object ob);
 void enter_world(object ob, object user);
 void reconnect(object ob, object user);
 
-private void create()
+protected void create()
 {
     // write(YEL "[LOGIN_D]->create():" + this_object() + "\n" NOR);
 }
@@ -53,7 +53,7 @@ void login(object ob)
     }
 }
 
-private void welcome(object ob)
+protected void welcome(object ob)
 {
     color_cat(MOTD);
 
@@ -61,7 +61,7 @@ private void welcome(object ob)
     input_to("get_id", ob);
 }
 
-private void get_encoding(string yn, object ob)
+protected void get_encoding(string yn, object ob)
 {
     if (yn[0] == 'y' || yn[0] == 'Y')
     {
@@ -70,7 +70,7 @@ private void get_encoding(string yn, object ob)
     welcome(ob);
 }
 
-private void get_id(string arg, object ob)
+protected void get_id(string arg, object ob)
 {
     arg = lower_case(arg);
 
@@ -110,7 +110,7 @@ private void get_id(string arg, object ob)
 }
 
 // 登录密码
-private void get_passwd(string pass, object ob)
+protected void get_passwd(string pass, object ob)
 {
     string my_pass;
 
@@ -147,7 +147,7 @@ object make_body(object ob)
 }
 
 // 校验 && 登录
-private void check_ok(object ob)
+protected void check_ok(object ob)
 {
     object user;
 
@@ -225,7 +225,7 @@ void reconnect(object ob, object user)
 }
 
 // 强制重连
-private void relogin(string yn, object ob, object user)
+protected void relogin(string yn, object ob, object user)
 {
     object old_link;
 
@@ -270,7 +270,7 @@ private void relogin(string yn, object ob, object user)
  * 注册流程
  */
 
-private void confirm_id(string yn, object ob)
+protected void confirm_id(string yn, object ob)
 {
     if (yn == "")
     {
@@ -290,7 +290,7 @@ private void confirm_id(string yn, object ob)
     input_to("get_name", ob);
 }
 
-private void get_name(string arg, object ob)
+protected void get_name(string arg, object ob)
 {
     if (!is_chinese(arg))
     {
@@ -313,7 +313,7 @@ private void get_name(string arg, object ob)
     input_to("new_password", 1, ob);
 }
 
-private void new_password(string pass, object ob)
+protected void new_password(string pass, object ob)
 {
     write("\n");
     if (strlen(pass) < 3)
@@ -328,7 +328,7 @@ private void new_password(string pass, object ob)
     input_to("confirm_password", 1, ob);
 }
 
-private void confirm_password(string pass, object ob)
+protected void confirm_password(string pass, object ob)
 {
     string old_pass;
 
@@ -347,7 +347,7 @@ private void confirm_password(string pass, object ob)
     input_to("get_gender", ob);
 }
 
-private void get_gender(string gender, object ob)
+protected void get_gender(string gender, object ob)
 {
     object user;
 
@@ -397,7 +397,7 @@ private void get_gender(string gender, object ob)
 }
 
 // 初始化新玩家必要属性
-private void init_new_player(object user)
+protected void init_new_player(object user)
 {
     user->set("birthday", time());
     user->set("exp", 0); // 经验
