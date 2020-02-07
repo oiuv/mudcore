@@ -37,8 +37,10 @@
 #define CORE_TIME_D         CORE_DIR "system/daemons/time_d"
 
 /* inherit 特性文件 */
+#define CORE_ACTION         CORE_DIR "inherit/action"
 #define CORE_CLEAN_UP       CORE_DIR "inherit/clean_up"
 #define CORE_COMMAND        CORE_DIR "inherit/command"
+#define CORE_CONDITION      CORE_DIR "inherit/condition"
 #define CORE_DBASE          CORE_DIR "inherit/dbase"
 #define CORE_MESSAGE        CORE_DIR "inherit/message"
 #define CORE_MOVE           CORE_DIR "inherit/move"

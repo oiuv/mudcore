@@ -143,8 +143,10 @@ type.h|驱动提供，配合 typeof() 使用
 
 名称|文件|说明
 -|-|-
+CORE_ACTION|/inherit/action.c|角色行动接口，实现限制行为功能
 CORE_CLEAN_UP|/inherit/clean_up.c|自动清理接口，实现 clean_up() 方法的垃圾回收功能
 CORE_COMMAND|/inherit/command.c|角色指令系统接口，实现生物对象特征功能
+CORE_CONDITION|/inherit/condition.c|角色增益状态控制接口，实现游戏BUFF功能
 CORE_DBASE|/inherit/dbase.c|数据存取功能接口，实现对象参数的增删改查功能
 CORE_MESSAGE|/inherit/message.c|玩家信息处理功能接口，实现分页显示
 CORE_MOVE|/inherit/move.c|对象移动接口，由角色、物品对象继承，方便移动

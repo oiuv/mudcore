@@ -5,7 +5,6 @@ Description: dbase.c 函数声明
 Author: xuefeng
 Version: v1.0
 Date: 2019-03-15
-History:
 *****************************************************************************/
 #ifndef DBASE_H
 #define DBASE_H
