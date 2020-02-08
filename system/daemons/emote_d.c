@@ -9,7 +9,6 @@ History:
 *****************************************************************************/
 #include <ansi.h>
 
-inherit CORE_DBASE;
 inherit CORE_SAVE;
 
 #define MSG_MYSELF  0
