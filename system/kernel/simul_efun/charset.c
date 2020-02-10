@@ -29,6 +29,37 @@ int is_english(string str)
     return 1;
 }
 
+varargs string break_string(string str, int len, mixed indent)
+{
+    string indent_str;
+    int br = 0;
+
+    if (!stringp(str)) return 0;
+
+    if (!len) len = 40;
+
+    if(indent && intp(indent)) indent_str = sprintf("%*s", indent, " ");
+    else if(stringp(indent)) indent_str = indent;
+    else indent_str = "";
+
+    str = indent_str + replace_string(str, "\n", "");
+
+    while(strlen(str[br..]) > len) {
+        int en = 0;
+        for(int i = 0; i < len; i++) {
+            if( str[br + i] < 127 )
+            {
+                en++;
+            }
+        }
+        br += len + en / 2;
+
+        str = str[0..br-1] + "\n" + str[br..<1];
+    }
+
+    return str;
+}
+
 int check_control(string name)
 {
     int i;
