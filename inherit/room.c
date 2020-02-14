@@ -59,7 +59,8 @@ void reset()
         }
         else
         {
-            ob[file] = allocate(amount);
+            if (!arrayp(ob[file]))
+                ob[file] = allocate(amount);
             for(int i = 0; i < amount; i++)
             {
                 if(!objectp(ob[file][i]))
