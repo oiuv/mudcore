@@ -27,12 +27,6 @@ string *update_file(string file)
     return arr;
 }
 
-void log_file(string file, string text)
-{
-    write_file(LOG_DIR + file, text);
-}
-
-
 void assure_file(string file)
 {
     string path, dir, *dirs;
@@ -42,7 +36,7 @@ void assure_file(string file)
     dirs = explode(file, "/");
 
     if (file[strlen(file) - 1] != '/')
-        dirs = dirs[0..sizeof(dir)-2];
+        dirs = dirs[0..sizeof(dirs)-2];
 
     path = "";
 
@@ -57,6 +51,12 @@ void assure_file(string file)
             default : return;
         }
     }
+}
+
+void log_file(string file, string text)
+{
+    assure_file(LOG_DIR + file);
+    write_file(LOG_DIR + file, text);
 }
 
 void cat(string file)

@@ -78,7 +78,6 @@ void channel_log(string msg, string verb, object user)
 
         lfn = sprintf("channel/%d-%d-%d", lt[LT_YEAR],
                       lt[LT_MON] + 1, lt[LT_MDAY]);
-        assure_file(LOG_DIR + lfn);
         log_file(lfn, msg_log);
         msg_log = "";
         log_from = t;

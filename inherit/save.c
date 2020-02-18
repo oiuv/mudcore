@@ -9,6 +9,7 @@ int save()
 
     if (stringp(file = this_object()->query_save_file()))
     {
+        assure_file(file);
         return save_object(file);
     }
 
