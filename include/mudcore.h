@@ -55,7 +55,7 @@
 #endif
 
 #ifndef WIZARD
-#define WIZARD  "ivy"
+#define WIZARD  "mudren"
 #endif
 
 #ifndef MOTD
