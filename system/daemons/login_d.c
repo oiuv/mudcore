@@ -211,7 +211,7 @@ void enter_world(object ob, object user)
     ob->save();   // 保存账号数据
 
     user->move(VOID_OB);
-    tell_room(VOID_OB, user->query("name") + "连线进入这个世界。\n", ({user}));
+    tell_room(VOID_OB, user->short() + "连线进入这个世界。\n", ({user}));
 }
 
 // 断线重连
