@@ -70,9 +70,8 @@ void channel_log(string msg, string verb, object user)
         msg_log = "";
 
     t = time();
-    msg_log += sprintf(" %s at %s\n%s",
-                       user->short(), log_time(), msg);
-    if (strlen(msg_log) > 8000 || t - log_from > 900)
+    msg_log += sprintf("[%s]%s\n", log_time(), remove_ansi(msg));
+    if (strlen(msg_log) > 40 || t - log_from > 20)
     {
         lt = localtime(t);
 
