@@ -38,8 +38,10 @@
 
 /* inherit 特性文件 */
 #define CORE_ACTION         CORE_DIR "inherit/action"
+#define CORE_ATTACK         CORE_DIR "inherit/attack"
 #define CORE_CLEAN_UP       CORE_DIR "inherit/clean_up"
 #define CORE_COMMAND        CORE_DIR "inherit/command"
+#define CORE_CONDITION_MOD  CORE_DIR "inherit/condition_mod"
 #define CORE_CONDITION      CORE_DIR "inherit/condition"
 #define CORE_DBASE          CORE_DIR "inherit/dbase"
 #define CORE_MESSAGE        CORE_DIR "inherit/message"
@@ -48,6 +50,9 @@
 #define CORE_OBSAVE         CORE_DIR "inherit/obsave"
 #define CORE_ROOM           CORE_DIR "inherit/room"
 #define CORE_SAVE           CORE_DIR "inherit/save"
+#define CORE_TEAM           CORE_DIR "inherit/team"
+// 玩家特殊功能
+#define CORE_USER_COMBAT_RECORD CORE_DIR "inherit/user_combat_record"
 
 /* 其他 */
 #ifndef HTTP_PORT
