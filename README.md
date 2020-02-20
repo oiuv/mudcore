@@ -114,8 +114,8 @@ system/object|系统核心对象，包括登录对象、基本玩家对象和 VO
 -|-|-
 CORE_MASTER_OB|/system/kernel/master|主控对象，负责接收玩家连接请求、安全验证、日志记录等核心功能
 CORE_SIMUL_EFUN_OB|/system/kernel/simul_efun|模拟外部函数对象，负责实现模拟外部函数功能
-CORE_LOGIN_OB|/system/object/login|示例玩家登陆对象
-CORE_USER_OB|/system/object/user|示例玩家对象
+CORE_LOGIN_OB|/system/object/login|示例玩家登陆对象，仅供参考，不建议继承使用
+CORE_USER_OB|/system/object/user|示例玩家对象，仅供参考，不建议继承使用
 CORE_VOID_OB|/system/object/void|临时环境，示例登录房间
 
 #### 系统头文件(Include Headers)
