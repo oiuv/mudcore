@@ -28,6 +28,11 @@ void create()
     restore();
 }
 
+string short()
+{
+    return "翻译精灵(CHINESE_D)";
+}
+
 void remove()
 {
     save();

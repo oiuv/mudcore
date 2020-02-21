@@ -74,3 +74,8 @@ object find_command(string verb)
 
     return 0;
 }
+
+string short()
+{
+    return "指令精灵(COMMAND_D)";
+}

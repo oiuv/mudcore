@@ -69,3 +69,8 @@ object compile_object(string file)
 {
     return 0;
 }
+
+string short()
+{
+    return "虚拟对象精灵(VIRTUAL_D)";
+}

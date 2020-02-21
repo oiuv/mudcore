@@ -399,7 +399,5 @@ protected void get_gender(string gender, object ob)
 // 初始化新玩家必要属性
 protected void init_new_player(object user)
 {
-    user->set("birthday", time());
-    user->set("exp", 0); // 经验
-    user->set("lv", 1);  // 等级
+    CHAR_D->init_player(user);
 }

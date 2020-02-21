@@ -25,6 +25,11 @@ void create()
     }
 }
 
+string short()
+{
+    return "表情精灵(EMOTE_D)";
+}
+
 int remove()
 {
     save();

@@ -229,3 +229,8 @@ int clear_object(mixed ob)
     map_delete(save_dbase, index);
     return 1;
 }
+
+string short()
+{
+    return "数据精灵(DBASE_D)";
+}

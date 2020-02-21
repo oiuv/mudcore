@@ -50,7 +50,11 @@ nosave mapping channels = ([
 
 void create()
 {
-    seteuid("频道精灵");
+}
+
+string short()
+{
+    return "频道精灵(CHANNEL_D)";
 }
 
 // 记录频道消息的日志

@@ -28,10 +28,13 @@
 
 /* 守护进程 */
 #define CORE_CHANNEL_D      CORE_DIR "system/daemons/channel_d"
+#define CORE_CHAR_D         CORE_DIR "system/daemons/char_d"
 #define CORE_CHINESE_D      CORE_DIR "system/daemons/chinese_d"
+#define CORE_COMBAT_D       CORE_DIR "system/daemons/combat_d"
 #define CORE_COMMAND_D      CORE_DIR "system/daemons/command_d"
 #define CORE_DBASE_D        CORE_DIR "system/daemons/dbase_d"
 #define CORE_EMOTE_D        CORE_DIR "system/daemons/emote_d"
+#define CORE_GRAPH_D        CORE_DIR "system/daemons/graph_d"
 #define CORE_LOGIN_D        CORE_DIR "system/daemons/login_d"
 #define CORE_VIRTUAL_D      CORE_DIR "system/daemons/virtual_d"
 #define CORE_TIME_D         CORE_DIR "system/daemons/time_d"
@@ -71,8 +74,16 @@
 #define CHANNEL_D   CORE_CHANNEL_D
 #endif
 
+#ifndef CHAR_D
+#define CHAR_D      CORE_CHAR_D
+#endif
+
 #ifndef CHINESE_D
 #define CHINESE_D   CORE_CHINESE_D
+#endif
+
+#ifndef COMBAT_D
+#define COMBAT_D    CORE_COMBAT_D
 #endif
 
 #ifndef COMMAND_D
@@ -85,6 +96,10 @@
 
 #ifndef EMOTE_D
 #define EMOTE_D     CORE_EMOTE_D
+#endif
+
+#ifndef GRAPH_D
+#define GRAPH_D     CORE_GRAPH_D
 #endif
 
 #ifndef LOGIN_D
