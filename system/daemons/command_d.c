@@ -5,8 +5,6 @@
 #define CMD_PATH_STD ({"/cmds/std/"})
 #endif
 
-nosave string *path = CMD_PATH_STD;
-
 private nosave mapping default_aliases = ([
     "s":"go south",
     "n":"go north",
@@ -55,6 +53,7 @@ void set_alias(mapping aliases)
 object find_command(string verb)
 {
     object file;
+    string *path = CMD_PATH_STD;
 
     if (wizardp(this_player()))
     {
