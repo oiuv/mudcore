@@ -6,7 +6,7 @@ mixed color =
 
 string *pic = ({"　", "▏", "▎", "▍", "▌", "▋", "▊", "▉", "█"});
 
-varargs string graph(int cur, int max, int fc, int bc, int length)
+varargs string draw(int cur, int max, int fc, int bc, int length)
 {
     string result = "";
     int now_len, flag = 0;
