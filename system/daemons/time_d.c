@@ -31,17 +31,47 @@ private nosave int *game_time = allocate(9);
 
 // 游戏时间计划任务（真实时间2秒为游戏时间1分钟）
 private nosave mixed *game_crontab = ({
-    "5,25,50 * * * * *", ( : save() :), "存储游戏世界时间",
-    // "* * * * * *", (: TIME_D->debug("game_crontab! " + TIME_D->gametime_digital_clock()) :), "测试任务",
-    // "5-15/3 * * * * *", (: TIME_D->debug("game_crontab! 45-15 " + ctime(realtime)) :), "测试任务",
+    "5,25,50 * * * * *", ( : TIME_D->save() :), "存储游戏世界时间",
+    // "* * * * * *", (: debug("game_crontab! " + TIME_D->gametime_digital_clock()) :), "测试任务",
+    // "5-15/3 * * * * *", (: debug("game_crontab! 45-15 " + ctime()) :), "测试任务",
 });
 
 // 真实时间计划任务
 private nosave mixed *real_crontab = ({
-    // "*/2 * * * * *", (: TIME_D->debug(HIY "real_crontab! " NOR + ctime(realtime)) :), "测试任务",
+    // "*/2 * * * * *", (: debug("real_crontab! " + ctime()) :), "测试任务",
 });
 
 private nosave mapping crontab_process = allocate_mapping(0);
+
+void set_game_crontab(mixed *crontab)
+{
+    game_crontab = crontab;
+}
+
+void set_real_crontab(mixed *crontab)
+{
+    real_crontab = crontab;
+}
+
+int query_gametime()
+{
+    return gametime * 60;
+}
+
+int query_realtime()
+{
+    return realtime;
+}
+
+int *query_game_time()
+{
+    return game_time;
+}
+
+int *query_real_time()
+{
+    return real_time;
+}
 
 void add_event(function fevent, int delay_time)
 {
@@ -168,16 +198,6 @@ string hour_period(int h)
     }
 }
 
-int *query_gametime_array()
-{
-    return game_time;
-}
-
-int *query_realtime_array()
-{
-    return real_time;
-}
-
 /* 传回游戏时钟：下午 3:39 */
 string gametime_digital_clock()
 {
@@ -197,27 +217,21 @@ string realtime_digital_clock()
 
 string time_description(string title, int *t)
 {
-    return sprintf(NOR WHT + title + NOR "%s年﹐%s﹐%s月%s日﹐星期%s﹐%s%s时%s分" NOR, t[LT_YEAR] == 1 ? "元" : chinese_number(t[LT_YEAR]), season_period(t[LT_MON]), !t[LT_MON] ? "元" : chinese_number(t[LT_MON] + 1), chinese_number(t[LT_MDAY]), week_period(t[LT_WDAY]), hour_period(t[LT_HOUR]), chinese_number(t[LT_HOUR] > 12 ? t[LT_HOUR] % 12 : t[LT_HOUR]), chinese_number(t[LT_MIN]));
+    return sprintf(NOR WHT + title + NOR "%s年，%s，%s月%s日，星期%s，%s%s时%s分" NOR, t[LT_YEAR] == 1 ? "元" : chinese_number(t[LT_YEAR]), season_period(t[LT_MON]), !t[LT_MON] ? "元" : chinese_number(t[LT_MON] + 1), chinese_number(t[LT_MDAY]), week_period(t[LT_WDAY]), hour_period(t[LT_HOUR]), chinese_number(t[LT_HOUR] > 12 ? t[LT_HOUR] % 12 : t[LT_HOUR]), chinese_number(t[LT_MIN]));
 }
 
-string game_time_description()
+string game_time_description(string arg)
 {
-    return time_description("魔幻", game_time);
+    if (!arg)
+        arg = "魔幻";
+    return time_description(arg, game_time);
 }
 
-string real_time_description()
+string real_time_description(string arg)
 {
-    return time_description("公元", real_time);
-}
-
-int query_game_time()
-{
-    return gametime * 60;
-}
-
-int query_real_time()
-{
-    return realtime;
+    if (!arg)
+        arg = "公元";
+    return time_description(arg, real_time);
 }
 
 int *analyse_time(int t)
@@ -376,16 +390,16 @@ void process_crontab(mixed *crontab, int *timearray)
     }
 }
 
-void process_per_second()
-{
-    // CHANNEL_D->do_channel(this_object(), "sys", "+1秒！");
-}
-
 int reset_gametime(int time)
 {
     gametime = time;
     // 存档游戏时间
     return save();
+}
+
+void process_per_second()
+{
+    // CHANNEL_D->do_channel(this_object(), "sys", "+1秒！");
 }
 
 // 游戏时间每分钟执行
@@ -464,11 +478,6 @@ int receive_dbase_data(mixed data)
     else
         reset_gametime(0);
     return 1;
-}
-
-varargs void debug(string msg)
-{
-    debug_message("[TIME_D]:" + msg);
 }
 
 string short()
