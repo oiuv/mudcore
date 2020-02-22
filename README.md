@@ -213,3 +213,4 @@ msg|智能区域消息
 log_time|方便日志记录的 ctime 时间格式
 getcid|返回复制对象的ID
 debug|随机颜色输出内容
+process_bar|显示指定百分比的进度条

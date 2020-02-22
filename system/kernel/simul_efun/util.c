@@ -37,3 +37,54 @@ void debug(mixed arg)
 
     write(element_of(color) + arg + NOR "\n");
 }
+
+// 进度条
+string process_bar(int n)
+{
+    string sp;
+    int start;
+
+    if (n < 0)
+        n = 0;
+    else if (n > 100)
+        n = 100;
+
+    sp = "                                                  " NOR;
+
+    if (n == 100)
+    {
+        sp[22] = '1';
+        sp[23] = '0';
+        sp[24] = '0';
+        sp[25] = '%';
+        start = 22;
+    }
+    else if (n >= 10)
+    {
+        sp[23] = (n / 10) + '0';
+        sp[24] = (n % 10) + '0';
+        sp[25] = '%';
+        start = 23;
+    }
+    else
+    {
+        sp[24] = n + '0';
+        sp[25] = '%';
+        start = 24;
+    }
+
+    n /= 2;
+    if (start > n)
+    {
+        sp = sp[0..start-1] + HIY + sp[start..<0];
+        sp = sp[0..n - 1] + BBLU + sp[n..<0];
+    }
+    else
+    {
+        sp = sp[0..n - 1] + BBLU + sp[n..<0];
+        sp = sp[0..start-1] + HIY + sp[start..<0];
+    }
+
+    sp = NOR + BCYN + sp;
+    return sp;
+}
