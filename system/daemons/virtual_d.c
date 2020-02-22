@@ -1,12 +1,11 @@
 /*****************************************************************************
-Copyright: 2019, Mud.Ren
+Copyright: 2020, Mud.Ren
 File name: virtual_d.c
 Description: 虚拟对象守护进程
 Author: xuefeng
 Version: v1.0
-Date: 2019-04-01
 *****************************************************************************/
-// 虚拟环境服务
+// 虚拟环境功能
 mixed compile_area(string file)
 {
     string virtual;
@@ -30,7 +29,7 @@ mixed compile_area(string file)
     {
         if ((m = sscanf(file[n + 1..], "%d,%d", x, y)) != 2)
         {
-            return 0;
+            return virtual->query_maze_room(file[n + 1..]);
         }
     }
 
@@ -45,7 +44,7 @@ mixed compile_area(string file)
 
     return ob;
 }
-// 虚拟怪物服务
+// 虚拟怪物功能，开发者可以覆盖功能
 mixed compile_mob(string file)
 {
     string *path, virtual;
@@ -64,9 +63,10 @@ mixed compile_mob(string file)
 
     return ob;
 }
-
+// 其他虚拟对象功能
 object compile_object(string file)
 {
+    // todo 开发者自己实现
     return 0;
 }
 

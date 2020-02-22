@@ -31,9 +31,9 @@ private nosave int *game_time = allocate(9);
 
 // 游戏时间计划任务（真实时间2秒为游戏时间1分钟）
 private nosave mixed *game_crontab = ({
-    "5,25,50 * * * * *", ( : TIME_D->save() :), "存储游戏世界时间",
+    "5,25,45 * * * * *", ( : TIME_D->save() :), "存储游戏世界时间",
     // "* * * * * *", (: debug("game_crontab! " + TIME_D->gametime_digital_clock()) :), "测试任务",
-    // "5-15/3 * * * * *", (: debug("game_crontab! 45-15 " + ctime()) :), "测试任务",
+    // "5-15/3 * * * * *", (: debug("game_crontab! 5-15 " + ctime()) :), "测试任务",
 });
 
 // 真实时间计划任务

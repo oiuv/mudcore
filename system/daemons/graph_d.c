@@ -18,6 +18,10 @@ varargs string draw(int cur, int max, int fc, int bc, int length)
         fc = 1 + random(7);
     if (bc < 0 || bc > 7)
         bc = 1 + random(7);
+    if (max < 1)
+        max = 1;
+    if (cur < 0)
+        cur = 0;
     //if( max < cur ) return sprintf("%"+(length*2-18)+"Oops! There's something wrong with it!","");
     if (max < cur)
     {
@@ -25,8 +29,6 @@ varargs string draw(int cur, int max, int fc, int bc, int length)
         cur = max;
     }
 
-    if (cur < 0)
-        cur = 0;
 
     cur *= 1000;
     max *= 1000;
@@ -34,7 +36,8 @@ varargs string draw(int cur, int max, int fc, int bc, int length)
     now_len = floor(cur / (max / to_float(length)));
     last_len = cur % (max / length);
     last_len ? temp = last_len / ((max / length) / 8.) : 0.;
-    result = sprintf(color[fc][1] + "%-" + now_len * 2 + "s", " ");
+    if (cur)
+        result = sprintf(color[fc][1] + "%-" + now_len * 2 + "s", " ");
     if (flag)
         result[ < 2..] = ">>";
     if (now_len < length)

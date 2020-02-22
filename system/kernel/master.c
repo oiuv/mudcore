@@ -109,7 +109,7 @@ mixed compile_object(string str)
     }
 #endif
 
-    return 0;
+    return call_other(VIRTUAL_D, "compile_object", str);
 }
 
 string object_name(object ob)

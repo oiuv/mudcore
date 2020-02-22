@@ -1,3 +1,4 @@
+inherit CORE_CLEAN_UP;
 inherit CORE_DBASE;
 inherit CORE_NAME;
 inherit CORE_ROOM;

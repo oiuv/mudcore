@@ -36,8 +36,8 @@
 #define CORE_EMOTE_D        CORE_DIR "system/daemons/emote_d"
 #define CORE_GRAPH_D        CORE_DIR "system/daemons/graph_d"
 #define CORE_LOGIN_D        CORE_DIR "system/daemons/login_d"
-#define CORE_VIRTUAL_D      CORE_DIR "system/daemons/virtual_d"
 #define CORE_TIME_D         CORE_DIR "system/daemons/time_d"
+#define CORE_VIRTUAL_D      CORE_DIR "system/daemons/virtual_d"
 
 /* inherit 特性文件 */
 #define CORE_ACTION         CORE_DIR "inherit/action"
@@ -54,6 +54,7 @@
 #define CORE_ROOM           CORE_DIR "inherit/room"
 #define CORE_SAVE           CORE_DIR "inherit/save"
 #define CORE_TEAM           CORE_DIR "inherit/team"
+#define CORE_VRM            CORE_DIR "inherit/vrm"
 // 玩家特殊功能
 #define CORE_USER_COMBAT_RECORD CORE_DIR "inherit/user_combat_record"
 

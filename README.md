@@ -160,6 +160,7 @@ CORE_ROOM|/inherit/room.c|游戏环境标准接口，实现房间核心功能，
 CORE_SAVE|/inherit/save.c|对象数据存取接口，主要是玩家角色使用存档和读档
 CORE_TEAM|/inherit/team.c|角色组队功能接口，实现组队相关功能
 CORE_USER_COMBAT_RECORD|/inherit/user_combat_record.c|玩家战斗记录功能，实现玩家战斗数据记录
+CORE_VRM|/inherit/vrm.c|随机迷宫功能接口，实现随机迷宫功能
 
 #### 守护进程(Daemons)
 
@@ -168,9 +169,9 @@ CORE_USER_COMBAT_RECORD|/inherit/user_combat_record.c|玩家战斗记录功能�
 名称|文件路径|核心功能
 -|-|-
 CORE_CHANNEL_D|/system/daemons/channel_d.c|负责处理玩家聊天功能和频道管理
-CORE_CHAR_D|/system/daemons/char_d.c|负责处理角色数据
+CORE_CHAR_D|/system/daemons/char_d.c|负责处理角色数据，需开发者实现具体功能
 CORE_CHINESE_D|/system/daemons/chinese_d.c|负责处理中、英文对照，以及一些与中文相关的功能
-CORE_COMBAT_D|/system/daemons/combat_d.c|负责战斗功能
+CORE_COMBAT_D|/system/daemons/combat_d.c|负责战斗功能，需开发者实现具体功能
 CORE_COMMAND_D|/system/daemons/command_d.c|负责指令及别名处理功能
 CORE_DBASE_D|/system/daemons/dbase_d.c|负责系统数据存档处理，默认存储位置`/data/dbase_d.o`
 CORE_EMOTE_D|/system/daemons/emote_d.c|负责管理游戏表情动作和相应功能
