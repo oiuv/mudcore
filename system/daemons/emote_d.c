@@ -68,13 +68,13 @@ varargs int do_emote(object me, string verb, string arg, object *obs, string cha
     }
 
     if (!arrayp(obs)) obs = all_inventory(environment(me));
-    if(!stringp(channel)) channel = YEL "%s" NOR;
+    if (!stringp(channel)) channel = YEL "%s" NOR;
 
     if (objectp(target) && stringp(str = def[MSG_OTHERS]))
     {
         boardcast("emote", sprintf(channel, str), me, target, obs);
-    } else
-    if (stringp(str = def[MSG_MYSELF]))
+    }
+    else if (stringp(str = def[MSG_MYSELF]))
         boardcast("emote", sprintf(channel, str), me, 0, obs);
     else
         return notify_fail("…………\n");

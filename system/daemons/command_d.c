@@ -47,6 +47,11 @@ mapping query_default_alias()
 
 void set_alias(mapping aliases)
 {
+    default_aliases = aliases;
+}
+
+void add_alias(mapping aliases)
+{
     default_aliases += aliases;
 }
 

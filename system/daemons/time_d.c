@@ -9,7 +9,7 @@ Date: 2019-04-01
 #include <ansi.h>
 #include <localtime.h>
 
-inherit CORE_OBSAVE;
+inherit CORE_DBSAVE;
 
 // 游戏时间
 private int gametime;

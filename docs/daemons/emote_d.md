@@ -5,8 +5,19 @@
 ### 核心方法
 
 ```c
-varargs int do_emote(object me, string verb, string arg, object *obs, string channel);
+varargs int do_emote(object me, string verb, string target, object *obs, string channel);
 
+```
+
+> 参数说明
+
+    me          发送动作的对象
+    verb        表情动词，如 `hi`
+    target      动作目标，如 玩家名称
+    obs         广播对象
+    channel     动作频道
+
+```c
 // 设置表情
 int set_emote(string pattern, string *def);
 

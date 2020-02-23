@@ -64,7 +64,7 @@ mixed compile_mob(string file)
     return ob;
 }
 // 其他虚拟对象功能
-object compile_object(string file)
+mixed compile_object(string file)
 {
     // todo 开发者自己实现
     return 0;
