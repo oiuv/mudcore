@@ -1,7 +1,7 @@
 /*****************************************************************************
 Copyright: 2020, Mud.Ren
 File name: bitmap_d.c
-Description: 点阵文字显示系统守护进程
+Description: 点阵文字(bitmap font)显示系统守护进程
 Author: xuefeng
 Version: v1.1
 Date: 2020-02-20
@@ -14,7 +14,7 @@ Date: 2020-02-20
 #define DEFAULT_BGCOLOR ""
 #define AUTO_SIZE 12
 
-varargs string font(string str, int size, string fill, string bg, string fcolor, string bgcolor)
+varargs string show(string str, int size, string fill, string bg, string fcolor, string bgcolor)
 {
     int offset;
     int *mask = ({0x80, 0x40, 0x20, 0x10, 0x8, 0x4, 0x2, 0x1});
