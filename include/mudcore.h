@@ -27,6 +27,7 @@
 #define CORE_USER_OB        CORE_DIR "system/object/user"
 
 /* 守护进程 */
+#define CORE_BITMAP_D       CORE_DIR "system/daemons/bitmap_d"
 #define CORE_CHANNEL_D      CORE_DIR "system/daemons/channel_d"
 #define CORE_CHAR_D         CORE_DIR "system/daemons/char_d"
 #define CORE_CHINESE_D      CORE_DIR "system/daemons/chinese_d"
@@ -69,6 +70,10 @@
 
 #ifndef MOTD
 #define MOTD    CORE_DIR "system/etc/motd"
+#endif
+
+#ifndef BITMAP_D
+#define BITMAP_D    CORE_BITMAP_D
 #endif
 
 #ifndef CHANNEL_D

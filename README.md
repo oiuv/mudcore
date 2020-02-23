@@ -168,6 +168,7 @@ CORE_VRM|/inherit/vrm.c|随机迷宫功能接口，实现随机迷宫功能
 
 名称|文件路径|核心功能
 -|-|-
+CORE_BITMAP_D|/system/daemons/bitmap_d.c|负责处理中英文字符的点阵输出
 CORE_CHANNEL_D|/system/daemons/channel_d.c|负责处理玩家聊天功能和频道管理
 CORE_CHAR_D|/system/daemons/char_d.c|负责处理角色数据，需开发者实现具体功能
 CORE_CHINESE_D|/system/daemons/chinese_d.c|负责处理中、英文对照，以及一些与中文相关的功能
