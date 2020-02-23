@@ -101,7 +101,9 @@ private string exit_desc; // 迷宫出口的长描述
 private string *maze_room_desc = ({}); // 迷宫房间的长描述
 private string maze_room_short; // 迷宫房间的短描述
 private int is_outdoors = 0; // 迷宫房间是否为户外
+private int maze_map = 0; // 是否绘制迷宫地图
 private string *maze_npcs = ({}); // 迷宫中的怪物
+private mapping extra_info = ([]); // 迷宫额外参数
 /******************* ---- END ---- *********************/
 
 // 建立标记.
@@ -417,7 +419,8 @@ private void create_maze()
     // 地图文件为同目录下同名的'.map' 文件，
     // 绘制地图也许可利于区域巫师的工作。
     // 如需要可开放物件对于本目录的'写'。
-    // paint_vrm_map();
+    if (maze_map)
+        paint_vrm_map();
 }
 
 private void link_to_west(int x, int y) // The west room is (x - 1, y)
@@ -503,7 +506,8 @@ private void link_to_north(int x, int y) // The north room is (x, y + 1)
 // 绘制已建成迷宫的地图.
 private void paint_vrm_map()
 {
-    string hor = "─", ver = "│  ", room = "◎", sroom = "●";
+    // string hor = "─", ver = "│  ", room = "◎", sroom = "●";
+    string hor = "--", ver = "|  ", room = "#", sroom = "x";
     int x, y;
     string output = "", map_file;
 
@@ -530,7 +534,7 @@ private void paint_vrm_map()
             if ((all[x][y]) & S) // have south
                 output += ver;
             else
-                output += "    ";
+                output += "   ";
         }
         output += "\n";
     }
@@ -800,6 +804,23 @@ void set_maze_npcs(mixed npc)
     return;
 }
 
+// 迷宫房间是否绘制地图
+void set_maze_map(int yes)
+{
+    if (!intp(yes))
+        return;
+
+    if (yes)
+        maze_map = 1;
+}
+
+// 迷宫额外参数
+void set_extra_info(mixed info)
+{
+    if (mapp(info))
+        extra_info = info;
+}
+
 /**** 以上是预设迷宫参数的接口函数 ****/
 
 // 创造迷宫房间，由 VIRTUAL_D 调用。
@@ -828,7 +849,7 @@ nomask object query_maze_room(string str)
         ob = new (f);
         if (!ob)
             return 0;
-        ob->set("virtual_room", 1);
+        ob->set("maze_room", 1);
         ob->set("short", entry_short);
         ob->set("long", entry_desc);
         if (is_outdoors)
@@ -853,7 +874,7 @@ nomask object query_maze_room(string str)
         if (!ob)
             return 0;
 
-        ob->set("virtual_room", 1);
+        ob->set("maze_room", 1);
         ob->set("short", exit_short);
         ob->set("long", exit_desc);
         if (is_outdoors)
@@ -888,12 +909,21 @@ nomask object query_maze_room(string str)
     if (!ob)
         return 0;
 
-    ob->set("virtual_room", 1);
+    ob->set("maze_room", 1);
     ob->set("short", maze_room_short);
     ob->set("long", maze_room_desc[random(sizeof(maze_room_desc))]);
     if (is_outdoors)
         ob->set("outdoors", 1);
+    // 迷宫坐标，备用显示
     ob->set("zone", (["x":x, "y":y]));
+    // 迷宫额外参数
+    if (sizeof(extra_info))
+    {
+        foreach(mixed key, mixed value in extra_info)
+        {
+            ob->set(key, value);
+        }
+    }
     if (exits & W)
         ob->set("exits/west", mroom_fname(x - 1, y));
     if (exits & E)
