@@ -144,10 +144,10 @@ mixed query_object_data(mixed ob)
     if (!ob)
         return 0;
 
-    //todo 只有ROOT或对象自己才可以保存或读取数据
-
-    if (objectp(ob))
+    if (objectp(ob) || (stringp(ob) && (ob = find_object(ob))))
+    {
         index = base_name(ob);
+    }
     else
         return 0;
 
@@ -168,10 +168,10 @@ int set_object_data(mixed ob, mixed data)
     if (!ob)
         return 0;
 
-    //todo 只有ROOT或对象自己才可以保存或读取数据
-
-    if (objectp(ob))
+    if (objectp(ob) || (stringp(ob) && (ob = find_object(ob))))
+    {
         index = base_name(ob);
+    }
     else
         return 0;
 
