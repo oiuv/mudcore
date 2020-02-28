@@ -70,7 +70,7 @@ object find_command(string verb)
 
     foreach(string p in path)
     {
-        if (file = load_object(p + verb))
+        if (file_size(p + verb + ".c") > 0 && objectp(file = load_object(p + verb)))
         {
             return file;
         }

@@ -6,6 +6,7 @@
 #include "simul_efun/charset.c" // 因使用颜色过滤模拟函数，需在color.c后面
 #include "simul_efun/file.c"
 #include "simul_efun/gender.c"
+#include "simul_efun/json.c"
 #include "simul_efun/message.c"　 // 因使用到人称处理模拟函数，需在gender.c后面
 #include "simul_efun/override.c"
 #include "simul_efun/path.c"
