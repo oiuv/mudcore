@@ -209,6 +209,7 @@ update_file|以数组的形式返回文件每一行内容 并跳过 `#` 注释�
 log_file|记录日志到指定文件
 assure_file|建立文件目录
 cat|输出文件内容到屏幕
+tail|输出文件尾部最多10行内容到屏幕
 pronoun|返回中文人称代词
 msg|智能区域消息
 log_time|方便日志记录的 ctime 时间格式

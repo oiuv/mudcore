@@ -63,3 +63,14 @@ void cat(string file)
 {
     write(read_file(file));
 }
+
+int tail(string path)
+{
+    if (stringp(path) && file_size(path) >= 0)
+    {
+        write(read_file(path, file_length(path) - 9));
+        return 1;
+    }
+
+    return 0;
+}
