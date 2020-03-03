@@ -9,6 +9,10 @@ History:
 *****************************************************************************/
 #include <ansi.h>
 
+nosave string *banned_name = ({
+    "屌", "屄", "姦", "穴", "爸", "妈", "爷", "奶",
+});
+
 // 内部调用的函数
 protected void welcome(object ob);
 protected void get_encoding(string arg, object ob);
@@ -36,6 +40,11 @@ protected void create()
 string short()
 {
     return "登录精灵(LOGIN_D)";
+}
+
+protected void add_banned_name(string *name)
+{
+    banned_name += name;
 }
 
 // 登录入口
@@ -306,6 +315,14 @@ protected void get_name(string arg, object ob)
         input_to("get_name", ob);
         return;
     }
+    foreach(string name in banned_name)
+        if (strsrch(arg, name) > -1)
+        {
+            write("\n对不起，这个名字会引起不必要的误会。");
+            write("\n请重新输入您" HIY "名字" NOR "：");
+            input_to("get_name", ob);
+            return;
+        }
 
     ob->set("name", arg);
 
