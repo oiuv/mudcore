@@ -39,8 +39,8 @@ void remove()
     destruct(this_object());
 }
 
-// 判断是否 user 对象，和 efun userp() 稍有区别
-int is_user() { return 1; }
+// 判断是否是 user 对象文件，和 efun userp() 稍有区别
+int is_user() { return clonep(); }
 
 // 玩家断线处理
 void net_dead()

@@ -33,7 +33,8 @@ varargs void set_name(string name, string *id)
     {
         set("id", lower_case(id[0]));
         my_id = id;
-        if (!this_object()->is_user()) // 不可以使用 userp() 判断
+        // 非玩家对象增加首字母ID，不可以使用 userp() 判断
+        if (!this_object()->is_user())
         {
             my_id += ({lower_case(id[0][0..0])});
         }
