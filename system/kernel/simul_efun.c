@@ -2,7 +2,7 @@
 #include "simul_efun/array.c"
 #include "simul_efun/atoi.c"
 #include "simul_efun/bit.c"
-#include "simul_efun/bitmap_font.c" // 使用 atoi 模拟外部函数
+#include "simul_efun/bitmap_font.c"
 #include "simul_efun/color.c"
 #include "simul_efun/charset.c" // 因使用颜色过滤模拟函数，需在color.c后面
 #include "simul_efun/file.c"
