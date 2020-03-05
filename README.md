@@ -168,7 +168,6 @@ CORE_VRM|/inherit/vrm.c|随机迷宫功能接口，实现随机迷宫功能
 
 名称|文件路径|核心功能
 -|-|-
-CORE_BITMAP_D|/system/daemons/bitmap_d.c|负责处理中英文字符的点阵输出
 CORE_CHANNEL_D|/system/daemons/channel_d.c|负责处理玩家聊天功能和频道管理
 CORE_CHAR_D|/system/daemons/char_d.c|负责处理角色数据，需开发者实现具体功能
 CORE_CHINESE_D|/system/daemons/chinese_d.c|负责处理中、英文对照，以及一些与中文相关的功能
@@ -176,7 +175,6 @@ CORE_COMBAT_D|/system/daemons/combat_d.c|负责战斗功能，需开发者实现
 CORE_COMMAND_D|/system/daemons/command_d.c|负责指令及别名处理功能
 CORE_DBASE_D|/system/daemons/dbase_d.c|负责系统数据存档处理，默认存储位置`/data/dbase_d.o`
 CORE_EMOTE_D|/system/daemons/emote_d.c|负责管理游戏表情动作和相应功能
-CORE_GRAPH_D|/system/daemons/graph_d.c|负责游戏中的进度条绘图功能
 CORE_LOGIN_D|/system/daemons/login_d.c|框架示例登录管理功能，可做开发参考
 CORE_TIME_D|/system/daemons/time_d.c|负责控制游戏系统时间和计划任务
 CORE_VIRTUAL_D|/system/daemons/virtual_d.c|负责虚拟对象处理
@@ -187,6 +185,7 @@ CORE_VIRTUAL_D|/system/daemons/virtual_d.c|负责虚拟对象处理
 
 simul-efun|简介
 -|-
+bitmap_font|处理中英文字符并点阵输出
 print_r|数组打印功能，格式化输出，开发调试用
 atoi|string 类型数字转 int 类型数字
 itoc|int 类型数字转 ASCII 字符，如 itoc(65) 返回值为 A
@@ -216,3 +215,4 @@ log_time|方便日志记录的 ctime 时间格式
 getcid|返回复制对象的ID
 debug|随机颜色输出内容
 process_bar|显示指定百分比的进度条
+graph_draw|自定义进度条绘图

@@ -1,11 +1,10 @@
-### CORE_BITMAP_D
 
-`BITMAP_D`点阵字体显示系统，可以在游戏中显示点阵文字。
+点阵字体显示系统，可以在游戏中显示点阵文字。
 
 ### 核心方法
 
 ```c
-varargs string show(string str, int size, string fill, string bg, string fcolor, string bgcolor);
+varargs string bitmap_font(string str, int size, string fill, string bg, string fcolor, string bgcolor);
 ```
 
 > 参数说明

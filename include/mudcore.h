@@ -27,7 +27,6 @@
 #define CORE_USER_OB        CORE_DIR "system/object/user"
 
 /* 守护进程 */
-#define CORE_BITMAP_D       CORE_DIR "system/daemons/bitmap_d"
 #define CORE_CHANNEL_D      CORE_DIR "system/daemons/channel_d"
 #define CORE_CHAR_D         CORE_DIR "system/daemons/char_d"
 #define CORE_CHINESE_D      CORE_DIR "system/daemons/chinese_d"
@@ -35,7 +34,6 @@
 #define CORE_COMMAND_D      CORE_DIR "system/daemons/command_d"
 #define CORE_DBASE_D        CORE_DIR "system/daemons/dbase_d"
 #define CORE_EMOTE_D        CORE_DIR "system/daemons/emote_d"
-#define CORE_GRAPH_D        CORE_DIR "system/daemons/graph_d"
 #define CORE_LOGIN_D        CORE_DIR "system/daemons/login_d"
 #define CORE_TIME_D         CORE_DIR "system/daemons/time_d"
 #define CORE_VIRTUAL_D      CORE_DIR "system/daemons/virtual_d"
@@ -72,10 +70,6 @@
 #define MOTD    CORE_DIR "system/etc/motd"
 #endif
 
-#ifndef BITMAP_D
-#define BITMAP_D    CORE_BITMAP_D
-#endif
-
 #ifndef CHANNEL_D
 #define CHANNEL_D   CORE_CHANNEL_D
 #endif
@@ -102,10 +96,6 @@
 
 #ifndef EMOTE_D
 #define EMOTE_D     CORE_EMOTE_D
-#endif
-
-#ifndef GRAPH_D
-#define GRAPH_D     CORE_GRAPH_D
 #endif
 
 #ifndef LOGIN_D

@@ -1,20 +1,20 @@
 /*****************************************************************************
 Copyright: 2020, Mud.Ren
-File name: bitmap_d.c
-Description: 点阵文字(bitmap font)显示系统守护进程
+File name: bitmap_font.c
+Description: 点阵文字(bitmap font)，对16号字体框架提供了数款代替字体可用
 Author: xuefeng
 Version: v1.1
 Date: 2020-02-20
 *****************************************************************************/
-#define HZK CORE_DIR "system/etc/fonts/hzk"
-#define ASC CORE_DIR "system/etc/fonts/asc"
+#define HZK CORE_DIR "system/etc/fonts/HZK"
+#define ASC CORE_DIR "system/etc/fonts/ASC"
 #define DEFAULT_FILL "88"
 #define DEFAULT_BG "  "
 #define DEFAULT_FCOLOR ""
 #define DEFAULT_BGCOLOR ""
 #define AUTO_SIZE 12
 
-varargs string show(string str, int size, string fill, string bg, string fcolor, string bgcolor)
+varargs string bitmap_font(string str, int size, string fill, string bg, string fcolor, string bgcolor)
 {
     int offset;
     int *mask = ({0x80, 0x40, 0x20, 0x10, 0x8, 0x4, 0x2, 0x1});

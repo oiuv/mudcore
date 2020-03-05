@@ -1,13 +1,13 @@
-// 绘图守护进程
+// 自定义进度条绘图
 #include <ansi.h>
 
-mixed color =
-    ({({"", ""}), ({RED, BRED}), ({GRN, BGRN}), ({CYN, BCYN}), ({BLU, BBLU}), ({YEL, BYEL}), ({MAG, BMAG}), ({WHT, HBWHT})});
-
-string *pic = ({"　", "▏", "▎", "▍", "▌", "▋", "▊", "▉", "█"});
-
-varargs string draw(int cur, int max, int fc, int bc, int length)
+varargs string graph_draw(int cur, int max, int fc, int bc, int length)
 {
+    mixed color = ({
+        ({"", ""}), ({RED, BRED}), ({GRN, BGRN}), ({CYN, BCYN}),
+        ({BLU, BBLU}), ({YEL, BYEL}), ({MAG, BMAG}), ({WHT, HBWHT}
+    )});
+    string *pic = ({"　", "▏", "▎", "▍", "▌", "▋", "▊", "▉", "█"});
     string result = "";
     int now_len, flag = 0;
     float last_len, temp;
@@ -49,13 +49,4 @@ varargs string draw(int cur, int max, int fc, int bc, int length)
     }
 
     return result + NOR;
-}
-
-void create()
-{
-}
-
-string query_name()
-{
-    return "绘图精灵(GRAPH_D)";
 }

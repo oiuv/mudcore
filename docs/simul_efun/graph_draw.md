@@ -1,11 +1,10 @@
-### CORE_GRAPH_D
 
-`GRAPH_D` 绘图处理进程，用于玩家HP等状态条。
+绘图处理，用于玩家HP等状态条。
 
 ### 核心方法
 
 ```c
-varargs string draw(int cur, int max, int fc, int bc, int length)
+varargs string graph_draw(int cur, int max, int fc, int bc, int length)
 ```
 
 > 参数说明
