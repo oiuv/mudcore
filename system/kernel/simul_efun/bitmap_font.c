@@ -15,7 +15,9 @@ Description:
 #define DEFAULT_FCOLOR ""
 #define DEFAULT_BGCOLOR ""
 #define AUTO_SIZE 12
-
+/**
+ * 字符、字号、内容填充、背景填充、前景色、背景色
+ */
 varargs string bitmap_font(string str, int size, string fill, string bg, string fcolor, string bgcolor)
 {
     int offset, fontsize, scale;

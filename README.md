@@ -194,7 +194,6 @@ bitSet|返回数值指定位为1的值
 bitClear|返回数值指定位为0的值
 chinese_number|返回中文数字
 chinese|返回指定字符串的中文名称
-break_string|根据指定长度换行字符串
 is_chinese|判断指定字符串是否为中文
 is_english|判断指定字符串是否为英文
 check_control|判断指定字符串是否包含控制字符
