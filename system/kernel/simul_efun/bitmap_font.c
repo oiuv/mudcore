@@ -5,15 +5,20 @@ Author: xuefeng@mud.ren
 Version: v1.1
 Date: 2020-02-20
 Description:
-    点阵文字(bitmap font)，对16号字体框架提供了数款代替字体可用
-    实现原理参考：https://blog.twofei.com/embedded/hzk.html
+    display ASCII and chinese with bitmap font
 *****************************************************************************/
-#define HZK CORE_DIR "system/etc/fonts/HZK"
-#define ASC CORE_DIR "system/etc/fonts/ASC"
+// 字体文件(请根据需要修改路径)
+#define HZK CORE_DIR "system/kernel/simul_efun/fonts/HZK"
+#define ASC CORE_DIR "system/kernel/simul_efun/fonts/ASC"
+// 默认前景字符
 #define DEFAULT_FILL "8"
+// 默认背景字符
 #define DEFAULT_BG "-"
+// 默认前景颜色
 #define DEFAULT_FCOLOR ""
+// 默认背景颜色
 #define DEFAULT_BGCOLOR ""
+// 默认点阵大小
 #define AUTO_SIZE 12
 /**
  * 字符、字号、内容填充、背景填充、前景色、背景色
@@ -28,14 +33,13 @@ varargs string bitmap_font(string str, int size, string fill, string bg, string 
     if (member_array(size, ({12, 14, 16})) < 0)
         size = AUTO_SIZE;
 
-    out = allocate(size, "");
-    // 中文字体占用的字节数
+    // 中文字体占用的字节数(支持32x32等字库)
     if (size < 16)
         fontsize = size * 2;
     else
         fontsize = size * size / 8;
 
-    scale = fontsize / size;
+    out = allocate(size, "");
 
     if (!sizeof(fill)) fill = DEFAULT_FILL;
     if (!sizeof(bg)) bg = DEFAULT_BG;
@@ -49,7 +53,7 @@ varargs string bitmap_font(string str, int size, string fill, string bg, string 
     if (!bgcolor) bgcolor = DEFAULT_BGCOLOR;
     // 16x16中文字库随机字体
     if (size == 16)
-        file = HZK + size + element_of(({"", "F", "H", "K", "L", "S", "V", "X", "Y"}));
+        file = HZK + size + element_of(({"C", "F", "H", "K", "L", "S", "V", "X", "Y"}));
     else
         file = HZK + size;
 
@@ -62,8 +66,11 @@ varargs string bitmap_font(string str, int size, string fill, string bg, string 
             // offset = (94 * (区码 - 1) + (位码 - 1)) * fontsize;
             offset = fontsize * ((bstr[k] - 0xA1) * 94 + bstr[k+1] - 0xA1);
             char = read_buffer(file, offset, fontsize);
+            scale = fontsize / size;
             k++;
-        } else {
+        }
+        else
+        {
             // 英文每个字符占1字节
             offset = bstr[k] * size;
             char = read_buffer(ASC + size, offset, size);
