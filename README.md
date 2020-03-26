@@ -215,3 +215,4 @@ getcid|返回复制对象的ID
 debug|随机颜色输出内容
 process_bar|显示指定百分比的进度条
 graph_draw|自定义进度条绘图
+sort_string|根据指定宽度换行显示内容
