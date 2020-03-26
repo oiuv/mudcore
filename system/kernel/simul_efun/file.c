@@ -7,24 +7,23 @@ Version: v1.0
 Date: 2019-03-12
 History:
 *****************************************************************************/
-string *update_file(string file)
+string *read_lines(string file)
 {
-    string *arr;
+    string *list;
     string str;
     int i;
 
     str = read_file(file);
-    if (!str) {
+    if (!str)
         return ({});
-    }
-    arr = explode(str, "\n");
-    for (i = 0; i < sizeof(arr); i++) {
-        if (arr[i][0] == '#') {
-            arr[i] = 0;
-        }
-    }
-    arr -= ({ 0 });
-    return arr;
+
+    list = explode(str, "\n");
+    for (i = 0; i < sizeof(list); i++)
+        if (list[i][0] == '#')
+            list[i] = 0;
+
+    list -= ({ 0 });
+    return list;
 }
 
 void assure_file(string file)

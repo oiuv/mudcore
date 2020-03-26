@@ -203,7 +203,7 @@ remove_ansi|清理 ansi 颜色代码
 ansi|转换 $HIR$ 等为 ansi 颜色代码
 color_cat|彩色输出内容到屏幕
 color_len|统计字符串中颜色占用的长度
-update_file|以数组的形式返回文件每一行内容 并跳过 `#` 注释行
+read_lines|以数组的形式返回文件每一行内容 并跳过 `#` 注释行
 log_file|记录日志到指定文件
 assure_file|建立文件目录
 cat|输出文件内容到屏幕
