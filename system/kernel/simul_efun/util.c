@@ -92,7 +92,7 @@ string process_bar(int n)
 // sort a chinese string (must be chinese), align the
 // string with then len. the prefix is used when the desc
 // will be lead by another string or space with length is prefix.
-string sort_string(string input, int width, int prefix)
+varargs string sort_string(string input, int width, int prefix)
 {
     int i;
     int sl;  // 字符串长度
@@ -101,9 +101,9 @@ string sort_string(string input, int width, int prefix)
     string result;
 
     result = "";
-
-    len = prefix;
     esc = 0;
+    if (!width) width = 78;
+    len = prefix;
     sl = strlen(input);
     for (i = 0; i < sl; i++)
     {
@@ -117,17 +117,27 @@ string sort_string(string input, int width, int prefix)
 
             switch ((k < sl) ? input[k..k] : 0)
             {
-            // 符号不换行
-            case "：":
-            case "”":
-            case "。":
-            case "，":
-            case "；":
-            case "）":
-            case " )":
-            case "！":
-            case "？":
-            case "、":
+            // 部分中英文符号不换行
+            case "’":   //8217
+            case "”":   //8221
+            case "、":  //12289
+            case "。":  //12290
+            case "！":  //65281
+            case "）":  //65289
+            case "，":  //65292
+            case "：":  //65306
+            case "；":  //65307
+            case "？":  //65311
+            case " ":   //32
+            case "!":   //33
+            case "”":   //34
+            case "'":   //34
+            case ")":   //41
+            case ",":   //44
+            case ".":   //46
+            case ":":   //58
+            case ";":   //59
+            case "?":   //63
                 if (k != i)
                 {
                     result += input[i..k];
@@ -161,17 +171,13 @@ string sort_string(string input, int width, int prefix)
                 len = 0;
                 continue;
             }
+            len++;
         }
-
-        result += input[i..i];
-        if (! esc) len++;
-
         if (esc && input[i] == 'm')
             esc = 0;
-    }
 
-    if (i < sl)
-        result += input[i..sl-1];
+        result += input[i..i];
+    }
 
     if (len)
         result += "\n";
