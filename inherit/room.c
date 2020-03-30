@@ -13,7 +13,8 @@ Date: 2019-03-12
 #define DOOR_LOCKED 2
 
 /**
- * 本接口需要继承CORE_DBASE、CORE_NAME接口才能正常使用
+ * 本接口需要继承CORE_DBASE接口才能正常使用数据存取
+ * 本接口需要继承CORE_NAME接口才能使用short()、long()方法，建议自己实现相关方法
  */
 // inherit CORE_CLEAN_UP;
 // inherit CORE_DBASE;
