@@ -12,6 +12,8 @@ LPMUD游戏开发框架核心代码，仅仅包括核心代码，可以在此基
 
 框架提供大量常用模拟外部函数和最基本的游戏底层（包括指令系统、聊天频道、表情系统和档案存取功能），可以用来快速开发个人的MUD，框架部分独立维护，更新升级不影响个人项目。个人项目目录结构和功能灵活自主，框架提供的功能可灵活选择使用，只需要继承对应模块即可。
 
+注意：项目开发不要继承 **CORE_LOGIN_OB** 和 **CORE_USER_OB**，这二个为示例文件，仅供演示和参考，请务必自己实现登录对象和玩家对象。
+
 ## 框架使用说明
 
 把本框架放在你的MUD项目中，推荐保持默认目录名称 `mudcore`，并做如下配置：
@@ -116,8 +118,8 @@ system/object|系统核心对象，包括登录对象、基本玩家对象和 VO
 -|-|-
 CORE_MASTER_OB|/system/kernel/master|主控对象，负责接收玩家连接请求、安全验证、日志记录等核心功能
 CORE_SIMUL_EFUN_OB|/system/kernel/simul_efun|模拟外部函数对象，负责实现模拟外部函数功能
-CORE_LOGIN_OB|/system/object/login|示例玩家登陆对象，仅供参考，不建议继承使用
-CORE_USER_OB|/system/object/user|示例玩家对象，仅供参考，不建议继承使用
+CORE_LOGIN_OB|/system/object/login|示例登陆对象，仅供参考，正式开发千万不要继承使用
+CORE_USER_OB|/system/object/user|示例玩家对象，仅供参考，正式开发千万不要继承使用
 CORE_VOID_OB|/system/object/void|临时环境，示例登录房间
 
 #### 系统头文件(Include Headers)

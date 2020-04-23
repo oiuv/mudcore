@@ -1,3 +1,11 @@
+/*****************************************************************************
+Copyright: 2020, Mud.Ren
+File name: login.c
+Description: 登录示例对象 LOGIN_OB，仅供参考，不要继承使用
+Author: xuefeng
+Version: v1.0
+Date: 2020-04-20
+*****************************************************************************/
 inherit CORE_DBASE;
 inherit CORE_SAVE;
 

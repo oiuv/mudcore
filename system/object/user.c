@@ -1,10 +1,10 @@
 /*****************************************************************************
-Copyright: 2019, Mud.Ren
+Copyright: 2020, Mud.Ren
 File name: user.c
-Description: 用户连线对象 USER_OB
+Description: 用户示例对象 USER_OB，仅供参考，不要继承使用
 Author: xuefeng
 Version: v1.0
-Date: 2019-03-12
+Date: 2020-04-20
 *****************************************************************************/
 #include <ansi.h>
 inherit CORE_DBASE;
