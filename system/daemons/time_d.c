@@ -164,27 +164,19 @@ string season_period(int m)
 }
 
 // 返回星期
-string week_period(int w)
+string week_period(int week, int style)
 {
-    switch (w)
+    mixed w = ({
+        ({"星期日", "星期一", "星期二", "星期三", "星期四", "星期五", "星期六"}),
+        ({"日曜日", "月曜日", "火曜日", "水曜日", "木曜日", "金曜日", "土曜日"}),
+    });
+
+    if (abs(week) > 6 || abs(style) > 1)
     {
-        case 0:
-            return "日";
-        case 1:
-            return "一";
-        case 2:
-            return "二";
-        case 3:
-            return "三";
-        case 4:
-            return "四";
-        case 5:
-            return "五";
-        case 6:
-            return "六";
-        default:
-            return 0;
+        return "";
     }
+
+    return w[style][week];
 }
 
 string hour_period(int h)
@@ -225,23 +217,32 @@ string realtime_digital_clock()
 }
 
 // 返回localtime时间描述字符串
-string time_description(string title, int *t)
+string time_description(string title, int *t, int style)
 {
-    return sprintf(NOR WHT + title + NOR "%s年，%s，%s月%s日，星期%s，%s%s时%s分" NOR, t[LT_YEAR] == 1 ? "元" : chinese_number(t[LT_YEAR]), season_period(t[LT_MON]), !t[LT_MON] ? "元" : chinese_number(t[LT_MON] + 1), chinese_number(t[LT_MDAY]), week_period(t[LT_WDAY]), hour_period(t[LT_HOUR]), chinese_number(t[LT_HOUR] > 12 ? t[LT_HOUR] % 12 : t[LT_HOUR]), chinese_number(t[LT_MIN]));
+    return sprintf(NOR WHT + title + NOR "%s年，%s，%s月%s日，%s，%s%s时%s分" NOR, t[LT_YEAR] == 1 ? "元" : chinese_number(t[LT_YEAR]), season_period(t[LT_MON]), !t[LT_MON] ? "元" : chinese_number(t[LT_MON] + 1), chinese_number(t[LT_MDAY]), week_period(t[LT_WDAY], style), hour_period(t[LT_HOUR]), chinese_number(t[LT_HOUR] > 12 ? t[LT_HOUR] % 12 : t[LT_HOUR]), chinese_number(t[LT_MIN]));
 }
 
-varargs string game_time_description(string arg)
+varargs string game_time_description(string arg, int style)
 {
     if (!arg)
         arg = "魔幻";
-    return time_description(arg, game_time);
+    if (!style)
+    {
+        style = 1;
+    }
+
+    return time_description(arg, game_time, style);
 }
 
-varargs string real_time_description(string arg)
+varargs string real_time_description(string arg, int style)
 {
     if (!arg)
         arg = "公元";
-    return time_description(arg, real_time);
+    if (!style)
+    {
+        style = 0;
+    }
+    return time_description(arg, real_time, style);
 }
 
 // 转换时间戳为localtime
