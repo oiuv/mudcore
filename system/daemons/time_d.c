@@ -1,24 +1,25 @@
 /*****************************************************************************
-Copyright: 2019, Mud.Ren
+Copyright: 2020, Mud.Ren
 File name: time_d.c
 Description: 游戏时间系统及计划任务守护进程
 Author: xuefeng
-Version: v1.0
-Date: 2019-04-01
+Version: v1.1
+Date: 2020-04-21
 *****************************************************************************/
 #include <ansi.h>
 #include <localtime.h>
 
 inherit CORE_DBSAVE;
 
-// 游戏时间
+// 游戏时间戳
 private int gametime;
-// 真实时间 time()
-private nosave int realtime;
 
+// 游戏时间和现实时间换算（现实tick秒是游戏scale秒）
 private nosave int tick;
-private nosave mapping event = allocate_mapping(0);
+private nosave int scale;
+private nosave int year;
 
+// localtime()
 private nosave int *real_time = allocate(9);
 private nosave int *game_time = allocate(9);
 
@@ -29,70 +30,75 @@ private nosave int *game_time = allocate(9);
 // 中杠（-）：可以用整数之间的中杠表示一个整数范围，例如“2-6”表示“2,3,4,5,6”
 // 正斜线（/）：可以用正斜线指定时间的间隔频率，例如“21-5/2”或“*/10”
 
-// 游戏时间计划任务（真实时间2秒为游戏时间1分钟）
+// 游戏时间计划任务
 private nosave mixed *game_crontab = ({
-    "5,25,45 * * * * *", ( : TIME_D->save() :), "存储游戏世界时间",
-    // "* * * * * *", (: debug("game_crontab! " + TIME_D->gametime_digital_clock()) :), "测试任务",
+    // "5,25,45 * * * * *", ( : TIME_D->save() :), "存储游戏世界时间",
+    // "* * * * * *", (: debug("game_crontab! " + TIME_D->gametime_digital_clock()) :), "游戏时间测试任务",
     // "5-15/3 * * * * *", (: debug("game_crontab! 5-15 " + ctime()) :), "测试任务",
 });
 
 // 真实时间计划任务
 private nosave mixed *real_crontab = ({
     // "*/2 * * * * *", (: debug("real_crontab! " + ctime()) :), "测试任务",
+    // "* * * * * *", (: debug("real_crontab! " + TIME_D->realtime_digital_clock()) :), "真实时间测试任务",
 });
 
-private nosave mapping crontab_process = allocate_mapping(0);
-
+// 设置游戏时间计划任务
 void set_game_crontab(mixed *crontab)
 {
     game_crontab = crontab;
 }
 
+// 设置现实时间计划任务
 void set_real_crontab(mixed *crontab)
 {
     real_crontab = crontab;
 }
 
+// 返回游戏时间戳（秒）
 int query_gametime()
 {
-    return gametime * 60;
+    return gametime;
 }
 
+// 返回现实时间戳（time()
 int query_realtime()
 {
-    return realtime;
+    return time();
 }
 
+// 设置游戏时钟转换比率
+void set_scale(int t, int s, int y)
+{
+    tick = t;
+    scale = s;
+    year = y;
+}
+
+// 返回游戏localtime()
 int *query_game_time()
 {
     return game_time;
 }
 
+// 返回现实localtime()
 int *query_real_time()
 {
     return real_time;
 }
 
-void add_event(function fevent, int delay_time)
+//格式化的ctime() 06/13/2019 15:20:00
+varargs string replace_ctime(int t)
 {
-    if (!sizeof(event) || !event[fevent])
-        event = ([fevent:delay_time]);
+    string month, ctime;
+    if (t)
+    {
+        ctime = ctime(t);
+    }
     else
-        event[fevent] = delay_time;
-}
-
-void exec_event(function fevent)
-{
-    if (objectp(function_owner(fevent)))
-        evaluate(fevent);
-
-    map_delete(event, fevent);
-}
-
-// 06/13/2019 15:20:00
-string replace_ctime(int t)
-{
-    string month, ctime = ctime(t);
+    {
+        ctime = ctime();
+    }
 
     switch (ctime[4..6])
     {
@@ -137,6 +143,7 @@ string replace_ctime(int t)
     return sprintf("%s/%s/%s %s", month, (ctime[8] == ' ' ? "0" + ctime[9..9] : ctime[8..9]), ctime[ < 4.. < 1], ctime[11..18]);
 }
 
+// 季节，case 用法涨姿势了
 string season_period(int m)
 {
     switch (m)
@@ -156,6 +163,7 @@ string season_period(int m)
     }
 }
 
+// 返回星期
 string week_period(int w)
 {
     switch (w)
@@ -207,6 +215,7 @@ string gametime_digital_clock()
     return hour_period(h) + " " + (h == 12 || (h %= 12) > 9 ? "" + h : " " + h) + ":" + (m > 9 ? "" + m : "0" + m);
 }
 
+// 返回现实时钟⏰
 string realtime_digital_clock()
 {
     int h = real_time[LT_HOUR];
@@ -215,25 +224,27 @@ string realtime_digital_clock()
     return hour_period(h) + " " + (h == 12 || (h %= 12) > 9 ? "" + h : " " + h) + ":" + (m > 9 ? "" + m : "0" + m);
 }
 
+// 返回localtime时间描述字符串
 string time_description(string title, int *t)
 {
     return sprintf(NOR WHT + title + NOR "%s年，%s，%s月%s日，星期%s，%s%s时%s分" NOR, t[LT_YEAR] == 1 ? "元" : chinese_number(t[LT_YEAR]), season_period(t[LT_MON]), !t[LT_MON] ? "元" : chinese_number(t[LT_MON] + 1), chinese_number(t[LT_MDAY]), week_period(t[LT_WDAY]), hour_period(t[LT_HOUR]), chinese_number(t[LT_HOUR] > 12 ? t[LT_HOUR] % 12 : t[LT_HOUR]), chinese_number(t[LT_MIN]));
 }
 
-string game_time_description(string arg)
+varargs string game_time_description(string arg)
 {
     if (!arg)
         arg = "魔幻";
     return time_description(arg, game_time);
 }
 
-string real_time_description(string arg)
+varargs string real_time_description(string arg)
 {
     if (!arg)
         arg = "公元";
     return time_description(arg, real_time);
 }
 
+// 转换时间戳为localtime
 int *analyse_time(int t)
 {
     int *ret = allocate(9);
@@ -318,18 +329,18 @@ int *analyse_time(int t)
 // 执行计划任务
 void process_crontab(mixed *crontab, int *timearray)
 {
-    int i, j, row, divider, start, end, fit, timecost, crontabsize;
-    string s, script, note, *timescript;
+    int divider, start, end, fit, timecost, crontabsize;
+    string script, note, *timescript;
     function fp;
 
     crontabsize = sizeof(crontab);
 
-    for (row = 0; row < crontabsize; row += 3)
+    for (int row = 0; row < crontabsize; row += 3)
     {
         reset_eval_cost();
-        script = crontab[row];
-        fp = crontab[row + 1];
-        note = crontab[row + 2];
+        script = crontab[row];      // 计划时间
+        fp = crontab[row + 1];      // 计划任务
+        note = crontab[row + 2];    // 计划说明
 
         timescript = allocate(9);
 
@@ -342,7 +353,7 @@ void process_crontab(mixed *crontab, int *timearray)
                    timescript[LT_YEAR]) != 11)
             continue;
 
-        for (i = 1; i <= 6; i++)
+        for (int i = 1; i <= 6; i++)
         {
             fit = 0;
 
@@ -360,9 +371,9 @@ void process_crontab(mixed *crontab, int *timearray)
             }
             else
             {
-                foreach (s in explode(timescript[i], ","))
+                foreach (string s in explode(timescript[i], ","))
                 {
-                    j = to_int(s);
+                    int j = to_int(s);
 
                     if (!undefinedp(j))
                     {
@@ -387,9 +398,11 @@ void process_crontab(mixed *crontab, int *timearray)
         {
             catch (evaluate(fp));
         };
+        // debug("任务耗时：" + timecost);
     }
 }
 
+// 设置或重置游戏时间
 int reset_gametime(int time)
 {
     gametime = time;
@@ -397,24 +410,34 @@ int reset_gametime(int time)
     return save();
 }
 
-void process_per_second()
+// 游戏时间每(scale / tick)秒执行一次
+varargs void process_gametime(int timestamp)
 {
-    // CHANNEL_D->do_channel(this_object(), "sys", "+1秒！");
+    // 设置游戏localtime
+    game_time = analyse_time(timestamp);
+    if (year)
+    {
+        game_time[LT_YEAR] = year;
+    }
+    else
+    {
+        game_time[LT_YEAR] -= 1969;
+    }
+    // 执行计划任务
+    process_crontab(game_crontab, game_time);
 }
 
-// 游戏时间每分钟执行
-void process_gametime()
+// 继承覆盖用
+void process_per_second()
 {
-    game_time = analyse_time(++gametime * 60);
-    game_time[LT_YEAR] -= 1969;
-
-    process_crontab(game_crontab, game_time);
+    // 可在此扩展自己的功能
 }
 
 // 真实时间每秒执行
 void process_realtime()
 {
-    mixed *localtime = localtime(realtime);
+    // 设置真实localtime
+    mixed *localtime = localtime(time());
 
     real_time[LT_SEC] = localtime[LT_SEC];
     real_time[LT_MIN] = localtime[LT_MIN];
@@ -426,40 +449,36 @@ void process_realtime()
     real_time[LT_YDAY] = localtime[LT_YDAY];
 
     process_per_second();
-
+    // 执行计划任务
     if (!localtime[LT_SEC])
         process_crontab(real_crontab, real_time);
+}
+
+void heart_beat()
+{
+    process_realtime();
+
+    // 每 tick 秒执行１次
+    if (!(time() % tick))
+    {
+        gametime += scale;
+        process_gametime(++gametime);
+    }
+
 }
 
 // 现实２秒 = 游戏１分钟
 // 现实２分钟 = 游戏１小时
 // 现实４８分钟 = 游戏１天
 // 现实１天 = 游戏３０天
-void heart_beat()
-{
-    while (realtime < time())
-    {
-        realtime++;
-        process_realtime();
-    }
-
-    if (sizeof(event))
-        foreach (function fevent, int delay_time in event)
-            if (!--event[fevent])
-                exec_event(fevent);
-
-    // 每２秒执行１次
-    if (!(++tick % 2))
-        process_gametime();
-}
-
 private void create()
 {
-    realtime = time();
+    // 设置2秒为游戏世界1分钟
+    tick = 2;
+    scale = 60;
     // 取得游戏时间
     restore();
 
-    process_gametime();
     set_heart_beat(1);
 }
 
