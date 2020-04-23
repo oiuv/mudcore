@@ -35,6 +35,7 @@
 #define CORE_DBASE_D        CORE_DIR "system/daemons/dbase_d"
 #define CORE_EMOTE_D        CORE_DIR "system/daemons/emote_d"
 #define CORE_LOGIN_D        CORE_DIR "system/daemons/login_d"
+#define CORE_NATURE_D       CORE_DIR "system/daemons/nature_d"
 #define CORE_TIME_D         CORE_DIR "system/daemons/time_d"
 #define CORE_VIRTUAL_D      CORE_DIR "system/daemons/virtual_d"
 
@@ -100,6 +101,10 @@
 
 #ifndef LOGIN_D
 #define LOGIN_D     CORE_LOGIN_D
+#endif
+
+#ifndef NATURE_D
+#define NATURE_D    CORE_NATURE_D
 #endif
 
 #ifndef TIME_D
