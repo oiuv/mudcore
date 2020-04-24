@@ -55,9 +55,10 @@ void select_day_phase()
 
     remove_call_out("select_day_phase");
 
-    // Get minutes of today.
+    // Get hour of today.
     t = query_hour();
     ts = TIME_D->query_scale();
+
     // Find the day phase for now.
     for (i = 0; i < sizeof(day_phase) - 1; i++)
         if (t < day_phase[i + 1]["hour"])
@@ -74,7 +75,7 @@ void select_day_phase()
 
     // calculate the call out time
     n = n * 60 - query_minute();
-    n = n * 60 * ts[0] / ts[1] + 1;
+    n = n * 60 * ts[0] / ts[1];
     if (n < 1)
         n = 1;
     call_out("select_day_phase", n);
@@ -227,13 +228,14 @@ void event_night(string file)
     // debug("event_night : " + file);
 }
 
+// 窗外景象，室内调用
 string outdoor_room_description()
 {
     return ansi(day_phase[current_day_phase]["outcolor"] + "    " +
                 day_phase[current_day_phase]["desc_msg"] + "。");
 }
 
-mapping *read_table(string file)
+private mapping *read_table(string file)
 {
     string *line, *field, *format;
     mapping *data;
