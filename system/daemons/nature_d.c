@@ -35,8 +35,6 @@ void create()
     {
         select_day_phase();
     }
-
-
 }
 
 void update_day_phase()
