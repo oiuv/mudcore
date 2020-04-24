@@ -30,7 +30,13 @@ int query_year() { return query_localtime()[LT_YEAR]; }
 void create()
 {
     day_phase = read_table(NATURE_DIR "day_phase");
-    select_day_phase();
+    // 仅继承对象呼叫，避免重复
+    if (inherits(CORE_NATURE_D, this_object()))
+    {
+        select_day_phase();
+    }
+
+
 }
 
 void update_day_phase()
@@ -45,13 +51,13 @@ void update_day_phase()
 
 void select_day_phase()
 {
-    int i, t, n;
+    int i, t, n, *ts;
 
     remove_call_out("select_day_phase");
 
     // Get minutes of today.
     t = query_hour();
-
+    ts = TIME_D->query_scale();
     // Find the day phase for now.
     for (i = 0; i < sizeof(day_phase) - 1; i++)
         if (t < day_phase[i + 1]["hour"])
@@ -68,7 +74,7 @@ void select_day_phase()
 
     // calculate the call out time
     n = n * 60 - query_minute();
-    n = n * 60 / 365 + 1;
+    n = n * 60 * ts[0] / ts[1] + 1;
     if (n < 1)
         n = 1;
     call_out("select_day_phase", n);

@@ -75,6 +75,12 @@ void set_scale(int t, int s, int y)
     year = y;
 }
 
+// 返回游戏时钟转换比
+int *query_scale()
+{
+    return ({tick, scale, year});
+}
+
 // 返回游戏localtime()
 int *query_game_time()
 {
@@ -472,15 +478,18 @@ void heart_beat()
 // 现实２分钟 = 游戏１小时
 // 现实４８分钟 = 游戏１天
 // 现实１天 = 游戏３０天
-private void create()
+protected void create()
 {
     // 设置2秒为游戏世界1分钟
     tick = 2;
     scale = 60;
     // 取得游戏时间
     restore();
-
-    set_heart_beat(1);
+    // 仅LIB继承对象启用心跳💗
+    if (inherits(CORE_TIME_D, this_object()))
+    {
+        set_heart_beat(1);
+    }
 }
 
 mixed save_dbase_data()
