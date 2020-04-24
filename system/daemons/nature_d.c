@@ -38,7 +38,7 @@ void update_day_phase()
     string msg;
 
     msg = ansi(day_phase[current_day_phase]["outcolor"] + day_phase[current_day_phase]["time_msg"] + NOR "\n");
-    message("outdoor", msg, all_interactive());
+    message("outdoor", msg, users());
     if (!undefinedp(day_phase[current_day_phase]["event_fun"]))
         event(this_object(), day_phase[current_day_phase]["event_fun"]);
 }
@@ -109,7 +109,7 @@ void event_midnight()
     }
 
     if (msg)
-        message("vision", HIC "【季节天时】" + msg, all_interactive());
+        message("vision", HIC "【季节天时】" + msg, users());
 
     switch (m)
     {
