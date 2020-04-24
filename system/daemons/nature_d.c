@@ -62,11 +62,10 @@ void select_day_phase()
         if (t < day_phase[i + 1]["hour"])
             break;
 
-    if (i >= sizeof(day_phase) - 1)
+    if (i == sizeof(day_phase) - 1)
     {
         // the last hour
         n = 24 - t;
-        i = 0;
     }
     else
         n = day_phase[i + 1]["hour"] - t;
