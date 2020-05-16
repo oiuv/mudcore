@@ -1,8 +1,8 @@
 #ifndef CMD_PATH_WIZ
-#define CMD_PATH_WIZ ({"/cmds/wiz/", CORE_DIR "cmds/wizard/"})
+#define CMD_PATH_WIZ ({CORE_DIR "cmds/wizard/"})
 #endif
 #ifndef CMD_PATH_STD
-#define CMD_PATH_STD ({"/cmds/std/", CORE_DIR "cmds/player/"})
+#define CMD_PATH_STD ({CORE_DIR "cmds/player/"})
 #endif
 
 private nosave mapping default_aliases = ([

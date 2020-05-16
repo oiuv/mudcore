@@ -2,7 +2,7 @@
 
 LPMUD游戏开发框架核心代码，仅仅包括核心代码，可以在此基础上开发任何MUD，本框架需配合 FluffOS v2019使用。
 
-当前版本：`v1.0`
+当前版本：`v1.1`
 
 > 这是一个像汉芯和红芯一样伟大的项目 ^_^
 
@@ -66,13 +66,11 @@ inherit CORE_SIMUL_EFUN_OB;
 #define WIZARD "mudren"
 
 // 管理员指令路径
-#define CMD_PATH_WIZ ({"/cmds/wiz/"})
+#define CMD_PATH_WIZ ({"/cmds/wiz/", "/mudcore/cmds/wizard/"})
 
 // 玩家指令路径
-#define CMD_PATH_STD ({"/cmds/std/"})
+#define CMD_PATH_STD ({"/cmds/std/", "/mudcore/cmds/player/"})
 
-// 进入房间后自动look
-#define AUTO_LOOK
 ```
 
 指令需要实现以下方法：
@@ -99,6 +97,7 @@ int help(object me)
 
 目录|说明
 -|-
+cmds|框架提供的基本指令，可覆盖
 docs|开发者文档，包括框架模拟外部函数说明文档等
 include|框架头文件
 inherit|框架特性继承文件

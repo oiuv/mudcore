@@ -35,9 +35,8 @@ int move(mixed dest)
 
     if (interactive(me) && living(me))
     {
-#ifdef AUTO_LOOK
         command("look");
-#endif
     }
+
     return 1;
 }
