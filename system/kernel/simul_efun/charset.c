@@ -19,11 +19,13 @@ int is_chinese(string str)
 
 int is_english(string str)
 {
-    if( !str || !str[0] )
+    int i;
+    if (!str || !str[0])
         return 0;
 
-    foreach( int a in str )
-        if((a < 'a' || a > 'z') && (a < 'A' || a > 'Z'))
+    i = strlen(str);
+    while (i--)
+        if((str[i] < 'a' || str[i] > 'z') && (str[i] < 'A' || str[i] > 'Z'))
             return 0;
 
     return 1;

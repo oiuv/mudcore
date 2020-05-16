@@ -81,7 +81,7 @@ protected void get_encoding(string yn, object ob)
 
 protected void get_id(string arg, object ob)
 {
-    arg = lower_case(arg);
+    arg = lower_case(trim(arg));
 
     if (arg == "" || !is_english(arg) || strlen(arg) < 3)
     {
