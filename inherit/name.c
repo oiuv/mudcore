@@ -52,15 +52,17 @@ string name()
 
 string short()
 {
-    string str;
     // 避免sprintf() efun 呼叫 object_name() apply 报错
     if (function_exists("query", this_object()))
     {
+        string str;
         if (!stringp(str = query("short")))
             str = name() + (query("id") ? "(" + capitalize(query("id")) + ")" : "");
-    }
 
-    return str;
+        return str;
+    }
+    else
+        return file_name(this_object());
 }
 
 string long()
