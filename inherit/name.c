@@ -53,9 +53,13 @@ string name()
 string short()
 {
     string str;
+    // 避免sprintf() efun 呼叫 object_name() apply 报错
+    if (function_exists("query", this_object()))
+    {
+        if (!stringp(str = query("short")))
+            str = name() + (query("id") ? "(" + capitalize(query("id")) + ")" : "");
+    }
 
-    if (!stringp(str = query("short")))
-        str = name() + (query("id") ? "(" + capitalize(query("id")) + ")" : "");
     return str;
 }
 

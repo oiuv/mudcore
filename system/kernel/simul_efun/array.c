@@ -35,7 +35,7 @@ varargs void print_r(mixed *arr, int step)
                 {
                     write("    ");
                 }
-                write(i + " => " + arr[i] + "\n");
+                write(i + " => " + (objectp(arr[i]) ? sprintf("%O", arr[i]) : arr[i]) + "\n");
             }
         }
 
