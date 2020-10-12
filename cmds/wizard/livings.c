@@ -3,7 +3,7 @@ inherit CORE_CLEAN_UP;
 
 int main(object me, string arg)
 {
-    printf("%O\n", livings());
+    print_r(livings());
 
     return 1;
 }
