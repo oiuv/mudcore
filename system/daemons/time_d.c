@@ -146,7 +146,7 @@ varargs string replace_ctime(int t)
             break;
     }
 
-    return sprintf("%s/%s/%s %s", month, (ctime[8] == ' ' ? "0" + ctime[9..9] : ctime[8..9]), ctime[ < 4.. < 1], ctime[11..18]);
+    return sprintf("%s-%s-%s %s", ctime[ < 4.. < 1], month, (ctime[8] == ' ' ? "0" + ctime[9..9] : ctime[8..9]), ctime[11..18]);
 }
 
 // 季节，case 用法涨姿势了
