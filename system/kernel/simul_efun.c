@@ -13,6 +13,9 @@
 #include "simul_efun/override.c"
 #include "simul_efun/path.c"
 #include "simul_efun/util.c"
+#include "simul_efun/highest.c"
+#include "simul_efun/lowest.c"
+#include "simul_efun/range.c"
 
 private void create()
 {

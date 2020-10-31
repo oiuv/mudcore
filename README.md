@@ -218,3 +218,6 @@ debug|随机颜色输出内容
 process_bar|显示指定百分比的进度条
 graph_draw|自定义进度条绘图
 sort_string|根据指定宽度换行显示内容
+highest|返回一组数值的最大值
+lowest|返回一组数值的最小值
+range|返回指定范围内符合条件的数值
