@@ -70,7 +70,7 @@ varargs void boardcast(string type, string msg, object me, object you, object *o
     my_name = me->name() || "无名氏";
 
     // 对 me 显示的消息
-    my_msg = replace_string(msg, "$ME", pronoun(2, me));
+    my_msg = replace_string(msg, "$ME", CORE_SIMUL_EFUN_OB->pronoun(2, me));
     // 对其他人显示的消息
     other_msg = replace_string(msg, "$ME", my_name);
     // 对 you 的消息处理
@@ -79,14 +79,14 @@ varargs void boardcast(string type, string msg, object me, object you, object *o
         your_name = you->name() || "无名氏";
         // 对 me 显示的消息
         my_msg = replace_string(my_msg, "$YOU", your_name, 1);
-        my_msg = replace_string(my_msg, "$YOU", pronoun(3, you));
+        my_msg = replace_string(my_msg, "$YOU", CORE_SIMUL_EFUN_OB->pronoun(3, you));
         // 对 you 显示的消息
         your_msg = replace_string(msg, "$ME", my_name, 1);
-        your_msg = replace_string(your_msg, "$ME", pronoun(3, me));
-        your_msg = replace_string(your_msg, "$YOU", pronoun(2, you));
+        your_msg = replace_string(your_msg, "$ME", CORE_SIMUL_EFUN_OB->pronoun(3, me));
+        your_msg = replace_string(your_msg, "$YOU", CORE_SIMUL_EFUN_OB->pronoun(2, you));
         // 对其他人显示的消息
         other_msg = replace_string(other_msg, "$YOU", your_name, 1);
-        other_msg = replace_string(other_msg, "$YOU", pronoun(3, you));
+        other_msg = replace_string(other_msg, "$YOU", CORE_SIMUL_EFUN_OB->pronoun(3, you));
         // 对 you 送出信息
         if (!arrayp(exclude) || member_array(you, exclude) == -1)
             message(type, your_msg, you);

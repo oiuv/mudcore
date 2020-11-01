@@ -3,19 +3,22 @@
 #include "simul_efun/atoi.c"
 #include "simul_efun/bit.c"
 #include "simul_efun/bitmap_font.c"
+#include "simul_efun/break_string.c"
+#include "simul_efun/charset.c"
 #include "simul_efun/color.c"
-#include "simul_efun/charset.c" // 因使用颜色过滤模拟函数，需在color.c后面
+#include "simul_efun/element_of_weighted.c"
 #include "simul_efun/file.c"
 #include "simul_efun/gender.c"
 #include "simul_efun/graph_draw.c"
+#include "simul_efun/highest.c"
 #include "simul_efun/json.c"
-#include "simul_efun/message.c"　 // 因使用到人称处理模拟函数，需在gender.c后面
+#include "simul_efun/lowest.c"
+#include "simul_efun/message.c"
 #include "simul_efun/override.c"
 #include "simul_efun/path.c"
-#include "simul_efun/util.c"
-#include "simul_efun/highest.c"
-#include "simul_efun/lowest.c"
 #include "simul_efun/range.c"
+#include "simul_efun/sum.c"
+#include "simul_efun/util.c"
 
 private void create()
 {

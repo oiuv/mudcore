@@ -187,37 +187,41 @@ CORE_VIRTUAL_D|/system/daemons/virtual_d.c|负责虚拟对象处理
 
 simul-efun|简介
 -|-
-bitmap_font|处理中英文字符并点阵输出
-print_r|数组打印功能，格式化输出，开发调试用
+ansi|转换 $HIR$ 等为 ansi 颜色代码
+array_sum|返回数组元素的和
+assure_file|建立文件目录
 atoi|string 类型数字转 int 类型数字
-itoc|int 类型数字转 ASCII 字符，如 itoc(65) 返回值为 A
 bitCheck|检查数值指定为是否为1
-bitSet|返回数值指定位为1的值
 bitClear|返回数值指定位为0的值
+bitmap_font|处理中英文字符并点阵输出
+bitSet|返回数值指定位为1的值
+break_string|根据指定宽度换行显示内容
+cat|输出文件内容到屏幕
+check_control|判断指定字符串是否包含控制字符
+check_return|判断指定字符串是否包含换行符
+check_space|判断指定字符串是否包含空格
 chinese_number|返回中文数字
 chinese|返回指定字符串的中文名称
-is_chinese|判断指定字符串是否为中文
-is_english|判断指定字符串是否为英文
-check_control|判断指定字符串是否包含控制字符
-check_space|判断指定字符串是否包含空格
-check_return|判断指定字符串是否包含换行符
-remove_ansi|清理 ansi 颜色代码
-ansi|转换 $HIR$ 等为 ansi 颜色代码
 color_cat|彩色输出内容到屏幕
 color_len|统计字符串中颜色占用的长度
-read_lines|以数组的形式返回文件每一行内容 并跳过 `#` 注释行
-log_file|记录日志到指定文件
-assure_file|建立文件目录
-cat|输出文件内容到屏幕
-tail|输出文件尾部最多10行内容到屏幕
-pronoun|返回中文人称代词
-msg|智能区域消息
-log_time|方便日志记录的 ctime 时间格式
-getcid|返回复制对象的ID
 debug|随机颜色输出内容
-process_bar|显示指定百分比的进度条
+element_of_weighted|根据权重随机返回元素，权重高机率大
+getcid|返回复制对象的ID
 graph_draw|自定义进度条绘图
-sort_string|根据指定宽度换行显示内容
 highest|返回一组数值的最大值
+is_chinese|判断指定字符串是否为中文
+is_english|判断指定字符串是否为英文
+itoc|int 类型数字转 ASCII 字符，如 itoc(65) 返回值为 A
+log_file|记录日志到指定文件
+log_time|方便日志记录的 ctime 时间格式
 lowest|返回一组数值的最小值
+msg|智能区域消息
+print_r|数组打印功能，格式化输出，开发调试用
+process_bar|显示指定百分比的进度条
+pronoun|返回中文人称代词
 range|返回指定范围内符合条件的数值
+read_lines|以数组的形式返回文件每一行内容 并跳过 `#` 注释行
+remove_ansi|清理 ansi 颜色代码
+sort_string|根据指定宽度换行显示内容，中文支持更友好
+sum|返回一组数值的和
+tail|输出文件尾部最多10行内容到屏幕
