@@ -91,6 +91,8 @@ int help(object me)
 }
 ```
 
+具体框架使用演示项目：https://github.com/MudRen/mymud
+
 ## 框架功能介绍
 
 ### 目录结构
@@ -183,7 +185,7 @@ CORE_VIRTUAL_D|/system/daemons/virtual_d.c|负责虚拟对象处理
 
 #### 系统函数(Simul-Efuns)
 
-除驱动自带的 efun 外，框架提供了部分模拟外部函数，具体参考 `/docs/simul_efun/` 目录。
+除驱动自带的 efun 外，框架提供了部分模拟外部函数，具体使用参考 `/docs/simul_efun/` 目录，或查看函数源码（`/system/kernel/simul_efun/`）。
 
 simul-efun|简介
 -|-
