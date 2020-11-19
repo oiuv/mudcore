@@ -116,7 +116,7 @@ object find_command(string verb)
     string *path = CMD_PATH_STD;
     mapping current;
 
-    if (wizardp(this_player()))
+    if (this_player() && wizardp(this_player()))
     {
         path += CMD_PATH_WIZ;
     }
