@@ -2,7 +2,7 @@
 inherit CORE_CLEAN_UP;
 int main(object me, string arg)
 {
-    string file;
+    object file;
     if (!wizardp(me))
         return 0;
 

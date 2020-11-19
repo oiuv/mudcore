@@ -30,3 +30,18 @@ int main(object me, string arg)
 
     return 1;
 }
+
+int help(object me)
+{
+    if (!wizardp(me))
+        return 0;
+
+    write(@TEXT
+指令格式:  call_other /path/target function [arg1 arg2 ...]
+
+执行指定文件中的方法
+
+TEXT
+    );
+    return 1;
+}

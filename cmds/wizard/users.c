@@ -7,3 +7,18 @@ int main(object me, string arg)
 
     return 1;
 }
+
+int help(object me)
+{
+    if (!wizardp(me))
+        return 0;
+
+    write(@TEXT
+指令格式: users
+
+列出所有玩家对象
+
+TEXT
+    );
+    return 1;
+}

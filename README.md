@@ -93,6 +93,8 @@ int help(object me)
 
 具体框架使用演示项目：https://github.com/MudRen/mymud
 
+除了新开发MUD，老游戏也可以引入框架并使用框架的功能，具体参考：[在现有MUD中集成MudCore框架操作指南](https://bbs.mud.ren/threads/99)
+
 ## 框架功能介绍
 
 ### 目录结构

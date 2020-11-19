@@ -21,3 +21,18 @@ int main(object me, string arg)
 
     return 1;
 }
+
+int help(object me)
+{
+    if (!wizardp(me))
+        return 0;
+
+    write(@TEXT
+指令格式: all_inventory [id]
+
+列出指定对象环境中的所有对象。
+
+TEXT
+    );
+    return 1;
+}
