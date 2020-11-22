@@ -57,7 +57,7 @@ void continue_action()
     }
 }
 
-void interrupt_me(object who, string how)
+varargs void interrupt_me(object who, string how)
 {
     mixed bak;
 

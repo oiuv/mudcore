@@ -27,7 +27,14 @@ int id(string arg)
 
 varargs void set_name(string name, string *id)
 {
-    set("name", name);
+    if (stringp(name))
+    {
+        set("name", name);
+    }
+    else
+    {
+        set("name", "无名氏");
+    }
 
     if (pointerp(id))
     {

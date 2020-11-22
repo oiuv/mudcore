@@ -26,14 +26,14 @@ int move_or_destruct(object dest)
     return 1;
 }
 
-int move(mixed dest)
+varargs int move(mixed dest, int raw)
 {
     object me;
     me = this_object();
 
     move_object(dest);
 
-    if (interactive(me) && living(me))
+    if (interactive(me) && living(me) && !raw)
     {
         command("look");
     }

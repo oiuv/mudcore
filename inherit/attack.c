@@ -150,3 +150,9 @@ object *enemy_team()
     }
     return team;
 }
+
+// 自动攻击相关处理，需实现
+void init()
+{
+    // todo
+}
