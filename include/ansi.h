@@ -6,7 +6,7 @@
 #ifndef ANSI_H
 #define ANSI_H
 
-#define ESC	""
+#define ESC	"\033"              /* Escape ESC(\e) */
 #define CSI	ESC + "["
 #define BEL	ESC + "[s"
                 /*  Foreground Colors  */
@@ -49,7 +49,7 @@
 #define BBLU ESC+"[44m"          /* Blue     */
 #define BMAG ESC+"[45m"          /* Magenta  */
 #define BCYN ESC+"[46m"          /* Cyan     */
-// #define BWHT ESC+"[47m"          /* White    */
+#define BWHT ESC+"[47m"          /* White    */
 
 #define NOR ESC+"[2;37;0m"      /* Puts everything back to normal */
 
@@ -65,7 +65,7 @@
 #define BIGBOT ESC+"#4"         /* Dbl height characters, bottem half */
 #define SAVEC ESC+"[s"          /* Save cursor position */
 #define REST ESC+"[u"           /* Restore cursor to saved position */
-//#define REVINDEX ESC+"M       /* Scroll screen in opposite direction */
+#define REVINDEX ESC+"M"        /* Scroll screen in opposite direction */
 #define SINGW ESC+"#5"          /* Normal, single-width characters */
 #define DBL ESC+"#6"            /* Creates double-width characters */
 #define FRTOP ESC+"[2;25r"      /* Freeze top line */
@@ -76,6 +76,6 @@
 #define REV ESC+"[7m"           /* Turns reverse video mode on */
 #define HIREV ESC+"[1,7m"       /* Hi intensity reverse video  */
 
-#define BEEP ""
+#define BEEP "\07"               /* Beep Sound BEL(\a) */
 
 #endif
