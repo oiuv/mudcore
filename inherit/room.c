@@ -9,12 +9,19 @@ Date: 2019-03-12
 #include <ansi.h>
 #include <dbase.h>
 
-#define DOOR_CLOSED 1
-#define DOOR_LOCKED 2
+#ifndef DOOR_CLOSED
+#define DOOR_CLOSED             1
+#endif
+#ifndef DOOR_LOCKED
+#define DOOR_LOCKED             2
+#endif
+#ifndef DOOR_SMASHED
+#define DOOR_SMASHED            4
+#endif
 
 /**
  * 本接口需要继承CORE_DBASE接口才能正常使用数据存取
- * 本接口需要继承CORE_NAME接口才能使用short()、long()方法，建议自己实现相关方法
+ * 本接口需要继承CORE_NAME接口才能使用short()、long()方法，或者自己实现相关方法
  */
 // inherit CORE_CLEAN_UP;
 // inherit CORE_DBASE;
@@ -96,22 +103,8 @@ object make_inventory(string file)
     return ob;
 }
 
-string coordinate()
-{
-    mapping coordinate = query("zone");
-    int area = query("area"), x, y, z;
-
-    if (!mapp(coordinate))
-        coordinate = ([]);
-    x = coordinate["x"];
-    y = coordinate["y"];
-    z = coordinate["z"];
-
-    return sprintf("[%d - (%d,%d,%d)]", area, x, y, z);
-}
-
 // 设置环境区域和坐标
-varargs void setArea(int area, int x, int y, int z)
+varargs void setArea(mixed area, int x, int y, int z)
 {
     set("area", area);
     set("zone", ([
@@ -121,9 +114,24 @@ varargs void setArea(int area, int x, int y, int z)
     ]));
 }
 
-varargs void set_area(int area, int x, int y, int z)
+varargs void set_area(mixed area, int x, int y, int z)
 {
     setArea(area, x, y, z);
+}
+
+// 获取区域坐标
+string coordinate()
+{
+    mapping coordinate = query("zone");
+    int x, y, z;
+
+    if (!mapp(coordinate))
+        coordinate = ([]);
+    x = coordinate["x"];
+    y = coordinate["y"];
+    z = coordinate["z"];
+
+    return sprintf("(%d,%d,%d)", x, y, z);
 }
 
 // 移除一个出口
@@ -226,6 +234,11 @@ varargs void set_door(string dir, mixed data, string other_side_dir, int status)
         doors = ([dir:d]);
     else
         doors[dir] = d;
+}
+
+varargs void create_door(string dir, mixed data, string other_side_dir, int status)
+{
+    set_door(dir, data, other_side_dir, status);
 }
 
 varargs int open_door(string dir, int from_other_side)
