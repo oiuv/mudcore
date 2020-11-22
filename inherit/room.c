@@ -26,7 +26,7 @@ object make_inventory(string file);
 
 // void create(){}
 
-// driver自动定期呼叫此apply
+// driver自动定期呼叫此apply,可继承后增加清理环境中对象的功能
 void reset()
 {
     /**
@@ -77,8 +77,7 @@ void reset()
         }
     }
     set_temp("objects", ob);
-    // debug_message(ctime(time()));
-    // debug_message(sprintf("%O", ob));
+    // debug_message(sprintf("%s : %O",log_time(), ob));
 }
 
 void setup()
@@ -122,6 +121,12 @@ varargs void setArea(int area, int x, int y, int z)
     ]));
 }
 
+varargs void set_area(int area, int x, int y, int z)
+{
+    setArea(area, x, y, z);
+}
+
+// 移除一个出口
 void removeExit(string dir)
 {
     mapping exits = query("exits");
@@ -129,6 +134,12 @@ void removeExit(string dir)
         map_delete(exits, dir);
 }
 
+void remove_exit(string dir)
+{
+    removeExit(dir);
+}
+
+// 移除随机出口
 void removeRandomExit()
 {
     mapping exits = query("exits");
@@ -138,6 +149,12 @@ void removeRandomExit()
     }
 }
 
+void remove_random_exit()
+{
+    removeRandomExit();
+}
+
+// 增加一个出口
 void addExit(string dir, string dest)
 {
     mapping exits = query("exits");
@@ -147,6 +164,12 @@ void addExit(string dir, string dest)
         exits[dir] = dest;
 }
 
+void add_exit(string dir, string dest)
+{
+    addExit(dir, dest);
+}
+
+// 是否有权到指定方向，可覆盖
 int valid_leave(object me, string dir)
 {
     if (mapp(doors) && !undefinedp(doors[dir]))
@@ -274,4 +297,13 @@ mixed query_door(string dir, string prop)
         return 0;
     else
         return doors[dir][prop];
+}
+
+//replaces the program in this_object()
+void replace_program(string ob)
+{
+    if (replaceable(previous_object()))
+    {
+        efun::replace_program(ob);
+    }
 }
