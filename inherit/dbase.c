@@ -6,9 +6,13 @@ Author: xuefeng
 Version: v1.0
 Date: 2019-03-15
 *****************************************************************************/
-
+// 存档数据
 mapping dbase;
+// 临时数据
 nosave mapping tmp_dbase;
+// The default_ob provides the default values of the dbase. It is set to
+// be master copy of an object.
+nosave mixed default_ob;
 
 // void create(){}
 
@@ -52,6 +56,25 @@ nomask mixed _set(mapping map, string *parts, mixed value)
     return _set(map[parts[0]], parts[1..sizeof(parts)-1], value);
 }
 
+mixed query_default_object() { return default_ob; }
+
+void set_default_object(mixed ob)
+{
+    if (!geteuid())
+        seteuid(getuid());
+
+    if (stringp(ob))
+    {
+        ob = load_object(ob);
+    }
+
+    if (objectp(ob))
+    {
+        default_ob = ob;
+        ob->set("no_clean_up", 1);
+    }
+}
+
 mixed set(string prop, mixed data)
 {
     if (!mapp(dbase))
@@ -74,6 +97,9 @@ varargs mixed query(string prop, int raw)
         data = _query(dbase, explode(prop, "/"));
     else
         data = dbase[prop];
+
+    if (undefinedp(data) && default_ob)
+        data = default_ob->query(prop, 1);
 
     if (raw)
         return data;

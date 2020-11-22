@@ -11,9 +11,14 @@ void clean_up_team();
 
 int set_leader(object ob)
 {
-    if (ob == this_object())
-        debug_message("set_leader: Cannot set this_object() as leader.\n");
+    if (objectp(ob) && ob == this_object())
+    {
+        debug_message("set_leader: Can't set " + this_object() + " as leader.\n");
+        return 0;
+    }
     leader = ob;
+
+    return 1;
 }
 
 object query_leader() { return leader; }
@@ -21,7 +26,7 @@ object query_leader() { return leader; }
 int follow_path(string dir)
 {
     reset_eval_cost();
-    command("go " + dir);
+    return command("go " + dir);
 }
 
 int follow_me(object ob, string dir)
@@ -74,6 +79,7 @@ int is_team_leader()
 int set_team(object *t)
 {
     team = t;
+    return 1;
 }
 
 varargs int dismiss_team(object ob)
