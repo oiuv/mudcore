@@ -1,14 +1,14 @@
-//	File	:  /include/ansi.h
-//	Creator	:  Gothic@TMI-2
+//    File    :  /include/ansi.h
+//    Creator    :  Gothic@TMI-2
 //
-//	The standard set of ANSI codes for mudlib use.
+//    The standard set of ANSI codes for mudlib use.
 
 #ifndef ANSI_H
 #define ANSI_H
 
-#define ESC	"\033"              /* Escape ESC(\e) */
-#define CSI	ESC + "["
-#define BEL	ESC + "[s"
+#define ESC    "\033"           /* Escape ESC(\e) */
+#define CSI    ESC + "["
+#define BEL    ESC + "[s"
                 /*  Foreground Colors  */
 
 #define BLK ESC+"[30m"          /* Black    */
@@ -76,6 +76,6 @@
 #define REV ESC+"[7m"           /* Turns reverse video mode on */
 #define HIREV ESC+"[1,7m"       /* Hi intensity reverse video  */
 
-#define BEEP "\07"               /* Beep Sound BEL(\a) */
+#define BEEP "\07"              /* Beep Sound BEL(\a) */
 
 #endif
