@@ -257,7 +257,7 @@ varargs int open_door(string dir, int from_other_side)
         error("Room: open_door: attempt to open a door with out an exit.\n");
 
     if (from_other_side)
-        msg("vision", "有人从另一边将" + doors[dir]["name"] + "打开了。\n", this_object());
+        message("vision", "有人从另一边将" + doors[dir]["name"] + "打开了。\n", this_object());
     else if (objectp(ob = find_object(exits[dir])))
     {
         if (!ob->open_door(doors[dir]["other_side_dir"], 1))
