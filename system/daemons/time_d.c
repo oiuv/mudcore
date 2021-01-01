@@ -225,7 +225,7 @@ string realtime_digital_clock()
 // 返回localtime时间描述字符串
 string time_description(string title, int *t, int style)
 {
-    return sprintf(NOR WHT + title + NOR "%s年，%s，%s月%s日，%s，%s%s时%s分" NOR, t[LT_YEAR] == 1 ? "元" : chinese_number(t[LT_YEAR]), season_period(t[LT_MON]), !t[LT_MON] ? "元" : chinese_number(t[LT_MON] + 1), chinese_number(t[LT_MDAY]), week_period(t[LT_WDAY], style), hour_period(t[LT_HOUR]), chinese_number(t[LT_HOUR] > 12 ? t[LT_HOUR] % 12 : t[LT_HOUR]), chinese_number(t[LT_MIN]));
+    return sprintf(title + "%s年，%s，%s月%s日，%s，%s%s时%s分", t[LT_YEAR] == 1 ? "元" : chinese_number(t[LT_YEAR]), season_period(t[LT_MON]), !t[LT_MON] ? "元" : chinese_number(t[LT_MON] + 1), chinese_number(t[LT_MDAY]), week_period(t[LT_WDAY], style), hour_period(t[LT_HOUR]), chinese_number(t[LT_HOUR] > 12 ? t[LT_HOUR] % 12 : t[LT_HOUR]), chinese_number(t[LT_MIN]));
 }
 
 varargs string game_time_description(string arg, int style)
