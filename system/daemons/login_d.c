@@ -102,7 +102,7 @@ protected void get_id(string arg, object ob)
 
     if (arg == "" || !is_english(arg) || strlen(arg) < MIN_ID_LEN)
     {
-        write("\n请输入你的" + HIY "英文" NOR + "登录ID(至少 " + chinese_number(MIN_ID_LEN) + " 位字母):");
+        write("\n请输入你的" HIY "英文" NOR "登录ID(至少 " + MIN_ID_LEN + " 位字母):");
         input_to("get_id", ob);
         return;
     }
@@ -218,7 +218,7 @@ protected void check_ok(object ob)
         {
             destruct(user);
             // 进入创建角色流程
-            write("\n您的" HIY "名字" NOR "(不要超过10个汉字)：");
+            write("\n请输入您游戏角色的" HIY "名字" NOR "(不要超过" HIY + chinese_number(MAX_NAME_LEN) + NOR "个汉字)：");
             input_to("get_name", ob);
         }
     }
@@ -330,7 +330,7 @@ protected void new_password(string pass, object ob)
     write("\n");
     if (strlen(pass) < MIN_PASS_LEN)
     {
-        write("登录密码的长度至少要 " + chinese_number(MIN_PASS_LEN) + " 个字符，请重设您的登录密码：");
+        write("登录密码的长度至少要 " + MIN_PASS_LEN + " 个字符，请重设您的登录密码：");
         input_to("new_password", 1, ob);
         return;
     }
@@ -367,7 +367,7 @@ protected void confirm_password(string pass, object ob)
         return;
     }
 
-    write("\n您的" HIY "名字" NOR "(不要超过10个汉字)：");
+    write("\n请输入您游戏角色的" HIY "名字" NOR "(不要超过" HIY + chinese_number(MAX_NAME_LEN) + NOR "个汉字)：");
     input_to("get_name", ob);
 }
 
