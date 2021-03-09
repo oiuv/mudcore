@@ -9,6 +9,22 @@ History:
 *****************************************************************************/
 #include <ansi.h>
 
+#ifndef MIN_ID_LEN
+#define MIN_ID_LEN 3
+#endif
+
+#ifndef MIN_PASS_LEN
+#define MIN_PASS_LEN 5
+#endif
+
+#ifndef MIN_NAME_LEN
+#define MIN_NAME_LEN 2
+#endif
+
+#ifndef MAX_NAME_LEN
+#define MAX_NAME_LEN 8
+#endif
+
 nosave string *banned_name = ({
     "屌", "屄", "姦", "穴", "爸", "妈", "爷", "奶",
 });
@@ -84,9 +100,9 @@ protected void get_id(string arg, object ob)
 {
     arg = lower_case(trim(arg));
 
-    if (arg == "" || !is_english(arg) || strlen(arg) < 3)
+    if (arg == "" || !is_english(arg) || strlen(arg) < MIN_ID_LEN)
     {
-        write("\n请输入你的" + HIY "英文" NOR + "登录ID(至少3位字母):");
+        write("\n请输入你的" + HIY "英文" NOR + "登录ID(至少 " + chinese_number(MIN_ID_LEN) + " 位字母):");
         input_to("get_id", ob);
         return;
     }
@@ -284,15 +300,16 @@ protected void relogin(string yn, object ob, object user)
 
     reconnect(ob, user);
 }
+
 /**
- * 注册流程
+ * 账号创建流程
  */
 
 protected void confirm_id(string yn, object ob)
 {
     if (yn == "")
     {
-        write("\n使用这个 id 将会创造一个新的人物，您确定吗(y/n)？");
+        write("\n使用这个 id 将会创造一个新的账号，您确定吗(y/n)？");
         input_to("confirm_id", ob);
         return;
     }
@@ -311,9 +328,9 @@ protected void confirm_id(string yn, object ob)
 protected void new_password(string pass, object ob)
 {
     write("\n");
-    if (strlen(pass) < 3)
+    if (strlen(pass) < MIN_PASS_LEN)
     {
-        write("登录密码的长度至少要三个字符，请重设您的登录密码：");
+        write("登录密码的长度至少要 " + chinese_number(MIN_PASS_LEN) + " 个字符，请重设您的登录密码：");
         input_to("new_password", 1, ob);
         return;
     }
@@ -354,8 +371,14 @@ protected void confirm_password(string pass, object ob)
     input_to("get_name", ob);
 }
 
+/**
+ * 角色注册流程
+ */
+
 protected void get_name(string arg, object ob)
 {
+    string result;
+
     if (!is_chinese(arg))
     {
         write("\n对不起，只能给自己取纯中文的名字！");
@@ -363,9 +386,9 @@ protected void get_name(string arg, object ob)
         input_to("get_name", ob);
         return;
     }
-    if (strlen(arg) < 2 || strlen(arg) > 10)
+    if (strlen(arg) < MIN_NAME_LEN || strlen(arg) > MAX_NAME_LEN)
     {
-        write("\n对不起，你的名字只能为2～10个字符长度");
+        write("\n对不起，你的名字只能为" + MIN_NAME_LEN + "～" + MAX_NAME_LEN + "个字符长度");
         write("\n请重新输入您" HIY "名字" NOR "：");
         input_to("get_name", ob);
         return;
@@ -374,10 +397,18 @@ protected void get_name(string arg, object ob)
         if (strsrch(arg, name) > -1)
         {
             write("\n对不起，这个名字会引起不必要的误会。");
-            write("\n请重新输入您" HIY "名字" NOR "：");
+            write("\n请重新输入您的" HIY "名字" NOR "：");
             input_to("get_name", ob);
             return;
         }
+
+    if (result = NAME_D->invalid_new_name(arg))
+    {
+        write("\n对不起，" + result);
+        write("\n请重新输入您的" HIY "名字" NOR "：");
+        input_to("get_name", ob);
+        return;
+    }
 
     ob->set_temp("name", arg);
 
@@ -425,7 +456,8 @@ protected void get_gender(string gender, object ob)
 
     user->set("name", ob->query_temp("name"));
     user->set("gender", ob->query_temp("gender"));
-
+    // 记录名字
+    NAME_D->map_name(user->query("name"), user->query("id"));
     init_new_player(user);
     enter_world(ob, user);
     write("\n");

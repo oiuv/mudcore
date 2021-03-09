@@ -30,10 +30,9 @@ string short()
     return "表情精灵(EMOTE_D)";
 }
 
-int remove()
+void remove()
 {
     save();
-    return 1;
 }
 
 string query_save_file() { return DATA_DIR + "emote_d"; }

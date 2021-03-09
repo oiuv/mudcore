@@ -12,13 +12,13 @@ int main(object me, string arg)
 
     /* clean up first */
     if (file_size(filename) != -1)
-        rm (filename);
+        rm(filename);
     if (eval_ob = find_object(filename))
         destruct(eval_ob);
 
-    file = "mixed eval() { " + arg + "; }\n";
+    file = "mixed eval(object me) { " + arg + "; }\n";
     write_file(filename, file, 1);
-    printf("Result = %O\n", filename->eval());
+    printf("Result = %O\n", filename->eval(me));
 
     return 1;
 }
