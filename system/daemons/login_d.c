@@ -28,6 +28,7 @@ protected void init_new_player(object user);
 
 // 可以被外部调用的函数
 void login(object ob);
+nomask int check_password(string str, string password);
 object make_body(object ob);
 void enter_world(object ob, object user);
 void reconnect(object ob, object user);
@@ -112,10 +113,18 @@ protected void get_id(string arg, object ob)
             return;
         }
     }
-
+    // 进入注册流程
     write(WHT "\n使用[" HIC + (string)ob->query("id") + NOR + WHT "]这个ID将会"
-              "创造一个新的人物，您确定吗(" HIY "y/n" NOR + WHT ")？" NOR);
+              "创造一个新的账号，您确定吗(" HIY "y/n" NOR + WHT ")？" NOR);
     input_to("confirm_id", ob);
+}
+
+nomask int check_password(string str, string password)
+{
+    if (password[0..2] == "$6$")
+        return crypt(str, password) == password;
+    else
+        return oldcrypt(str, password) == password || crypt(str, password) == password;
 }
 
 // 登录密码
@@ -124,7 +133,7 @@ protected void get_passwd(string pass, object ob)
     string my_pass;
 
     my_pass = ob->query("password");
-    if (!stringp(my_pass) || (crypt(pass, my_pass) != my_pass && oldcrypt(pass, my_pass) != my_pass))
+    if (!stringp(my_pass) || !check_password(pass, my_pass))
     {
         write(RED "密码错误！\n" NOR);
         destruct(ob);
@@ -150,8 +159,8 @@ object make_body(object ob)
     seteuid(ob->query("id")); // 设置当前对象 euid 为玩家ID
     export_uid(user); // 设置玩家 uid
     seteuid(getuid()); // 设置当前对象 euid 为对象uid
-    // user->set("id", ob->query("id"));
-    user->set_name(ob->query("name"), ({ob->query("id")}));
+    user->set("id", ob->query("id"));
+
     return user;
 }
 
@@ -191,9 +200,10 @@ protected void check_ok(object ob)
         }
         else
         {
-            write(HIR "\n无法读取你的数据档案，您需要和巫师联系。\n" NOR);
             destruct(user);
-            destruct(ob);
+            // 进入创建角色流程
+            write("\n您的" HIY "名字" NOR "(不要超过10个汉字)：");
+            input_to("get_name", ob);
         }
     }
     else
@@ -211,13 +221,12 @@ void enter_world(object ob, object user)
     if (interactive(ob))
         exec(user, ob);
 
-    user->setup();                                           // 激活玩家角色
+    user->setup(); // 激活玩家角色
     user->set("last_login_ip", ob->query_temp("ip_number"));
     user->set("last_login_at", time());
     user->set("last_saved_at", time());
     user->add("login_times", 1);
     user->save(); // 保存玩家数据
-    ob->save();   // 保存账号数据
 
     user->move(VOID_OB);
     tell_room(VOID_OB, user->short() + "连线进入这个世界。\n", ({user}));
@@ -295,37 +304,6 @@ protected void confirm_id(string yn, object ob)
         return;
     }
 
-    write("\n您的" HIY "名字" NOR "(不要超过10个汉字)：");
-    input_to("get_name", ob);
-}
-
-protected void get_name(string arg, object ob)
-{
-    if (!is_chinese(arg))
-    {
-        write("\n对不起，只能给自己取纯中文的名字！");
-        write("\n请重新输入您" HIY "名字" NOR "：");
-        input_to("get_name", ob);
-        return;
-    }
-    if (strlen(arg) < 2 || strlen(arg) > 10)
-    {
-        write("\n对不起，你的名字只能为2～10个字符长度");
-        write("\n请重新输入您" HIY "名字" NOR "：");
-        input_to("get_name", ob);
-        return;
-    }
-    foreach(string name in banned_name)
-        if (strsrch(arg, name) > -1)
-        {
-            write("\n对不起，这个名字会引起不必要的误会。");
-            write("\n请重新输入您" HIY "名字" NOR "：");
-            input_to("get_name", ob);
-            return;
-        }
-
-    ob->set("name", arg);
-
     write("\n请输入你的" HIY "登录密码" NOR "：");
     input_to("new_password", 1, ob);
 }
@@ -359,6 +337,49 @@ protected void confirm_password(string pass, object ob)
     }
 
     ob->set("password", old_pass);
+    ob->set("created_at", time());
+    ob->set("register_from", ob->query_temp("ip_number"));
+    // 保存账号数据
+    if (ob->save())
+    {
+        write("账号注册成功！\n");
+    }
+    else
+    {
+        destruct(ob);
+        return;
+    }
+
+    write("\n您的" HIY "名字" NOR "(不要超过10个汉字)：");
+    input_to("get_name", ob);
+}
+
+protected void get_name(string arg, object ob)
+{
+    if (!is_chinese(arg))
+    {
+        write("\n对不起，只能给自己取纯中文的名字！");
+        write("\n请重新输入您" HIY "名字" NOR "：");
+        input_to("get_name", ob);
+        return;
+    }
+    if (strlen(arg) < 2 || strlen(arg) > 10)
+    {
+        write("\n对不起，你的名字只能为2～10个字符长度");
+        write("\n请重新输入您" HIY "名字" NOR "：");
+        input_to("get_name", ob);
+        return;
+    }
+    foreach (string name in banned_name)
+        if (strsrch(arg, name) > -1)
+        {
+            write("\n对不起，这个名字会引起不必要的误会。");
+            write("\n请重新输入您" HIY "名字" NOR "：");
+            input_to("get_name", ob);
+            return;
+        }
+
+    ob->set_temp("name", arg);
 
     write(WHT "您要扮演男性(" HIY "m" NOR + WHT ")的角色或女性(" HIY "f" NOR + WHT ")的角色？" NOR);
     input_to("get_gender", ob);
@@ -395,9 +416,6 @@ protected void get_gender(string gender, object ob)
         return;
     }
 
-    ob->set("created_at", time());
-    ob->set("register_from", ob->query_temp("ip_number"));
-
     if (!objectp(user = make_body(ob)))
     {
         write(HIR "\n你无法登录这个新的人物，请重新选择。\n" NOR);
@@ -405,7 +423,7 @@ protected void get_gender(string gender, object ob)
         return;
     }
 
-    user->set("name", ob->query("name"));
+    user->set("name", ob->query_temp("name"));
     user->set("gender", ob->query_temp("gender"));
 
     init_new_player(user);

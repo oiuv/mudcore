@@ -22,5 +22,6 @@ int restore()
 
     if (stringp(file = this_object()->query_save_file()))
         return restore_object(file);
+
     return 0;
 }
