@@ -10,7 +10,7 @@
 #define CSI ESC + "["        /* Control Sequence Introducer */
 #define SGR(x) CSI + x + "m" /* Set Graphics Rendition */
 
-/* Foreground Colors */
+/* Foreground Colors 30 ~ 37 */
 
 #define BLK SGR("30") /* 黑 */
 #define RED SGR("31") /* 紅 */
@@ -21,9 +21,9 @@
 #define CYN SGR("36") /* 青 */
 #define WHT SGR("37") /* 白 */
 
-/* Hi Intensity Foreground Colors */
+/* Hi Intensity Foreground Colors 90 ~ 97 */
 
-#define HBLK SGR("1;30") /* 灰 */
+#define GRY SGR("1;30")  /* 灰 */
 #define HIR SGR("1;31")  /* 紅 */
 #define HIG SGR("1;32")  /* 綠 */
 #define HIY SGR("1;33")  /* 黃 */
@@ -32,7 +32,7 @@
 #define HIC SGR("1;36")  /* 青 */
 #define HIW SGR("1;37")  /* 白 */
 
-/*  Background Colors  */
+/* Background Colors 40 ~ 47 */
 
 #define BBLK SGR("40") /* 黑 */
 #define BRED SGR("41") /* 紅 */
@@ -43,7 +43,7 @@
 #define BCYN SGR("46") /* 青 */
 #define BWHT SGR("47") /* 白 */
 
-/* High Intensity Background Colors  */
+/* High Intensity Background Colors 100 ~ 107 */
 
 #define HBBLK SGR("1;40") /* 灰 */
 #define HBRED SGR("1;41") /* 紅 */
@@ -54,14 +54,19 @@
 #define HBCYN SGR("1;46") /* 青 */
 #define HBWHT SGR("1;47") /* 白 */
 
-// #define NOR ESC + "[2;37;0m" /* Puts everything back to normal */
-#define NOR SGR("")      /* 清除所有特殊属性 */
-#define BOLD SGR("1")    /* Turn on bold mode */
-#define ITALIC SGR("3")  /* Turn on bold mode */
+// #define NOR ESC + "[m"   /* Puts everything back to normal */
+#define NOR SGR("0")     /* 清除所有特殊属性 */
+#define BOLD SGR("1")    /* Turn on BOLD mode */
+#define ITALIC SGR("3")  /* Turn on ITALIC mode */
 #define U SGR("4")       /* Initialize underscore mode */
 #define BLINK SGR("5")   /* Initialize blink mode */
 #define REV SGR("7")     /* Turns reverse video mode on */
 #define HIREV SGR("1;7") /* Hi intensity reverse video  */
+#define HIDE SGR("8")    /* 消隐(部分客户端不支持) */
+#define BOFF SGR("21")   /* BOLD OFF */
+#define IOFF SGR("23")   /* ITALIC OFF */
+#define UOFF SGR("24")   /* UNDERLINE OFF */
+#define ROFF SGR("27")   /* Reverse OFF */
 
 /* Additional ansi Esc codes added to ansi.h by Gothic  april 23,1993 */
 /* Note, these are Esc codes for VT100 terminals, and emmulators */
