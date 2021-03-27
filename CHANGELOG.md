@@ -1,5 +1,14 @@
 ## 更新日志
 
+### 2021年3月27日
+
+* 为了数据安全调整数据库密码配置文件位置为`DATA_DIR`下的`DB_CONFIG`
+* 调整CORE_LOGIN_D中 init_new_player 方法为`private void init_new_player(object user, object ob)`
+
+### 2021年3月10日
+
+* 新增CORE_NAME_D，用户注册校验是否重名
+
 ### 2020年11月22日
 
 * MOVE 模块优化，增加可控制是否自动 look

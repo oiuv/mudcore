@@ -9,9 +9,10 @@ Date: 2019-04-01
 #ifndef MYSQL_H
 #define MYSQL_H
 
-#define DB_HOST     "127.0.0.1"
-#define DB_NAME     "mud"
-#define DB_USER     "homestead"
-#define DB_PASSWD   "secret"
+#define DB_CONFIG   read_lines(DATA_DIR "DB_CONFIG")
+#define DB_HOST     DB_CONFIG[0]
+#define DB_NAME     DB_CONFIG[1]
+#define DB_USER     DB_CONFIG[2]
+#define DB_PASSWD   DB_CONFIG[3]
 
 #endif

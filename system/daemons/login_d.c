@@ -40,7 +40,7 @@ protected void get_name(string arg, object ob);
 protected void new_password(string pass, object ob);
 protected void confirm_password(string pass, object ob);
 protected void get_gender(string gender, object ob);
-protected void init_new_player(object user);
+protected void init_new_player(object user, object ob);
 
 // 可以被外部调用的函数
 void login(object ob);
@@ -458,13 +458,13 @@ protected void get_gender(string gender, object ob)
     user->set("gender", ob->query_temp("gender"));
     // 记录名字
     NAME_D->map_name(user->query("name"), user->query("id"));
-    init_new_player(user);
+    init_new_player(user, ob);
     enter_world(ob, user);
     write("\n");
 }
 
 // 初始化新玩家必要属性
-protected void init_new_player(object user)
+protected void init_new_player(object user, object ob)
 {
     CHAR_D->init_player(user);
 }
