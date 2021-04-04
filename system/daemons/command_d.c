@@ -39,7 +39,7 @@ string default_alias(string verb)
 {
     string *word;
 
-    verb = lower_case(verb);
+    // verb = lower_case(verb);
 
     switch (verb[0])
     {

@@ -4,7 +4,7 @@
 
 LPMUD游戏开发框架核心代码，仅仅包括核心代码，可以在此基础上开发任何MUD，本框架需配合 FluffOS v2019使用。
 
-当前版本：`v1.2`
+当前版本：`v1.2.1`
 
 这个项目的诞生源于我的[LPC零基础开发教程](https://bbs.mud.ren)，在写教程的过程中，发现很多朋友并不关心底层细节，只想能直接用来开发项目，国内绝大多数项目是《东方故事2》底层的，都是在这类MUD基础上修改，优点是可以快速上手，但不够灵活。能不能把底层独立出来，开发任何类型的MUD都可以使用？在思考后，我开始了这个项目，特色是只提供底层代码和接口，不提供任何游戏性的内容，独立于个人项目之外，只需简单配置即可实现个人MUD开发。本项目不考虑旧版的兼容性，只支持 FluffOS v2019 版。
 
@@ -175,13 +175,14 @@ CORE_VRM|/inherit/vrm.c|随机迷宫功能接口，实现随机迷宫功能
 -|-|-
 CORE_CHANNEL_D|/system/daemons/channel_d.c|负责处理玩家聊天功能和频道管理
 CORE_CHAR_D|/system/daemons/char_d.c|负责处理角色数据，需开发者实现具体功能
-CORE_CHINESE_D|/system/daemons/chinese_d.c|负责处理中、英文对照，以及一些与中文相关的功能
+CORE_CHINESE_D|/system/daemons/chinese_d.c|负责处理中、英文对照，以及一些与中文相关的功能，字典存档`/data/e2c_dict.o`
 CORE_COMBAT_D|/system/daemons/combat_d.c|负责战斗功能，需开发者实现具体功能
 CORE_COMMAND_D|/system/daemons/command_d.c|负责指令及别名处理功能
+CORE_CONFIG_D|/system/daemons/config_d.c|游戏配置守护进程，默认配置文件为`/data/config`
 CORE_DBASE_D|/system/daemons/dbase_d.c|负责系统数据存档处理，默认存储位置`/data/dbase_d.o`
-CORE_EMOTE_D|/system/daemons/emote_d.c|负责管理游戏表情动作和相应功能
+CORE_EMOTE_D|/system/daemons/emote_d.c|负责管理游戏表情动作和相应功能，默认存储位置`/data/emote_d.o`
 CORE_LOGIN_D|/system/daemons/login_d.c|框架示例登录管理功能，可做开发参考
-CORE_NAME_D|/system/daemons/name_d.c|负责角色姓名记录与检测
+CORE_NAME_D|/system/daemons/name_d.c|负责角色姓名记录与检测，默认存储位置`/data/name_d.o`
 CORE_NATURE_D|/system/daemons/nature_d.c|负责控制游戏季节和天气变化
 CORE_TIME_D|/system/daemons/time_d.c|负责控制游戏系统时间和计划任务
 CORE_VIRTUAL_D|/system/daemons/virtual_d.c|负责虚拟对象处理
@@ -209,6 +210,7 @@ chinese_number|返回中文数字
 chinese|返回指定字符串的中文名称
 color_cat|彩色输出内容到屏幕
 color_len|统计字符串中颜色占用的长度
+config|读取或设置游戏自定义配置的值
 debug|随机颜色输出内容
 element_of_weighted|根据权重随机返回元素，权重高机率大
 getcid|返回复制对象的ID
@@ -216,6 +218,7 @@ graph_draw|自定义进度条绘图
 highest|返回一组数值的最大值
 is_chinese|判断指定字符串是否为中文
 is_english|判断指定字符串是否为英文
+is_numeric|判断指定字符串是否为数字
 itoc|int 类型数字转 ASCII 字符，如 itoc(65) 返回值为 A
 log_file|记录日志到指定文件
 log_time|方便日志记录的 ctime 时间格式

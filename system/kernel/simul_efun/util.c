@@ -184,3 +184,21 @@ varargs string sort_string(string input, int width, int prefix)
 
     return result;
 }
+
+// 游戏配置内容的读取或设置
+varargs mixed config(string key, mixed value)
+{
+    if (nullp(key))
+    {
+        return CONFIG_D->query_entire_dbase();
+    }
+
+    if (nullp(value))
+    {
+        return CONFIG_D->query(key);
+    }
+    else
+    {
+        return CONFIG_D->set(key, value);
+    }
+}

@@ -25,7 +25,22 @@ int is_english(string str)
 
     i = strlen(str);
     while (i--)
-        if((str[i] < 'a' || str[i] > 'z') && (str[i] < 'A' || str[i] > 'Z'))
+        if ((str[i] < 'a' || str[i] > 'z') && (str[i] < 'A' || str[i] > 'Z'))
+            return 0;
+
+    return 1;
+}
+
+int is_numeric(string str)
+{
+    int i;
+
+    if (nullp(str) || !str[0])
+        return 0;
+
+    i = strlen(str);
+    while (i--)
+        if (str[i] < '0' || str[i] > '9')
             return 0;
 
     return 1;

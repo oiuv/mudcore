@@ -9,10 +9,9 @@ Date: 2019-04-01
 #ifndef MYSQL_H
 #define MYSQL_H
 
-#define DB_CONFIG   read_lines(DATA_DIR "DB_CONFIG")
-#define DB_HOST     DB_CONFIG[0]
-#define DB_NAME     DB_CONFIG[1]
-#define DB_USER     DB_CONFIG[2]
-#define DB_PASSWD   DB_CONFIG[3]
+#define DB_HOST     config("DB_HOST")
+#define DB_NAME     config("DB_DATABASE")
+#define DB_USER     config("DB_USERNAME")
+#define DB_PASSWD   config("DB_PASSWORD")
 
 #endif

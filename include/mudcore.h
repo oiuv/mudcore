@@ -32,6 +32,7 @@
 #define CORE_CHINESE_D      CORE_DIR "system/daemons/chinese_d"
 #define CORE_COMBAT_D       CORE_DIR "system/daemons/combat_d"
 #define CORE_COMMAND_D      CORE_DIR "system/daemons/command_d"
+#define CORE_CONFIG_D       CORE_DIR "system/daemons/config_d"
 #define CORE_DBASE_D        CORE_DIR "system/daemons/dbase_d"
 #define CORE_EMOTE_D        CORE_DIR "system/daemons/emote_d"
 #define CORE_LOGIN_D        CORE_DIR "system/daemons/login_d"
@@ -61,7 +62,7 @@
 
 /* 其他 */
 #ifndef HTTP_PORT
-#define HTTP_PORT   8000
+#define HTTP_PORT   config("HTTP_PORT")
 #endif
 
 #ifndef WIZARD
@@ -90,6 +91,10 @@
 
 #ifndef COMMAND_D
 #define COMMAND_D   CORE_COMMAND_D
+#endif
+
+#ifndef CONFIG_D
+#define CONFIG_D CORE_CONFIG_D
 #endif
 
 #ifndef DBASE_D

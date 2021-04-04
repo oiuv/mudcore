@@ -11,18 +11,18 @@ string *read_lines(string file)
 {
     string *list;
     string str;
-    int i;
 
     str = read_file(file);
     if (!str)
         return ({});
 
     list = explode(str, "\n");
-    for (i = 0; i < sizeof(list); i++)
-        if (list[i][0] == '#')
+    for (int i = 0; i < sizeof(list); i++)
+        if (list[i][0] == '#' || !strlen(list[i]))
             list[i] = 0;
 
-    list -= ({ 0 });
+    list -= ({0});
+
     return list;
 }
 
@@ -30,7 +30,8 @@ void assure_file(string file)
 {
     string path, dir, *dirs;
 
-    if (file_size(file) != -1) return;
+    if (file_size(file) != -1)
+        return;
 
     dirs = explode(file, "/");
 
@@ -39,15 +40,20 @@ void assure_file(string file)
 
     path = "";
 
-    foreach(dir in dirs)
+    foreach (dir in dirs)
     {
-        if (dir == "") continue;
+        if (dir == "")
+            continue;
         path += "/" + dir;
-        switch(file_size(path))
+        switch (file_size(path))
         {
-            case -1 : mkdir(path); break;
-            case -2 : continue;
-            default : return;
+        case -1:
+            mkdir(path);
+            break;
+        case -2:
+            continue;
+        default:
+            return;
         }
     }
 }
