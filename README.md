@@ -212,6 +212,7 @@ color_cat|彩色输出内容到屏幕
 color_len|统计字符串中颜色占用的长度
 config|读取或设置游戏自定义配置的值
 debug|随机颜色输出内容
+deep_path_list|获取指定目录及子目录下的文件列表
 element_of_weighted|根据权重随机返回元素，权重高机率大
 getcid|返回复制对象的ID
 graph_draw|自定义进度条绘图

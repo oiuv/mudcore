@@ -23,16 +23,16 @@ string resolve_path(string curr, string new_path)
     string *tmp;
     string t1;
 
-    if (! curr)
+    if (!curr)
         curr = "/";
 
-    if (! new_path || new_path == ".")
+    if (!new_path || new_path == ".")
         return curr;
 
     if (new_path == "here" && this_player())
         return file_name(environment(this_player())) + ".c";
 
-    if (new_path == "~" || new_path == "~/" )
+    if (new_path == "~" || new_path == "~/")
         new_path = user_path(getuid(this_player()));
 
     if (sscanf(new_path, "~/%s", t1))
@@ -41,7 +41,7 @@ string resolve_path(string curr, string new_path)
         new_path = user_path(t1);
     else if (new_path[0] != '/')
     {
-        if( curr[sizeof(curr)-1] != '/' )
+        if (curr[sizeof(curr) - 1] != '/')
             new_path = curr + "/" + new_path;
         else
             new_path = curr + new_path;
@@ -59,7 +59,7 @@ string resolve_path(string curr, string new_path)
             }
             else
             {
-                tmp = tmp[2 ..(sizeof(tmp) - 1)];
+                tmp = tmp[2..(sizeof(tmp) - 1)];
                 i = 0;
             }
         }
@@ -70,4 +70,25 @@ string resolve_path(string curr, string new_path)
         new_path = "/";
 
     return new_path;
+}
+
+/**
+ * @brief 递归获取目录下的文件列表
+ *
+ * @param root 文件目录，必须以"/"结尾
+ * @return string*
+ */
+string *deep_path_list(string root)
+{
+    string file, *list = ({});
+
+    foreach (file in get_dir(root))
+    {
+        if (file_size(root + file) == -2)
+            list += deep_path_list(root + file + "/");
+        else
+            list += ({root + file});
+    }
+
+    return list;
 }

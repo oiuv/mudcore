@@ -1,10 +1,38 @@
 // error.c
-
+#include <runtime_config.h>
+/**
+ * @brief 日志记录
+ *
+ * @param file
+ * @param message
+ */
 void log_error(string file, string message)
 {
-    log_file("log_error", message);
+    if (strsrch(message, "Warning") == -1)
+    {
+        if (this_player(1))
+        {
+            if (wizardp(this_player(1)))
+                efun::write("编译时段错误：" + message + "\n");
+            else
+                efun::write(get_config(__DEFAULT_ERROR_MESSAGE__) + "\n");
+        }
+        // 记录错误日志
+        log_file("log_error", message);
+    }
+    else
+    {
+        // 记录警告日志
+        log_file("log", message);
+    }
 }
 
+/**
+ * @brief 编译错误追踪方法
+ *
+ * @param map
+ * @param flag
+ */
 void error_handler(mapping map, int flag)
 {
     string str = "[" + ctime() + "]";
