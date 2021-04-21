@@ -16,9 +16,8 @@ int help(object me)
 
     write(@TEXT
 指令格式: reclaim
-
-清除那些不应继续保存在内存中的对象。
-
+指令说明:
+    清除那些不应继续保存在内存中的对象。
 TEXT
     );
     return 1;

@@ -36,10 +36,9 @@ int help(object me)
         return 0;
 
     write(@LONG
-指令格式：callouts [<函数名称>]
-
-列出系统中所有的定时函数。
-
+指令格式: callouts [<函数名称>]
+指令说明:
+    列出系统中所有的定时函数。
 LONG );
     return 1;
 }

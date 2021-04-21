@@ -1,5 +1,8 @@
 // which.c
 inherit CORE_CLEAN_UP;
+
+int help(object me);
+
 int main(object me, string arg)
 {
     object file;
@@ -7,7 +10,7 @@ int main(object me, string arg)
         return 0;
 
     if (!arg)
-        return notify_fail("指令格式：which <命令>\n");
+        return help(me);
 
     file = COMMAND_D->find_command(arg);
     if (!file)
@@ -16,11 +19,13 @@ int main(object me, string arg)
         write(arg + ":\n\t" + file + "\n");
     return 1;
 }
-int help()
+
+int help(object me)
 {
     write(@TEXT
-指令格式：which <命令>
-这个指令可以找到某个命令在什么目录。
+指令格式: which <命令>
+指令说明:
+    这个指令可以找到某个命令在什么目录。
 TEXT);
     return 1;
 }

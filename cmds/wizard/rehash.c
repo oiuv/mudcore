@@ -18,10 +18,9 @@ int help(object me)
         return 0;
 
     write(@HELP
-指令格式 : rehash
-
-当新增指令时使用此指令更新指令列表，让新指令生效。
-
+指令格式: rehash
+指令说明:
+    当新增指令时使用此指令更新指令列表，让新指令生效。
 HELP
     );
     return 1;

@@ -18,10 +18,9 @@ int help(object me)
         return 0;
 
     write(@HELP
-指令格式 : dump
-
-dump the stats of all objects to a file in root dir named OBJ_DUMP.
-
+指令格式: dump
+指令说明:
+    dump the stats of all objects to a file in root dir named OBJ_DUMP.
 HELP
     );
     return 1;

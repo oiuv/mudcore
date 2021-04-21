@@ -28,9 +28,8 @@ int help(object me)
 
     write(@TEXT
 指令格式: get_dir [dir]
-
-列出指定目录下的文件，如果不指定目录，默认为 /
-
+指令说明:
+    列出指定目录下的文件，如果不指定目录，默认为 /
 TEXT
     );
     return 1;

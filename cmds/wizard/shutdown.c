@@ -14,9 +14,8 @@ int help(object me)
 
     write(@HELP
 指令格式: shutdown
-
-关闭游戏服务器。
-
+指令说明:
+    关闭游戏服务器。
 HELP);
     return 1;
 }

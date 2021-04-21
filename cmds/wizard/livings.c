@@ -15,9 +15,8 @@ int help(object me)
 
     write(@TEXT
 指令格式: livings
-
-列出所有活着的对象
-
+指令说明:
+    列出所有活着的对象。
 TEXT
     );
     return 1;

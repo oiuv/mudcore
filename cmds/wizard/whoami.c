@@ -17,10 +17,9 @@ int help(object me)
         return 0;
 
     write(@HELP
-指令格式 : whoami
-
-这个指令可以查看自己的 ID 信息。
-
+指令格式: whoami
+指令说明:
+    这个指令可以查看自己的 ID 信息。
 HELP );
     return 1;
 }

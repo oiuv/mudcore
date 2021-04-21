@@ -2,6 +2,8 @@
 #include <ansi.h>
 inherit CORE_CLEAN_UP;
 
+int help(object me);
+
 int main(object me, string arg)
 {
     object ob;
@@ -10,7 +12,7 @@ int main(object me, string arg)
 
     if (!arg || sscanf(arg,"%s %s",arg1, arg2) != 2)
     {
-        debug("指令格式： call_other /path/target function [arg1 arg2 ...]");
+        return help(me);
     }
     else if (ob = load_object(arg1))
     {
@@ -37,10 +39,9 @@ int help(object me)
         return 0;
 
     write(@TEXT
-指令格式:  call_other /path/target function [arg1 arg2 ...]
-
-执行指定文件中的方法
-
+指令格式: call_other <对象文件名> function [arg1 arg2 ...]
+指令说明:
+    执行指定文件中的方法。
 TEXT
     );
     return 1;

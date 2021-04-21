@@ -15,9 +15,8 @@ int help(object me)
 
     write(@TEXT
 指令格式: heart_beats
-
-列出所有具有心跳的对象
-
+指令说明:
+    列出所有具有心跳的对象。
 TEXT
     );
     return 1;

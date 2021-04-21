@@ -1,9 +1,13 @@
 inherit CORE_CLEAN_UP;
+int help(object me);
 
 int main(object me, string arg)
 {
     object eval_ob;
     string filename, file;
+
+    if (!arg)
+        return help(me);
 
     filename = "/debug_eval_file.c";
 
@@ -29,10 +33,9 @@ int help(object me)
         return 0;
 
     write(@HELP
-指令格式 : eval <lpc code>
-
-测试专用，请先实现功能后运行。
-
+指令格式: eval <lpc code>
+指令说明:
+    测试专用，直接执行LPC代码片断，如：eval return me
 HELP);
 
     return 1;

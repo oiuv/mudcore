@@ -19,10 +19,9 @@ int help(object me)
         return 0;
 
     write(@HELP
-指令格式 : objects <参数>
-
-这个指令用来打印游戏中载入的对象列表，参数 -c 为复制对象，参数 -o 为蓝图对象。
-
+指令格式: objects <参数>
+指令说明:
+    这个指令用来打印游戏中载入的对象列表，参数 -c 为复制对象，参数 -o 为蓝图对象。
 HELP);
     return 1;
 }
