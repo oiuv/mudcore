@@ -22,7 +22,7 @@ int id(string arg)
     if (my_id && member_array(arg, my_id) != -1)
         return 1;
     else
-        return 0;
+        return query("id") == arg;
 }
 
 varargs void set_name(string name, string *id)
