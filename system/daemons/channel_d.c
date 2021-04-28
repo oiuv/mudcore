@@ -11,6 +11,8 @@ Date: 2019-03-12
 
 inherit CORE_DBASE;
 
+#define ROBOT_NPC ({"/area/npc/ivy"})
+
 int filter_listener(object ppl, string only, object me);
 
 nosave string msg_log;
@@ -189,6 +191,11 @@ varargs int do_channel(object me, string verb, string arg, int emote)
     }
     else
     {
+        // NPC监听聊天接口
+        if (userp(me) && verb == "chat")
+        {
+            ROBOT_NPC->receive_report(me, verb, arg);
+        }
         msg = sprintf(channels[verb]["msg_speak"], me->short(), channels[verb]["msg_color"] + arg);
         message(verb, msg, obs);
         channel_log(msg, verb, me);
