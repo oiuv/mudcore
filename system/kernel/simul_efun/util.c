@@ -190,15 +190,15 @@ varargs mixed config(string key, mixed value)
 {
     if (nullp(key))
     {
-        return CONFIG_D->query_entire_dbase();
+        return CORE_CONFIG_D->query_entire_dbase();
     }
 
     if (nullp(value))
     {
-        return CONFIG_D->query(key);
+        return CORE_CONFIG_D->query(key);
     }
     else
     {
-        return CONFIG_D->set(key, value);
+        return CORE_CONFIG_D->set(key, value);
     }
 }
