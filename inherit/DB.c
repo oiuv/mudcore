@@ -3,7 +3,8 @@
  * @author 雪风@mud.ren
  * @copyright mudcore@mud.ren
  */
-
+#ifdef __PACKAGE_DB__
+#include <mysql.h>
 // 数据库配置
 nosave string db_host;
 nosave string db_db;
@@ -96,7 +97,7 @@ varargs void create(string host, string db, string user)
     }
     else
     {
-        db_host = SIMUL_EFUN_OB->config("DB_HOST");
+        db_host = DB_HOST;
     }
 
     if (db)
@@ -105,7 +106,7 @@ varargs void create(string host, string db, string user)
     }
     else
     {
-        db_db = SIMUL_EFUN_OB->config("DB_DATABASE");
+        db_db = DB_DATABASE;
     }
 
     if (user)
@@ -114,7 +115,7 @@ varargs void create(string host, string db, string user)
     }
     else
     {
-        db_user = SIMUL_EFUN_OB->config("DB_USERNAME");
+        db_user = DB_USERNAME;
     }
 }
 /**
@@ -183,7 +184,7 @@ string implodeX(mixed *arr, string del)
 
     foreach (mixed x in arr)
     {
-        // debug(typeof(x));
+        // debug_message(typeof(x));
         switch (typeof(x))
         {
         case "int":
@@ -784,5 +785,7 @@ mixed delete()
 string dump()
 {
     string line = repeat_string("-*-", 20);
-    return sprintf("\n%s\ndb_host = %s\ndb_db = %s\ndb_user = %s\ndb_handle = %d\ndb_error = %O\ndb_table = %s\ndb_table_column = %O\ndb_sql = %s\n%s\n", line, db_host, db_db, db_user, db_handle, db_error, db_table, db_table_column, db_sql, line);
+    return sprintf("\n%s\ndb_host = %s\ndb_db = %s\ndb_user = %s\ndb_handle = %d\ndb_error = %O\ndb_table = %s\ndb_table_column = %O\ndb_sql = %s\ndb_status = %s\n%s\n", line, db_host, db_db, db_user, db_handle, db_error, db_table, db_table_column, db_sql, db_status(), line);
 }
+
+#endif

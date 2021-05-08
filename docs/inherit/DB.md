@@ -1,6 +1,6 @@
 # DB模块使用文档
 
-虽然MUD游戏多数只使用到`save_object()`存档数据，但总有一些情况我们需要使用到mysql，存一些必要的数据到数据库中，LPC中提供了数据库操作的核心函数：`db_connect`、`db_exec`、`db_fetch`、`db_close`、`db_status`，可以满足我们所有数据库操作的需求，比如，像本站中的玩家注册游戏账号自动注册社区账号，可以用以下代码实现：
+虽然MUD游戏多数只使用到`save_object()`存档数据，但总有一些情况我们需要使用到mysql，存一些必要的数据到数据库中，LPC中提供了数据库操作的核心函数：`db_connect`、`db_exec`、`db_fetch`、`db_close`、`db_status`，可以满足我们所有数据库操作的需求，比如，像bbs.mud.ren中的玩家注册游戏账号自动注册社区账号，可以用以下代码实现：
 
 ```c
 // 调用玩家连线对象注册bbs.mud.ren网站账号

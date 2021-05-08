@@ -26,7 +26,7 @@ mixed valid_database(object caller, string func, mixed *info)
         debug_message("([caller : " + caller + ", func : " + func + "])");
     }
     if (func == "connect")
-        return DB_PASSWD; // mysql数据库密码
+        return DB_PASSWORD; // mysql数据库密码
     else
         return 1;
 }

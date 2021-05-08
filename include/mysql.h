@@ -10,8 +10,8 @@ Date: 2019-04-01
 #define MYSQL_H
 
 #define DB_HOST     config("DB_HOST")
-#define DB_NAME     config("DB_DATABASE")
-#define DB_USER     config("DB_USERNAME")
-#define DB_PASSWD   config("DB_PASSWORD")
+#define DB_DATABASE config("DB_DATABASE")
+#define DB_USERNAME config("DB_USERNAME")
+#define DB_PASSWORD config("DB_PASSWORD")
 
 #endif
