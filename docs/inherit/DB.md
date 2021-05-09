@@ -114,7 +114,7 @@ DB_USERNAME : root
 DB_PASSWORD : root
 ```
 
-注意，`config`文件中只是指定了数据库默认配置，如果不使用文件配置，可以使用`setConnection`配置数据库连接。
+注意，`config`文件中只是指定了数据库默认配置，如果不使用文件配置，也可以在初始化时配置。
 
 ```c
 void test()
@@ -129,7 +129,7 @@ void test()
 }
 ```
 
-或者使用 `setConnect()` 方法配置数据库：
+或者使用 `setConnection()` 方法配置数据库：
 
 ```c
 void test()
@@ -144,7 +144,7 @@ void test()
 }
 ```
 
-上以配置使用以的是系统默认数据库类型（`__DEFAULT_DB__`），如果要指定数据库类型可以使用以下方式：
+上以配置使用以的是系统默认数据库类型`__DEFAULT_DB__`，如果要指定数据库类型可以使用以下方式：
 
 ```c
 void test()

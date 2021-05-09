@@ -527,16 +527,16 @@ private mixed connect()
     if (!db_handle || stringp(db_handle))
     {
         db_handle = db_connect(db_host, db_db, db_user, db_type);
+        /* error */
+        if (stringp(db_handle))
+            return db_error = db_handle;
+        else
+        {
+            // 默认mysql编码
+            db_exec(db_handle, "set names utf8mb4");
+        }
     }
-    /* error */
-    if (stringp(db_handle))
-        return db_error = db_handle;
-    else
-    {
-        // 默认mysql编码
-        db_exec(db_handle, "set names utf8mb4");
-        return db_handle;
-    }
+    return db_handle;
 }
 /**
  * @brief 关闭数据库连接
