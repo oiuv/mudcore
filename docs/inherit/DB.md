@@ -104,7 +104,6 @@ varargs string content(int id, string host, string db, string user)
 
 当你需要使用数据库增删改查功能时，可直接使用`CORE_DB`(`/mudcore/inherit/DB`)：
 
-
 首先，在你的`/data/`目录中新增配置文件`config`（如果你用git做版本管理，这个文件一定要加到.gitignore中），文件内容增加以下配置：
 
 ```
@@ -311,6 +310,16 @@ users = DB->table("users")
            ->get();
 ```
 
+#### whereIn / whereNotIn / orWhereIn / orWhereNotIn
+
+验证字段值是否在给定的数组中：
+
+```c
+users = DB->table("users")
+           ->whereIn("id", ({1, 3, 5, 7, 9}))
+           ->get();
+```
+
 #### whereNull / orWhereNull / whereNotNull / orWhereNotNull
 
 验证指定的字段是否是 `NULL`：
@@ -321,7 +330,17 @@ users = DB->table("users")
            ->get();
 ```
 
-### Ordering, Grouping, Limit & Offset
+### Distinct, Ordering, Grouping, Limit & Offset
+
+#### distinct
+
+`distinct` 方法会强制让查询返回的结果不重复：
+
+```c
+users = DB->table("users")
+                ->distinct()
+                ->get("name");
+```
 
 #### orderBy
 

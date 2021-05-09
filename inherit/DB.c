@@ -176,6 +176,17 @@ object table(string table)
     return this_object();
 }
 /**
+ * @brief 使用DISTINCT过滤重复数据
+ *
+ * @return object
+ */
+object distinct()
+{
+    db_distinct = 1;
+
+    return this_object();
+}
+/**
  * @brief 针对SQL展开数组的处理
  *
  * @param arr 需处理的数组
@@ -367,7 +378,20 @@ object orWhereNotNull(string column)
 
 object whereIn(string column, mixed *x, int not)
 {
-    // todo
+    string notin = " IN ";
+
+    if (not)
+    {
+        notin = " NOT IN ";
+    }
+
+    if (sizeof(db_sql_where))
+    {
+        db_sql_where += " AND ";
+    }
+
+    db_sql_where += column + notin + "(" + implodeX(x, ",") + ")";
+
     return this_object();
 }
 
@@ -378,7 +402,15 @@ object whereNotIn(string column, mixed *x)
 
 object orWhereIn(string column, mixed *x, int not )
 {
-    // todo
+    string notin = " IN ";
+
+    if (not)
+    {
+        notin = " NOT IN ";
+    }
+
+    db_sql_where += " OR " + column + notin + "(" + implodeX(x, ",") + ")";
+
     return this_object();
 }
 
@@ -511,6 +543,11 @@ private string db_sql()
 {
     if (!sizeof(db_sql))
     {
+        if (db_distinct)
+        {
+            db_sql_columns = "DISTINCT " + db_sql_columns;
+        }
+
         db_sql = "SELECT " + db_sql_columns + " FROM " + db_table;
         db_sql_bindings();
     }
