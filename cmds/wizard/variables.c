@@ -32,7 +32,7 @@ int main(object me, string arg)
     }
     else
     {
-        arg = lower_case(arg);
+        // arg = lower_case(arg);
 
         ob = present(arg, environment(me));
         if (!ob)

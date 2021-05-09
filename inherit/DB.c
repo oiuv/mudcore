@@ -6,9 +6,9 @@
 #ifdef __PACKAGE_DB__
 #include <mysql.h>
 // 数据库配置
-nosave string db_host;
-nosave string db_db;
-nosave string db_user;
+nosave string db_host = DB_HOST;
+nosave string db_db = DB_DATABASE;
+nosave string db_user = DB_USERNAME;
 nosave int db_type = __DEFAULT_DB__;
 // 数据库查询
 nosave mixed db_handle;
@@ -96,25 +96,13 @@ varargs void create(string host, string db, string user, int type)
     {
         db_host = host;
     }
-    else
-    {
-        db_host = DB_HOST;
-    }
     if (db)
     {
         db_db = db;
     }
-    else
-    {
-        db_db = DB_DATABASE;
-    }
     if (user)
     {
         db_user = user;
-    }
-    else
-    {
-        db_user = DB_USERNAME;
     }
     if (type)
     {
