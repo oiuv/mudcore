@@ -9,21 +9,7 @@ History:
 *****************************************************************************/
 string *read_lines(string file)
 {
-    string *list;
-    string str;
-
-    str = read_file(file);
-    if (!str)
-        return ({});
-
-    list = explode(str, "\n");
-    for (int i = 0; i < sizeof(list); i++)
-        if (list[i][0] == '#' || !strlen(list[i]))
-            list[i] = 0;
-
-    list -= ({0});
-
-    return list;
+    return filter_array(explode(read_file(file), "\n"), (: $1[0]!='#' :));
 }
 
 void assure_file(string file)
