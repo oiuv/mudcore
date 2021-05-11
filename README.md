@@ -194,6 +194,7 @@ CORE_VIRTUAL_D|/system/daemons/virtual_d.c|负责虚拟对象处理
 
 simul-efun|简介
 -|-
+all_environment|返回对象的所有环境
 ansi|转换 $HIR$ 等为 ansi 颜色代码
 array_sum|返回数组元素的和
 assure_file|建立文件目录
@@ -226,6 +227,9 @@ log_file|记录日志到指定文件
 log_time|方便日志记录的 ctime 时间格式
 lowest|返回一组数值的最小值
 msg|智能区域消息
+number_string|转化数字为科学计数法的字符串格式
+percent|返回数字在指定基数上的百分比
+percent_of|返回数据在指定倍数上的百分比
 print_r|数组打印功能，格式化输出，开发调试用
 process_bar|显示指定百分比的进度条
 pronoun|返回中文人称代词

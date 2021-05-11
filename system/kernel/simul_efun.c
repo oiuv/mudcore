@@ -1,4 +1,5 @@
 #include <ansi.h>
+#include "simul_efun/all_environment.c"
 #include "simul_efun/array.c"
 #include "simul_efun/atoi.c"
 #include "simul_efun/bit.c"
@@ -14,9 +15,12 @@
 #include "simul_efun/json.c"
 #include "simul_efun/lowest.c"
 #include "simul_efun/message.c"
+#include "simul_efun/number_string.c"
 #include "simul_efun/override.c"
 #include "simul_efun/path.c"
+#include "simul_efun/percent.c"
 #include "simul_efun/range.c"
+#include "simul_efun/reduce.c"
 #include "simul_efun/sum.c"
 #include "simul_efun/util.c"
 
