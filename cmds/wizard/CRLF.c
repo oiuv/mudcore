@@ -10,8 +10,6 @@ int convert_file(object me, string file);
 
 int main(object me, string arg)
 {
-    int *total = ({0});
-
     seteuid(geteuid(me));
 
     if (!arg)

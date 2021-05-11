@@ -38,7 +38,6 @@ mixed compile_object(string str)
 string object_name(object ob)
 {
     // debug_message("[CORE_MASTER_OB]->object_name():" + file_name(ob));
-    if (ob)
+    if (ob && function_exists("query", ob, 1))
         return ob->short();
-    return "未知对象";
 }
