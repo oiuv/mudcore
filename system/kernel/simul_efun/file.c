@@ -44,10 +44,10 @@ void assure_file(string file)
     }
 }
 
-void log_file(string file, string text)
+void log_file(string file, string text, int flag)
 {
     assure_file(LOG_DIR + file);
-    write_file(LOG_DIR + file, text);
+    write_file(LOG_DIR + file, text, flag);
 }
 
 void cat(string file)
