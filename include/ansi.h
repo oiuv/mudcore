@@ -71,15 +71,18 @@
 /* Additional ansi Esc codes added to ansi.h by Gothic  april 23,1993 */
 /* Note, these are Esc codes for VT100 terminals, and emmulators */
 /*          and they may not all work within the mud             */
-
-#define CLR ESC + "[2J"      /* Clear the screen  */
-#define HOME ESC + "[H"      /* Send cursor to home position */
+#define CLR CSI "2J"         /* Clear the screen  */
+#define HOME CSI "H"         /* Send cursor to home position */
 #define REF CLR + HOME       /* Clear screen and home cursor */
-#define SAVEC ESC + "[s"     /* Save cursor position */
-#define REST ESC + "[u"      /* Restore cursor to saved position */
-#define FRTOP ESC + "[2;25r" /* Freeze top line */
-#define FRBOT ESC + "[1;24r" /* Freeze bottom line */
-#define UNFR ESC + "[r"      /* Unfreeze top and bottom lines */
+#define SAVEC CSI "s"        /* Save cursor position */
+#define REST CSI "u"         /* Restore cursor to saved position */
+#define FRTOP CSI "2;25r"    /* Freeze top line */
+#define FRBOT CSI "1;24r"    /* Freeze bottom line */
+#define UNFR CSI "r"         /* Unfreeze top and bottom lines */
+
+#define FREEZE(x, y) CSI + x + ";" + y + "r" /* Freeze 住從 x 到 y 這幾行作為 screen */
+#define MOVEC(x, y) CSI + x + ";" + y + "H"  /* 將 cursor 移至第 x 行第 y 字 */
+
 #define REVINDEX ESC + "M"   /* Scroll screen in opposite direction */
 #define BIGTOP ESC + "#3"    /* Dbl height characters, top half */
 #define BIGBOT ESC + "#4"    /* Dbl height characters, bottem half */
