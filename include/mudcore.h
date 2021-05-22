@@ -63,7 +63,7 @@
 
 /* 其他 */
 #ifndef HTTP_PORT
-#define HTTP_PORT   config("HTTP_PORT")
+#define HTTP_PORT   8000
 #endif
 
 #ifndef WIZARD
