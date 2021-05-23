@@ -21,7 +21,7 @@ LPMUD游戏开发框架核心代码，仅仅包括核心代码，可以在此基
 1. 运行时配置文件<config.ini>中定义包含文件目录：
 
 ```ini
-include directories : /mudcore/include:/include
+include directories : /include:/mudcore/include
 ```
 
 2. 全局包含头文件<globals.h>中做如下配置：
@@ -91,9 +91,9 @@ int help(object me)
 }
 ```
 
-具体框架使用演示项目：https://github.com/MudRen/mymud
+如果你是使用泥芯框架从零开始开发新游戏，可参考框架使用演示教程：https://bbs.mud.ren/threads/66
 
-除了新开发MUD，老游戏也可以引入框架并使用框架的功能，具体参考：[在现有MUD中集成MudCore框架操作指南](https://bbs.mud.ren/threads/99)
+除了新开发游戏，老游戏也可以引入框架并使用框架的功能，具体参考：https://bbs.mud.ren/threads/99
 
 ## 框架功能介绍
 
@@ -158,10 +158,10 @@ CORE_CONDITION_MOD|/inherit/condition_mod.c|角色增益功能接口，提供增
 CORE_CONDITION|/inherit/condition.c|角色增益状态控制接口，实现游戏BUFF功能
 CORE_DB|/inherit/DB.c|MySQL数据库接口，可以优雅的操作数据库的增删改查
 CORE_DBASE|/inherit/dbase.c|数据存取功能接口，实现对象参数的增删改查功能
+CORE_DBSAVE|/inherit/dbsave.c|系统数据存取接口，配合 DBASE_D 使用
 CORE_MESSAGE|/inherit/message.c|玩家信息处理功能接口，实现分页显示
 CORE_MOVE|/inherit/move.c|对象移动接口，由角色、物品对象继承，方便移动
 CORE_NAME|/inherit/name.c|ID和名称接口，让对象可以被看见(查找)和命名
-CORE_DBSAVE|/inherit/dbsave.c|系统数据存取接口，配合 DBASE_D 使用
 CORE_ROOM|/inherit/room.c|游戏环境标准接口，实现房间核心功能，需要继承DBASE、NAME、CLEAN_UP
 CORE_SAVE|/inherit/save.c|对象数据存取接口，主要是玩家角色使用存档和读档
 CORE_TEAM|/inherit/team.c|角色组队功能接口，实现组队相关功能
