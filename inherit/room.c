@@ -96,8 +96,9 @@ object make_inventory(string file)
 {
     object ob;
 
-    if(!objectp(ob = new(file)))
+    if (!objectp(ob = new(file)))
         return 0;
+
     ob->set("home", base_name(this_object())); // 设置对象所在环境
     ob->move(this_object());
     return ob;
