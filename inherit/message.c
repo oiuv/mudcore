@@ -72,7 +72,9 @@ void finish_input()
 #include <runtime_config.h>
 
 #define LINE_NUMBER 1
+#ifndef LINES_PER_PAGE
 #define LINES_PER_PAGE 30
+#endif
 
 private void step_more(string *msg, int line, int size, int height, string cmd)
 {
