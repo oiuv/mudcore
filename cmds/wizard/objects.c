@@ -7,6 +7,10 @@ int main(object me, string arg)
         print_r(objects( (:clonep:) ));
     else if (arg == "-o")
         print_r(objects( (: !clonep($1) :) ));
+    else if (arg == "-v")
+    {
+        print_r(objects( (:virtualp:) ));
+    }
     else
         print_r(objects());
 
@@ -21,7 +25,7 @@ int help(object me)
     write(@HELP
 指令格式: objects <参数>
 指令说明:
-    这个指令用来打印游戏中载入的对象列表，参数 -c 为复制对象，参数 -o 为蓝图对象。
+    这个指令用来打印游戏中载入的对象列表，参数 -c 为复制对象，参数 -o 为蓝图对象，参数 -v 为虚拟对象。
 HELP);
     return 1;
 }
