@@ -74,6 +74,14 @@
 #define MOTD    CORE_DIR "system/etc/motd"
 #endif
 
+#ifndef MALE
+#define MALE    "男性"
+#endif
+#ifndef FEMALE
+#define FEMALE  "女性"
+#endif
+
+/* 守护进程 */
 #ifndef CHANNEL_D
 #define CHANNEL_D   CORE_CHANNEL_D
 #endif
@@ -95,7 +103,7 @@
 #endif
 
 #ifndef CONFIG_D
-#define CONFIG_D CORE_CONFIG_D
+#define CONFIG_D    CORE_CONFIG_D
 #endif
 
 #ifndef DBASE_D
@@ -130,6 +138,7 @@
 #define SIMUL_EFUN_OB    CORE_SIMUL_EFUN_OB
 #endif
 
+/* 核心对象 */
 #ifndef MASTER_OB
 #define MASTER_OB   CORE_MASTER_OB
 #endif

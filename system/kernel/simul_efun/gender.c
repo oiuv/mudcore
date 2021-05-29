@@ -23,8 +23,8 @@ string pronoun(int pronoun_number, mixed arg)
         case 3:
             switch( arg )
             {
-                case "男性": return "他";
-                case "女性": return "她";
+                case MALE: return "他";
+                case FEMALE: return "她";
                 default:
                     return "它";
             }

@@ -87,7 +87,7 @@ void select_day_phase()
 // This event is called everyday by update_day_phase, defined in the
 // "event_fun" field in /adm/etc/nature/day_phase
 
-void event_midnight()
+void event_midnight(string file)
 {
     string msg;
     int m, d;
@@ -192,37 +192,37 @@ void event_midnight()
 
 void event_dawn(string file)
 {
-    // debug("event_dawn : " + file);
+    // debug_message("3 event_dawn : " + file);
 }
 
 void event_sunrise(string file)
 {
-    // debug("event_sunrise : " + file);
+    // debug_message("6 event_sunrise : " + file);
 }
 
 void event_morning(string file)
 {
-    // debug("event_morning : " + file);
+    // debug_message("9 event_morning : " + file);
 }
 
 void event_noon(string file)
 {
-    // debug("event_noon : " + file);
+    // debug_message("12 event_noon : " + file);
 }
 
 void event_afternoon(string file)
 {
-    // debug("event_afternoon : " + file);
+    // debug_message("15 event_afternoon : " + file);
 }
 
 void event_evening(string file)
 {
-    // debug("event_evening : " + file);
+    // debug_message("18 event_evening : " + file);
 }
 
 void event_night(string file)
 {
-    // debug("event_night : " + file);
+    // debug_message("21 event_night : " + file);
 }
 
 // 窗外景象，室内调用
