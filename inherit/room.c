@@ -178,6 +178,85 @@ void add_exit(string dir, string dest)
     addExit(dir, dest);
 }
 
+// 移除出口
+void removeExitN(int y, int x1, int x2)
+{
+    if (query("zone/y") == y && query("zone/x") >= x1 && query("zone/x") <= x2)
+    {
+        removeExit("north");
+    }
+}
+void removeExitS(int y, int x1, int x2)
+{
+    if (query("zone/y") == y && query("zone/x") >= x1 && query("zone/x") <= x2)
+    {
+        removeExit("south");
+    }
+}
+void removeExitW(int x, int y1, int y2)
+{
+    if (query("zone/x") == x && query("zone/y") >= y1 && query("zone/y") <= y2)
+    {
+        removeExit("west");
+    }
+}
+void removeExitE(int x, int y1, int y2)
+{
+    if (query("zone/x") == x && query("zone/y") >= y1 && query("zone/y") <= y2)
+    {
+        removeExit("east");
+    }
+}
+// 上
+void removeExitX(int y, int x1, int x2)
+{
+    removeExitN(y, x1, x2);
+    removeExitS(y + 1, x1, x2);
+}
+// 左
+void removeExitY(int x, int y1, int y2)
+{
+    removeExitW(x, y1, y2);
+    removeExitE(x - 1, y1, y2);
+}
+// 设置房间区域(参数:任意对角线的二个坐标)
+void setRoomArea(int x1, int y1, int x2, int y2)
+{
+    int tx1 = min(({x1, x2}));
+    int ty1 = min(({y1, y2}));
+    int tx2 = max(({x1, x2}));
+    int ty2 = max(({y1, y2}));
+    removeExitX(ty2, tx1, tx2);
+    removeExitX(ty1 - 1, tx1, tx2);
+    removeExitY(x1, y1, y2);
+    removeExitY(x2 + 1, y1, y2);
+}
+
+// 查询光亮级别
+int query_light()
+{
+    int light = efun::set_light(0);
+    // 亮度调节
+    light += NATURE_D->light();
+    // 最小亮度0
+    if (light < 0)
+    {
+        light = 0;
+    }
+    // 最大亮度15
+    else if (light > 15)
+    {
+        light = 15;
+    }
+
+    return light;
+}
+// 增加光亮级别
+void add_light(int light)
+{
+    efun::set_light(light);
+}
+
 // 是否有权到指定方向，可覆盖
 int valid_leave(object me, string dir)
 {

@@ -11,6 +11,7 @@
 
 nosave int current_day_phase = -1;
 nosave mapping *day_phase;
+nosave int light = 0;
 
 private mapping *read_table(string file);
 
@@ -192,37 +193,50 @@ void event_midnight(string file)
 
 void event_dawn(string file)
 {
+    light = 3;
     // debug_message("3 event_dawn : " + file);
 }
 
 void event_sunrise(string file)
 {
+    light = 6;
     // debug_message("6 event_sunrise : " + file);
 }
 
 void event_morning(string file)
 {
+    light = 9;
     // debug_message("9 event_morning : " + file);
 }
 
 void event_noon(string file)
 {
+    light = 12;
     // debug_message("12 event_noon : " + file);
 }
 
 void event_afternoon(string file)
 {
+    light = 9;
     // debug_message("15 event_afternoon : " + file);
 }
 
 void event_evening(string file)
 {
+    light = 6;
     // debug_message("18 event_evening : " + file);
 }
 
 void event_night(string file)
 {
+    light = 3;
     // debug_message("21 event_night : " + file);
+}
+
+// 环境光线，可重写此方法
+int light()
+{
+    return light;
 }
 
 // 窗外景象，室内调用
