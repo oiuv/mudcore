@@ -7,9 +7,20 @@ Version: v1.0
 Date: 2019-03-12
 History:
 *****************************************************************************/
+// 判断文件是否存在
+int file_exists(string file)
+{
+    return (file_size(file) >= 0);
+}
+
 string *read_lines(string file)
 {
-    return filter_array(explode(read_file(file), "\n"), (: $1[0]!='#' :));
+    if (file_exists(file))
+    {
+        return filter_array(explode(read_file(file), "\n"), (: $1[0] != '#' :));
+    }
+    else
+        error("文件 " + file + " 不存在！");
 }
 
 void assure_file(string file)

@@ -202,3 +202,7 @@ varargs mixed config(string key, mixed value)
         return CORE_CONFIG_D->set(key, value);
     }
 }
+varargs mixed env(string key, mixed value)
+{
+    return config(key, value);
+}
