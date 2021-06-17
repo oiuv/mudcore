@@ -20,12 +20,12 @@ nosave string code = env("IQA_CODE");
 nosave mapping status = ([]);
 nosave object receiver;
 
-private void write_data(int fd)
+protected void write_data(int fd)
 {
     socket_write(fd, status[fd]["http"]);
 }
 
-private void receive_data(int fd, mixed result)
+protected void receive_data(int fd, mixed result)
 {
     string res;
     // debug_message(result);
@@ -48,11 +48,11 @@ private void receive_data(int fd, mixed result)
     socket_close(fd);
 }
 
-private void receive_callback(int fd, mixed result, string addr)
+protected void receive_callback(int fd, mixed result, string addr)
 {
 }
 
-private void socket_shutdown(int fd)
+protected void socket_shutdown(int fd)
 {
     socket_close(fd);
 }
