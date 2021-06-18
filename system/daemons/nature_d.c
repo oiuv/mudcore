@@ -233,8 +233,8 @@ void event_night(string file)
     // debug_message("21 event_night : " + file);
 }
 
-// 环境光线，可重写此方法
-int light()
+// 环境ob光线，可重写此方法
+int light(object ob)
 {
     return light;
 }

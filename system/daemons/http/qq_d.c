@@ -19,15 +19,17 @@ nosave int group = env("MIRAI_GROUP") || 9783836;
 nosave mapping status = ([]);
 nosave string session;
 
-private void verify();
-private void websocket();
+protected void verify();
+protected void websocket();
+protected void msg(mixed data);
+protected void send(string msg);
 
-private void http(int fd)
+protected void http(int fd)
 {
     socket_write(fd, status[fd]["http"]);
 }
 
-private void receive_auth(int fd, mixed result)
+protected void receive_auth(int fd, mixed result)
 {
     int n = strsrch(result, "{");
     // debug_message(result);
@@ -47,7 +49,7 @@ private void receive_auth(int fd, mixed result)
     }
 }
 
-private void receive_verify(int fd, mixed result)
+protected void receive_verify(int fd, mixed result)
 {
     int n = strsrch(result, "{");
     // debug_message(result);
@@ -64,66 +66,79 @@ private void receive_verify(int fd, mixed result)
         }
     }
 }
-private void receive_msg(int fd, mixed result)
+protected void receive_msg(int fd, mixed result)
 {
     // debug_message(sprintf("QQ_D receive_msg(fd = %d, result = %O)", fd, result));
     socket_close(fd);
 }
 
-private void receive_data(int fd, mixed result)
+// 可重写此方法以适应自己的MUD
+protected void msg(mapping data)
 {
-    string res;
+    mapping sender, messageChain;
+    string type;
+
+    sender = data["sender"];
+    type = data["type"];
+    // 这里只做最傻瓜的处理
+    messageChain = data["messageChain"][1];
+    if (type == "GroupMessage")
+    {
+        string msg = "[其它类型消息]";
+        if (messageChain["type"] == "Plain")
+        {
+            msg = messageChain["text"];
+        }
+        else if (messageChain["type"] == "Face")
+        {
+            msg = "[表情]" + messageChain["name"];
+        }
+        // 发送消息到MUD
+        message("info", HIG "【QQ群】" NOR + sender["memberName"] + "@" + sender["group"]["name"] + "：" + msg + "\n", users());
+    }
+}
+
+protected void receive_data(int fd, mixed result)
+{
     int n = strsrch(result, "{");
     // debug_message(result);
     if (n == 4 && strsrch(result, "}}}") > 0)
     {
+        string res;
         mixed json;
-        mapping sender, messageChain;
-        string type;
         res = trim(result[n..]);
         json = json_decode(res);
         // debug_message(sprintf("%O", json));
-        sender = json["sender"];
-        type = json["type"];
-        // 这里只做最傻瓜的处理
-        messageChain = json["messageChain"][1];
-        if (type == "GroupMessage")
-        {
-            string msg ="[其它类型消息]";
-            if (messageChain["type"] == "Plain")
-            {
-                msg = messageChain["text"];
-            }
-            else if (messageChain["type"] == "Face")
-            {
-                msg = "[表情]" + messageChain["name"];
-            }
-            // 发送消息到MUD
-            message("info", HIG"【QQ群】"NOR + sender["memberName"] + "@" + sender["group"]["name"] + "：" + msg + "\n", users());
-        }
+        msg(json);
     }
 }
 
-private void receive_callback(int fd, mixed result)
+protected void receive_callback(int fd, mixed result)
 {
     // debug_message(sprintf("QQ_D receive_callback(fd = %d, result = %O)", fd, result));
 }
 
-private void socket_shutdown(int fd)
+protected void socket_shutdown(int fd)
 {
     // debug_message(sprintf("QQ_D socket_shutdown(fd = %d)", fd));
     socket_close(fd);
 }
 
 /* 游戏消息转发QQ群调用此方法 */
-void msg(string msg)
+varargs void send(string msg, int qun)
 {
     int fd;
     int ret;
+    string body;
     string path = "/sendGroupMessage";
-    // string body = "{\"sessionKey\":\"" + session + "\",\"target\":" + group + ",\"messageChain\":[{\"type\":\"Plain\",\"text\":\"" + msg + "\"}]}";
+    string qq_qun = group + "";
+    if (qun)
+    {
+        qq_qun = qun + "";
+    }
+    // body = "{\"sessionKey\":\"" + session + "\",\"target\":" + qq_qun + ",\"messageChain\":[{\"type\":\"Plain\",\"text\":\"" + msg + "\"}]}";
     // 美化格式，不用转义
-    string body = @RAW
+    body = @RAW
 {
     "sessionKey": "%^session%^",
     "target": %^group%^,
@@ -137,7 +152,7 @@ void msg(string msg)
 RAW;
     body = terminal_colour(body, ([
         "session":session,
-        "group":group + "",
+        "group":qq_qun,
         "msg":msg,
     ]));
 
@@ -152,8 +167,9 @@ RAW;
         socket_close(fd);
     }
 }
+
 // 连接websocket
-private void websocket()
+protected void websocket()
 {
     int fd;
     int ret;
@@ -171,7 +187,7 @@ private void websocket()
     }
 }
 // 绑定session到QQ
-private void verify()
+protected void verify()
 {
     int fd;
     int ret;
@@ -190,7 +206,7 @@ private void verify()
     }
 }
 // 获取session
-private void auth()
+protected void auth()
 {
     int fd;
     int ret;
@@ -209,8 +225,7 @@ private void auth()
     }
 }
 
-void create()
+protected void create()
 {
     seteuid(ROOT_UID);
-    auth();
 }

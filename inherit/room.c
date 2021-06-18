@@ -237,7 +237,7 @@ int query_light()
 {
     int light = efun::set_light(0);
     // 亮度调节
-    light += NATURE_D->light();
+    light += NATURE_D->light(this_object());
     // 最小亮度0
     if (light < 0)
     {
