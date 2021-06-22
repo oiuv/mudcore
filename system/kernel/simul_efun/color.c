@@ -43,6 +43,7 @@ string remove_ansi(string arg)
     arg = replace_string(arg, HBMAG, "");
     arg = replace_string(arg, HBCYN, "");
     arg = replace_string(arg, HBWHT, "");
+    arg = replace_string(arg, HIDDEN, "");
     return arg;
 }
 
@@ -91,6 +92,7 @@ string ansi(string content)
     content = replace_string(content, "$REV$", REV);
     content = replace_string(content, "$HIREV$", HIREV);
     content = replace_string(content, "$BOLD$", BOLD);
+    content = replace_string(content, "$HIDDEN$", HIDDEN);
 
     return content;
 }

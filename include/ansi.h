@@ -62,7 +62,7 @@
 #define BLINK SGR("5")   /* Initialize blink mode */
 #define REV SGR("7")     /* Turns reverse video mode on */
 #define HIREV SGR("1;7") /* Hi intensity reverse video  */
-#define HIDE SGR("8")    /* 消隐(部分客户端不支持) */
+#define HIDDEN SGR("8")  /* 消隐(部分客户端不支持) */
 #define BOFF SGR("21")   /* BOLD OFF */
 #define IOFF SGR("23")   /* ITALIC OFF */
 #define UOFF SGR("24")   /* UNDERLINE OFF */
