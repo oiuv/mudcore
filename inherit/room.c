@@ -47,6 +47,12 @@ void reset()
     write_file(LOG_DIR + "reset", "[ROOM]->reset():" +
             sprintf("%-40s%s", file_name(this_object()), ctime(time()) + "\n"));
     */
+    // 仅继承对象继续执行
+    if (!inherits(CORE_ROOM, this_object()))
+    {
+        return;
+    }
+
     if (!mapp(ob_list = query("objects")))
         return;
 
