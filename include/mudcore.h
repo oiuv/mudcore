@@ -41,6 +41,9 @@
 #define CORE_TIME_D         CORE_DIR "system/daemons/time_d"
 #define CORE_VIRTUAL_D      CORE_DIR "system/daemons/virtual_d"
 
+#define CORE_INTERMUD_D             CORE_DIR "system/daemons/intermud/i2d"
+#define CORE_INTERMUD_SERVICE(x)    (CORE_DIR "system/daemons/intermud/_" + x)
+
 /* inherit 特性文件 */
 #define CORE_ACTION         CORE_DIR "inherit/action"
 #define CORE_ATTACK         CORE_DIR "inherit/attack"
@@ -116,6 +119,10 @@
 
 #ifndef LOGIN_D
 #define LOGIN_D     CORE_LOGIN_D
+#endif
+
+#ifndef INTERMUD_D
+#define INTERMUD_D CORE_INTERMUD_D
 #endif
 
 #ifndef NAME_D
