@@ -212,6 +212,16 @@ mapping query_mudinfo(string name)
     return 0;
 }
 
+void delete_mudinfo(string name)
+{
+    // SECURED_INTERMUD_API;
+
+    if (!mapp(mudlist))
+        return;
+    if (mapp(mudlist[name]))
+        map_delete(mudlist, name);
+}
+
 void set_mud_alias(string alias, string name)
 {
     // SECURED_INTERMUD_API;
