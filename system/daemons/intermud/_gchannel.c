@@ -15,7 +15,7 @@
 #include "mudlib.h"
 #include "intermud.h"
 
-inherit F_CLEAN_UP;
+inherit CORE_CLEAN_UP;
 
 nosave string id;
 nosave mapping spam_check = ([]);

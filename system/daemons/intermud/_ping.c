@@ -17,8 +17,8 @@
 
 #define VERBOSE
 
-inherit F_CLEAN_UP;
-inherit F_DBASE;
+inherit CORE_CLEAN_UP;
+inherit CORE_DBASE;
 
 private void create()
 {

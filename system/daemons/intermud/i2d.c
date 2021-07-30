@@ -23,9 +23,9 @@
 #define LOG_TRAFFIC
 #define SAVE_MUDLIST
 
-inherit F_DBASE;
+inherit CORE_DBASE;
 #ifdef SAVE_MUDLIST
-inherit F_SAVE;
+inherit CORE_SAVE;
 #endif /* SAVE_MUDLIST */
 
 nosave int udp_port;
@@ -113,11 +113,16 @@ void remove()
 #endif /* SAVE_MUDLIST */
 }
 
-private void read_callback(int socket, string msg, string addr)
+private void read_callback(int socket, mixed msg, string addr)
 {
     string *info, p, v;
     mixed *handler;
     mapping args;
+
+    if (bufferp(msg))
+    {
+        msg = string_decode(msg, "gbk");
+    }
 
 #ifdef LOG_UDP
     log_file("intermud/udp.log", sprintf("[%s] from %s (size=%d): %s\n",

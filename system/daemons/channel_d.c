@@ -196,7 +196,7 @@ varargs int do_channel(object me, string verb, string arg, int emote)
         {
             ROBOT_NPC->receive_report(me, verb, arg);
         }
-        msg = sprintf(channels[verb]["msg_speak"], me->short(), channels[verb]["msg_color"] + arg);
+        msg = sprintf(channels[verb]["msg_speak"], me->short() || me->query("channel_id"), channels[verb]["msg_color"] + arg);
         message(verb, msg, obs);
         channel_log(msg, verb, me);
     }
