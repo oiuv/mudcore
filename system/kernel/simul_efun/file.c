@@ -17,7 +17,7 @@ string *read_lines(string file)
 {
     if (file_exists(file))
     {
-        return filter_array(explode(read_file(file), "\n"), (: $1[0] != '#' :));
+        return filter_array(explode(read_file(file), "\n"), (: $1[0] != '#' && $1[0] != ';' :));
     }
     else
         error("文件 " + file + " 不存在！");
