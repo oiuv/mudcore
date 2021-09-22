@@ -186,23 +186,35 @@ varargs string sort_string(string input, int width, int prefix)
 }
 
 // 游戏配置内容的读取或设置
-varargs mixed config(string key, mixed value)
+varargs mixed env(string key, mixed value)
 {
     if (nullp(key))
     {
-        return CORE_CONFIG_D->query_entire_dbase();
+        return CORE_ENV_D->query_entire_dbase();
     }
 
     if (nullp(value))
     {
-        return CORE_CONFIG_D->query(key);
+        return CORE_ENV_D->query(key);
     }
     else
     {
-        return CORE_CONFIG_D->set(key, value);
+        return CORE_ENV_D->set(key, value);
     }
 }
-varargs mixed env(string key, mixed value)
+varargs mixed config(string key, mixed value)
 {
-    return config(key, value);
+    if (nullp(key))
+    {
+        return CORE_ENV_D->query_entire_dbase();
+    }
+
+    if (nullp(value))
+    {
+        return CORE_ENV_D->query(key);
+    }
+    else
+    {
+        return CORE_ENV_D->set(key, value);
+    }
 }

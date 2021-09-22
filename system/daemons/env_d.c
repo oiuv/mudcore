@@ -1,15 +1,15 @@
 /*****************************************************************************
 Copyright: 2021, Mud.Ren
-File name: config_d.c
+File name: env_d.c
 Description: 游戏配置守护进程
 Author: xuefeng
 Version: v1.0
 Date: 2021-04-01
-说明：游戏中自定义配置的存取，推荐直接使用config(key, void | value)来读或写配置
+说明：游戏中自定义配置的存取，推荐直接使用env(key, void | value)来读或写配置
 *****************************************************************************/
 inherit CORE_DBASE;
 
-#define CONFIG_FILE DATA_DIR "config"
+#define CONFIG_FILE DATA_DIR ".env"
 
 void create()
 {

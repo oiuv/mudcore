@@ -32,9 +32,9 @@
 #define CORE_CHINESE_D      CORE_DIR "system/daemons/chinese_d"
 #define CORE_COMBAT_D       CORE_DIR "system/daemons/combat_d"
 #define CORE_COMMAND_D      CORE_DIR "system/daemons/command_d"
-#define CORE_CONFIG_D       CORE_DIR "system/daemons/config_d"
 #define CORE_DBASE_D        CORE_DIR "system/daemons/dbase_d"
 #define CORE_EMOTE_D        CORE_DIR "system/daemons/emote_d"
+#define CORE_ENV_D          CORE_DIR "system/daemons/env_d"
 #define CORE_LOGIN_D        CORE_DIR "system/daemons/login_d"
 #define CORE_NAME_D         CORE_DIR "system/daemons/name_d"
 #define CORE_NATURE_D       CORE_DIR "system/daemons/nature_d"
@@ -105,10 +105,6 @@
 #define COMMAND_D   CORE_COMMAND_D
 #endif
 
-#ifndef CONFIG_D
-#define CONFIG_D    CORE_CONFIG_D
-#endif
-
 #ifndef DBASE_D
 #define DBASE_D     CORE_DBASE_D
 #endif
@@ -117,12 +113,16 @@
 #define EMOTE_D     CORE_EMOTE_D
 #endif
 
+#ifndef ENV_D
+#define ENV_D       CORE_ENV_D
+#endif
+
 #ifndef LOGIN_D
 #define LOGIN_D     CORE_LOGIN_D
 #endif
 
 #ifndef INTERMUD_D
-#define INTERMUD_D CORE_INTERMUD_D
+#define INTERMUD_D  CORE_INTERMUD_D
 #endif
 
 #ifndef NAME_D

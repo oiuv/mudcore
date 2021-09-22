@@ -13,10 +13,10 @@
 #define STREAM 1
 #define EESUCCESS 1
 
-nosave string host = "jisuapiareacode.api.bdymkt.com";
-nosave string addr = "157.255.71.211 80";
-nosave string path = "/iqa/query?question=";
-nosave string code = env("IQA_CODE");
+nosave string host = env("IQA_HOST") || "jisuapiareacode.api.bdymkt.com";
+nosave string addr = env("IQA_ADDR") || "157.255.71.211 80";
+nosave string path = env("IQA_PATH") || "/iqa/query?question=";
+nosave string AppCode = env("IQA_CODE") || env("AppCode");
 nosave mapping status = ([]);
 nosave object receiver;
 
@@ -67,7 +67,7 @@ void iqa(object me, string arg)
 
     fd = socket_create(STREAM, "receive_callback", "socket_shutdown");
     status[fd] = ([]);
-    status[fd]["http"] = "POST " + path + arg + " HTTP/1.1\nHost: " + host + "\nContent-Type: application/json;charset=UTF-8\nX-Bce-Signature: AppCode/" + code + "\r\n\r\n";
+    status[fd]["http"] = "POST " + path + arg + " HTTP/1.1\nHost: " + host + "\nContent-Type: application/json;charset=UTF-8\nX-Bce-Signature: AppCode/" + AppCode + "\r\n\r\n";
 
     ret = socket_connect(fd, addr, "receive_data", "write_data");
     if (ret != EESUCCESS)
