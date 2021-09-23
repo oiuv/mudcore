@@ -34,7 +34,7 @@ protected void receive_data(int fd, mixed result)
         // debug_message(sprintf("%O", result));
         if (result["ReturnStatus"] == "Success")
         {
-            tell_object(receiver, BCYN "验证码发送成功，请注意查收短信。\n" NOR);
+            tell_object(receiver, BCYN "消息已发送，请注意查收短信。\n" NOR);
         }
         else
         {
