@@ -381,6 +381,8 @@ varargs int close_door(string dir, int from_other_side)
     return 1;
 }
 
+// todo 增加上锁开锁相关接口
+
 int check_door(string dir, mapping door)
 {
     if (!mapp(doors) || undefinedp(doors[dir]))

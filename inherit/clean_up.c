@@ -27,7 +27,7 @@ int clean_up(int inherited)
     if (this_object()->query("no_clean_up") > 1)
         write_file(LOG_DIR + "no_clean_up", base_name(this_object()) + "\tflag = " +
                    this_object()->query("no_clean_up") + "\n");
-    // 非复制对象或 no_clean_up 为 1 的对象不清除
+    // no_clean_up 为 1 的非复制对象不清除
     if (!clonep() && this_object()->query("no_clean_up") == 1)
         return AGAIN;
     // 在线游戏玩家不清除
