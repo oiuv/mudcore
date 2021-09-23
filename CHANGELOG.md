@@ -4,6 +4,7 @@
 
 * 增加手机短信验证码示例接口
 * 调整CONFIG_D为ENV_D，环境变量配置文件修改为`/data/.env`
+* 调整sefun，itoc(int)改名为unicode(int)
 
 ### 2021年7月
 

@@ -209,6 +209,7 @@ all_environment|返回对象的所有环境
 ansi|转换 $HIR$ 等为 ansi 颜色代码
 array_sum|返回数组元素的和
 assure_file|建立文件目录
+atof|string 类型数字转 float 类型数字
 atoi|string 类型数字转 int 类型数字
 bitCheck|检查数值指定为是否为1
 bitClear|返回数值指定位为0的值
@@ -235,7 +236,6 @@ highest|返回一组数值的最大值
 is_chinese|判断指定字符串是否为中文
 is_english|判断指定字符串是否为英文
 is_numeric|判断指定字符串是否为数字
-itoc|int 类型数字转 ASCII 字符，如 itoc(65) 返回值为 A
 log_file|记录日志到指定文件
 log_time|方便日志记录的 ctime 时间格式
 lowest|返回一组数值的最小值
@@ -252,3 +252,4 @@ remove_ansi|清理 ansi 颜色代码
 sort_string|根据指定宽度换行显示内容，中文支持更友好
 sum|返回一组数值的和
 tail|输出文件尾部最多10行内容到屏幕
+unicode|UNICODE编码转字符，如 unicode(65) 或 unicode(0x41) 返回值为 A

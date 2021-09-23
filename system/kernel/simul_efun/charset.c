@@ -7,6 +7,21 @@ Date: 2012-03-01
 Description: 字符集相关模拟函数
 *****************************************************************************/
 
+int atoi(mixed str)
+{
+    return to_int(str);
+}
+
+float atof(mixed str)
+{
+    return to_float(str);
+}
+
+string unicode(int c)
+{
+    return sprintf("%c", c);
+}
+
 int is_chinese(string str)
 {
     if (!str)
