@@ -35,7 +35,7 @@ void log_error(string file, string message)
  * @brief 编译错误追踪方法
  *
  * @param map
- * @param flag
+ * @param flag // catch(error("error"));
  */
 void error_handler(mapping map, int flag)
 {
@@ -44,9 +44,9 @@ void error_handler(mapping map, int flag)
     str += sprintf("%O\n", map);
 
     if (flag)
-        printf("%s", map["error"]);
-    else
         debug("出错啦！详情记录在 error_handler 日志。");
+    else
+        printf("%s", map["error"]);
 
     log_file("error_handler", str);
 }
