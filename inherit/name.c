@@ -7,7 +7,6 @@ Version: v1.0
 Date: 2019-03-15
 History:
 *****************************************************************************/
-#include <dbase.h>
 
 nosave string *my_id;
 
@@ -22,23 +21,23 @@ int id(string arg)
     if (my_id && member_array(arg, my_id) != -1)
         return 1;
     else
-        return query("id") == arg;
+        return this_object()->query("id") == arg;
 }
 
 varargs void set_name(string name, string *id)
 {
     if (stringp(name))
     {
-        set("name", name);
+        this_object()->set("name", name);
     }
     else
     {
-        set("name", "无名氏");
+        this_object()->set("name", "无名氏");
     }
 
     if (pointerp(id))
     {
-        set("id", lower_case(id[0]));
+        this_object()->set("id", lower_case(id[0]));
         my_id = id;
         // 非玩家对象增加首字母ID，不可以使用 userp() 判断
         if (!this_object()->is_user())
@@ -51,7 +50,7 @@ varargs void set_name(string name, string *id)
 string name()
 {
     string str;
-    if (stringp(str = query("name")))
+    if (stringp(str = this_object()->query("name")))
         return str;
     else
         return file_name(this_object());
@@ -60,8 +59,8 @@ string name()
 string short()
 {
     string str;
-    if (!stringp(str = query("short")))
-        str = name() + (query("id") ? "(" + capitalize(query("id")) + ")" : "");
+    if (!stringp(str = this_object()->query("short")))
+        str = name() + (this_object()->query("id") ? "(" + capitalize(this_object()->query("id")) + ")" : "");
 
     return str;
 }
@@ -70,7 +69,7 @@ string long()
 {
     string str, extra;
 
-    if (!stringp(str = query("long")))
+    if (!stringp(str = this_object()->query("long")))
         str = short() + "\n";
     if (stringp(extra = this_object()->extra_long()))
         str += extra;
