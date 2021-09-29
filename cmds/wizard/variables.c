@@ -46,9 +46,12 @@ int main(object me, string arg)
         if (!ob)
             return notify_fail("无法找到对象 " + arg + "。\n");
     }
-    if (sizeof(vars = variables(ob)))
-        foreach (string var in vars)
-            printf("%s = %O\n", var, fetch_variable(var, ob));
+    if (sizeof(vars = variables(ob, 1)))
+        foreach (string *var in vars)
+            if (strsrch(var[1], "private") == -1)
+                printf("%s = %O\n", var[0], fetch_variable(var[0], ob));
+            else
+                printf("%s 是 %s 类型变量\n", var[0], var[1]);
 
     return 1;
 }
