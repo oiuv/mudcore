@@ -1,6 +1,6 @@
 /*****************************************************************************
 Copyright: 2020, Mud.Ren
-File name: vrm_d.c
+File name: vrm.c
 Author: ＭＵＤ游戏天下
 Description: 虚拟随机迷宫 (Virtual Random Maze)修改版
 Version: v1.1

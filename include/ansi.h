@@ -1,14 +1,22 @@
-//    File    :  /include/ansi.h
-//    Creator    :  Gothic@TMI-2
-//
-//    The standard set of ANSI codes for mudlib use.
+// File    :  /include/ansi.h
+// Creator :  Gothic@TMI-2
+// 雪风@mud.ren 完善修改
+// The standard set of ANSI codes for mudlib use.
 
 #ifndef ANSI_H
 #define ANSI_H
 
-#define ESC "\033"           /* Escape ESC(\e) */
-#define CSI ESC + "["        /* Control Sequence Introducer */
-#define SGR(x) CSI + x + "m" /* Set Graphics Rendition */
+// Control Characters
+#define BEEP "\07" /* Beep Sound BEL(\a) */
+#define ESC "\033" /* Escape ESC(\e | \x1b) */
+// Escape Sequences
+#define CSI ESC + "[" /* Control Sequence Introducer */
+// CSI Color Sequences
+#define SGR(x) CSI + x + "m"                                      /* ANSI color code (Select Graphic Rendition) */
+#define FCC(x) CSI + "38;5;" + x + "m"                            /* Foreground 256 color code */
+#define BCC(x) CSI + "48;5;" + x + "m"                            /* Background 256 color code */
+#define RGB(r, g, b) CSI + "38;2;" + r + ";" + g + ";" + b + "m"  /* Foreground 24 bit rgb color code */
+#define BRGB(r, g, b) CSI + "48;2;" + r + ";" + g + ";" + b + "m" /* Background 24 bit rgb color code */
 
 /* Foreground Colors 30 ~ 37 */
 
@@ -63,7 +71,8 @@
 #define REV SGR("7")     /* Turns reverse video mode on */
 #define HIREV SGR("1;7") /* Hi intensity reverse video  */
 #define HIDDEN SGR("8")  /* 消隐(部分客户端不支持) */
-#define BOFF SGR("21")   /* BOLD OFF */
+#define STRIKE SGR("9")  /* Display text as strikethrough */
+#define BOFF SGR("22")   /* BOLD OFF */
 #define IOFF SGR("23")   /* ITALIC OFF */
 #define UOFF SGR("24")   /* UNDERLINE OFF */
 #define ROFF SGR("27")   /* Reverse OFF */
@@ -88,7 +97,5 @@
 #define BIGBOT ESC + "#4"    /* Dbl height characters, bottem half */
 #define SINGW ESC + "#5"     /* Normal, single-width characters */
 #define DBL ESC + "#6"       /* Creates double-width characters */
-
-#define BEEP "\07" /* Beep Sound BEL(\a) */
 
 #endif
