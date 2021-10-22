@@ -1,6 +1,6 @@
 // dbsave.c 公共数据库系统存档接口
 
-int is_ob_saved() { return 1; }
+int is_db_saved() { return 1; }
 
 int save()
 {

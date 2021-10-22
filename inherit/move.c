@@ -18,7 +18,7 @@ int move_or_destruct(object dest)
         tell_object(this_object(), HIW "\n突然一阵时空扭曲，你被传送到虚空。\n" NOR);
         move(VOID_OB);
     }
-    else if (this_object()->is_ob_saved())
+    else if (this_object()->is_db_saved())
     {
         this_object()->save();
     }
