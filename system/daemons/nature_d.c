@@ -88,7 +88,7 @@ void select_day_phase()
 // This event is called everyday by update_day_phase, defined in the
 // "event_fun" field in /adm/etc/nature/day_phase
 
-void event_midnight(string file)
+void event_midnight(object file)
 {
     string msg;
     int m, d;
@@ -191,43 +191,43 @@ void event_midnight(string file)
     }
 }
 
-void event_dawn(string file)
+void event_dawn(object file)
 {
     light = 3;
     // debug_message("3 event_dawn : " + file);
 }
 
-void event_sunrise(string file)
+void event_sunrise(object file)
 {
     light = 6;
     // debug_message("6 event_sunrise : " + file);
 }
 
-void event_morning(string file)
+void event_morning(object file)
 {
     light = 9;
     // debug_message("9 event_morning : " + file);
 }
 
-void event_noon(string file)
+void event_noon(object file)
 {
     light = 12;
     // debug_message("12 event_noon : " + file);
 }
 
-void event_afternoon(string file)
+void event_afternoon(object file)
 {
     light = 9;
     // debug_message("15 event_afternoon : " + file);
 }
 
-void event_evening(string file)
+void event_evening(object file)
 {
     light = 6;
     // debug_message("18 event_evening : " + file);
 }
 
-void event_night(string file)
+void event_night(object file)
 {
     light = 3;
     // debug_message("21 event_night : " + file);
