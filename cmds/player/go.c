@@ -27,7 +27,7 @@ nosave mapping default_dirs = ([
     "southwest":"西南",
            "up":"上面",
          "down":"下面",
-        "enter":"里面",
+           "in":"里面",
           "out":"外面",
 ]);
 
@@ -50,8 +50,8 @@ nosave mapping r_dirs = ([
     "southwest":"northeast",
            "up":"down",
          "down":"up",
-        "enter":"out",
-          "out":"enter",
+           "in":"out",
+          "out":"in",
 ]);
 
 nosave mapping empty_mapping = ([]);
