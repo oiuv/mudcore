@@ -11,6 +11,7 @@ CORE_CONDITION|/inherit/condition.c|角色增益状态控制接口，实现游�
 CORE_DB|/inherit/DB.c|MySQL数据库接口，可以优雅的操作数据库的增删改查
 CORE_DBASE|/inherit/dbase.c|数据存取功能接口，实现对象参数的增删改查功能
 CORE_DBSAVE|/inherit/dbsave.c|系统数据存取接口，配合 DBASE_D 使用
+CORE_GMCP|/inherit/gmcp.c|GMCP功能接口，可配合mudlet客户端使用
 CORE_MESSAGE|/inherit/message.c|玩家信息处理功能接口，实现分页显示
 CORE_MOVE|/inherit/move.c|对象移动接口，由角色、物品对象继承，方便移动
 CORE_NAME|/inherit/name.c|ID和名称接口，让对象可以被看见(查找)和命名

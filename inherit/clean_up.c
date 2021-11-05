@@ -23,8 +23,8 @@ int clean_up(int inherited)
     object *inv;
 
     // 被其它对象继承时不清除
-    if (inherited)
-        return AGAIN;
+    // if (inherited > 1)
+    //     return AGAIN;
     // 记录因某些原因未能回到出生环境的对象
     if (this_object()->query("no_clean_up") > 1)
         write_file(LOG_DIR + "no_clean_up", sprintf("%O\tno_clean_up = %d\n", this_object(), this_object()->query("no_clean_up")));

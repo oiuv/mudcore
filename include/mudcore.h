@@ -53,6 +53,7 @@
 #define CORE_CONDITION      CORE_DIR "inherit/condition"
 #define CORE_DB             CORE_DIR "inherit/DB"
 #define CORE_DBASE          CORE_DIR "inherit/dbase"
+#define CORE_GMCP           CORE_DIR "inherit/gmcp"
 #define CORE_MESSAGE        CORE_DIR "inherit/message"
 #define CORE_MOVE           CORE_DIR "inherit/move"
 #define CORE_NAME           CORE_DIR "inherit/name"
