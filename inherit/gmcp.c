@@ -20,7 +20,7 @@ void send_gmcp(string gmcp)
 
 varargs void sendGMCP(mapping data, mixed *modules...)
 {
-    if (!this_player() || !has_gmcp(this_player()))
+    if (!has_gmcp())
         return;
 
     if (!mapp(data) || !sizeof(modules))
@@ -44,7 +44,7 @@ private void gmcp_enable()
 
 protected void init_gmcp()
 {
-    if (!this_player() || !has_gmcp(this_player()))
+    if (!has_gmcp())
         return;
     gmcp_enable();
 
