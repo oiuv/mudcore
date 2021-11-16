@@ -61,7 +61,7 @@ string ansi(string content)
     content = replace_string(content, "$BLU$", BLU);
     content = replace_string(content, "$MAG$", MAG);
     content = replace_string(content, "$CYN$", CYN);
-    content = replace_string(content, "$GRY$", GRY);
+    content = replace_string(content, "$HIK$", HIK);
     content = replace_string(content, "$WHT$", WHT);
     content = replace_string(content, "$HIR$", HIR);
     content = replace_string(content, "$HIG$", HIG);
