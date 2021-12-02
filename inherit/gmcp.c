@@ -69,5 +69,4 @@ void gmcp(string req)
 {
     // todo 处理客户端请求
     log_gmcp("Received: " + req);
-    // debug_message(req);
 }

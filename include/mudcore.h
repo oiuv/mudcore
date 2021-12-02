@@ -18,6 +18,10 @@
 #ifndef LOG_DIR
 #define LOG_DIR "/log/"
 #endif
+// area模式目录，应该在 <globals.h> 中定义
+#ifndef AREA_PATTERN_DIR
+#define AREA_PATTERN_DIR    CORE_DIR "world/area_pattern/"
+#endif
 
 /* 核心对象 */
 #define CORE_MASTER_OB      CORE_DIR "system/kernel/master"
@@ -27,6 +31,7 @@
 #define CORE_USER_OB        CORE_DIR "system/object/user"
 
 /* 守护进程 */
+#define CORE_AREA_PATTERN_D CORE_DIR "system/daemons/area_pattern_d"
 #define CORE_CHANNEL_D      CORE_DIR "system/daemons/channel_d"
 #define CORE_CHAR_D         CORE_DIR "system/daemons/char_d"
 #define CORE_CHINESE_D      CORE_DIR "system/daemons/chinese_d"
@@ -38,6 +43,7 @@
 #define CORE_LOGIN_D        CORE_DIR "system/daemons/login_d"
 #define CORE_NAME_D         CORE_DIR "system/daemons/name_d"
 #define CORE_NATURE_D       CORE_DIR "system/daemons/nature_d"
+#define CORE_QUEST_D        CORE_DIR "system/daemons/quest_d"
 #define CORE_TIME_D         CORE_DIR "system/daemons/time_d"
 #define CORE_VIRTUAL_D      CORE_DIR "system/daemons/virtual_d"
 
@@ -46,6 +52,7 @@
 
 /* inherit 特性文件 */
 #define CORE_ACTION         CORE_DIR "inherit/action"
+#define CORE_AREA           CORE_DIR "inherit/area/area"
 #define CORE_ATTACK         CORE_DIR "inherit/attack"
 #define CORE_CLEAN_UP       CORE_DIR "inherit/clean_up"
 #define CORE_COMMAND        CORE_DIR "inherit/command"
@@ -88,6 +95,10 @@
 #endif
 
 /* 守护进程 */
+#ifndef AREA_PATTERN_D
+#define AREA_PATTERN_D   CORE_AREA_PATTERN_D
+#endif
+
 #ifndef CHANNEL_D
 #define CHANNEL_D   CORE_CHANNEL_D
 #endif
@@ -134,6 +145,10 @@
 
 #ifndef NATURE_D
 #define NATURE_D    CORE_NATURE_D
+#endif
+
+#ifndef QUEST_D
+#define QUEST_D    CORE_QUEST_D
 #endif
 
 #ifndef TIME_D

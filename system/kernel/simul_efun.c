@@ -1,5 +1,6 @@
 #include <ansi.h>
 #include "simul_efun/all_environment.c"
+#include "simul_efun/area.c"
 #include "simul_efun/array.c"
 #include "simul_efun/bit.c"
 #include "simul_efun/bitmap_font.c"

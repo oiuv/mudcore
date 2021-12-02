@@ -118,3 +118,42 @@ int color_len(string str)
     }
     return extra;
 }
+
+string color_to_html(string msg)
+{
+    if (!msg)
+        return 0;
+    msg = replace_string(msg, BLK, "<span style=\"color: #000000\">");
+    msg = replace_string(msg, RED, "<span style=\"color: #990000\">");
+    msg = replace_string(msg, GRN, "<span style=\"color: #009900\">");
+    msg = replace_string(msg, YEL, "<span style=\"color: #999900\">");
+    msg = replace_string(msg, BLU, "<span style=\"color: #000099\">");
+    msg = replace_string(msg, MAG, "<span style=\"color: #990099\">");
+    msg = replace_string(msg, CYN, "<span style=\"color: #669999\">");
+    msg = replace_string(msg, WHT, "<span style=\"color: #EEEEEE\">");
+
+    msg = replace_string(msg, HIK, "<span style=\"color: #BBBBBB\">");
+    msg = replace_string(msg, HIR, "<span style=\"color: #FF0000\">");
+    msg = replace_string(msg, HIG, "<span style=\"color: #00FF00\">");
+    msg = replace_string(msg, HIY, "<span style=\"color: #FFFF00\">");
+    msg = replace_string(msg, HIB, "<span style=\"color: #0000FF\">");
+    msg = replace_string(msg, HIM, "<span style=\"color: #FF00FF\">");
+    msg = replace_string(msg, HIC, "<span style=\"color: #00FFFF\">");
+    msg = replace_string(msg, HIW, "<span style=\"color: #FFFFFF\">");
+
+    msg = replace_string(msg, BBLK, "<span style=\"background-color: #FFFF00\">");
+    msg = replace_string(msg, BRED, "<span style=\"background-color: #990000\">");
+    msg = replace_string(msg, BGRN, "<span style=\"background-color: #009900\">");
+    msg = replace_string(msg, BYEL, "<span style=\"background-color: #999900\">");
+    msg = replace_string(msg, BBLU, "<span style=\"background-color: #000099\">");
+    msg = replace_string(msg, BMAG, "<span style=\"background-color: #990099\">");
+    msg = replace_string(msg, BCYN, "<span style=\"background-color: #669999\">");
+    msg = replace_string(msg, BWHT, "<span style=\"background-color: #EEEEEE\">");
+
+    msg = replace_string(msg, NOR, "</span>");
+    msg = replace_string(msg, U, "<span>");
+    msg = replace_string(msg, BLINK, "<span>");
+    msg = replace_string(msg, REV, "<span>");
+
+    return msg;
+}

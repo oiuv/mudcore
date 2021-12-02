@@ -31,7 +31,7 @@ nomask int command_hook(string arg)
     if ((verb = trim(verb)) == "")
         return 0;
 
-    if (!arg && (objectp(environment()) && stringp(environment()->query("exits/" + verb))) &&
+    if (!arg && (objectp(environment()) && environment()->query("exits/" + verb)) &&
         objectp(file = COMMAND_D->find_command("go")) &&
         call_other(file, "main", me, verb))
         ;
@@ -59,6 +59,7 @@ nomask void enable_living()
     if (!query_temp("actived"))
     {
         enable_commands();
+        parse_init();
         set_temp("actived", 1);
         add_action("command_hook", "", 1);
     }

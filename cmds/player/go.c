@@ -6,7 +6,11 @@ Author: xuefeng
 Version: v1.0
 *****************************************************************************/
 #include <ansi.h>
+#include <type.h>
 inherit CORE_CLEAN_UP;
+
+int do_area_move(object me, object env, string dir);
+int do_room_move(object me, object env, string dir);
 
 nosave mapping default_dirs = ([
         "north":"北方",
@@ -58,10 +62,7 @@ nosave mapping empty_mapping = ([]);
 
 int main(object me, string arg)
 {
-    string dest, dir, msg_in, msg_out;
-    object env, obj;
-    mapping exit;
-    int result;
+    object env;
 
     if (!arg)
         return notify_fail("你要往哪个方向走？\n");
@@ -73,33 +74,142 @@ int main(object me, string arg)
     if (!env)
         return notify_fail("你哪里也去不了。\n");
 
-    if (!mapp(exit = env->query("exits")) || undefinedp(exit[arg]))
+    if (env->is_area())
+        return do_area_move(me, env, arg);
+    else
+        return do_room_move(me, env, arg);
+}
+
+int do_room_move(object me, object env, string dir)
+{
+    string dir_name, msg_in, msg_out;
+    object obj;
+    mapping exit;
+    mixed dest;
+    int result;
+
+    if (!mapp(exit = env->query("exits")) || undefinedp(exit[dir]))
     {
         if (query_verb() == "go")
             return notify_fail("这个方向没有出路。\n");
     }
 
-    dest = exit[arg];
-    if (!(obj = find_object(dest)))
-        if (!objectp(obj = load_object(dest)))
-            return notify_fail(sprintf("目标区域无法加载，无法向 %s 移动。\n", dest));
+    dest = exit[dir];
 
-    if (!undefinedp(default_dirs[arg]))
-        dir = default_dirs[arg];
+    switch (typeof(dest))
+    {
+    case T_OBJECT:
+        obj = dest;
+        break;
+    case T_STRING:
+        if (!objectp(obj = load_object(dest)))
+        {
+            return notify_fail(sprintf("目标环境异常，无法向 %s 移动。\n", dest));
+        }
+        break;
+    case T_MAPPING:
+        if (undefinedp(dest["filename"]) || undefinedp(dest["x_axis"]) || undefinedp(dest["y_axis"]))
+        {
+            return notify_fail(sprintf("目标方向异常，无法向 %s 移动。\n", dir));
+        }
+        if (!objectp(obj = load_object(dest["filename"])))
+        {
+            return notify_fail(sprintf("目标环境异常，无法向 %s 移动。\n", dest["filename"]));
+        }
+        break;
+    // case T_INT:
+    // case T_FLOAT:
+    // case T_ARRAY:
+    default:
+        return notify_fail("这个方向的出口有问题，请联系巫师处理。\n");
+    }
+
+    if (undefinedp(dir_name = default_dirs[dir]))
+        dir_name = dir;
 
     // 特殊方向限制移动
-    result = env->valid_leave(me, arg);
+    result = env->valid_leave(me, dir);
     // debug_message("valid_leave:" + result);
     if (!result)
         return 1;
 
-    msg_out = me->query("name") + "往" + dir + "离开了。";
+    msg_out = me->query("name") + "往" + dir_name + "离开了。";
     message("vision", msg_out, environment(me), ({me}));
-
-    me->move(dest);
-
     msg_in = me->query("name") + "走了过来。";
-    message("vision", msg_in, environment(me), ({me}));
+    // move I to dest
+    if (obj->is_area())
+    {
+        if (area_move(obj, me, dest["x_axis"], dest["y_axis"]))
+        {
+            object *obs;
+            obs = obj->query_inventory(dest["x_axis"], dest["y_axis"]);
+            tell_area(obj, dest["x_axis"], dest["y_axis"], msg_in, ({me}));
+            // 對進入的座標做init()動作
+            if (sizeof(obs))
+                obs->init();
+        }
+        else
+            return notify_fail("移动失败！！\n");
+    }
+    else if (!me->move(obj))
+        return notify_fail("移动失败！\n");
+    else
+        message("vision", msg_in, environment(me), ({me}));
+
+    return 1;
+}
+
+int do_area_move(object me, object env, string dir)
+{
+    int x, y;
+    string *area_exits, dir_name, min, mout;
+    object new_env, *obs;
+    mapping info;
+
+    if (!(info = me->query("area_info")))
+        return 0;
+
+    x = info["x_axis"];
+    y = info["y_axis"];
+
+    area_exits = env->query_exits(x, y);
+
+    if (member_array(dir, area_exits) == -1)
+    {
+        write("這個方向沒有出路。\n");
+        return 1;
+    }
+
+    if (undefinedp(dir_name = default_dirs[dir]))
+        dir_name = dir;
+
+    // 檢查area是否合法的移動并通过valid_leave实现移动
+    if (function_exists("valid_leave", env) && !env->valid_leave(me, dir))
+        return 1;
+
+    mout = "往" + dir_name + "離開。\n";
+    min = "走了過來。\n";
+    new_env = environment(me);
+
+    if (undefinedp(dir_name = default_dirs[dir]))
+        dir_name = dir;
+
+    // 顯示離開訊息
+    tell_area(env, x, y, me->name() + mout, ({me}));
+
+    if (new_env->is_area())
+    {
+        // 顯示進入訊息
+        tell_area(new_env, info["x_axis"], info["y_axis"], me->name() + min, ({me}));
+
+        // 對進入的座標做init()動作
+        obs = new_env->query_inventory(info["x_axis"], info["y_axis"]);
+        // 本质上还在一个环境中，需要主动调用init()
+        if (sizeof(obs) > 1)
+            obs->init();
+    }
+    else
+        tell_room(new_env, me->name() + min, me);
 
     return 1;
 }

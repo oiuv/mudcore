@@ -34,6 +34,10 @@ int look_room(object me, object env)
         tell_object(me, "你的四周灰蒙蒙地一片，什么也没有。\n");
         return 1;
     }
+    if (env->is_area())
+    {
+        return env->do_look(me);
+    }
 
     str = sprintf(HIC + "\n%s" + NOR + "%s\n    %s" + NOR,
                     env->short(), wizardp(me) ? " - " + env : env->coordinate(),

@@ -28,15 +28,35 @@ int move_or_destruct(object dest)
 
 varargs int move(mixed dest, int raw)
 {
-    object me;
-    me = this_object();
+    object me = this_object();
+    object env = environment(me);
 
+    // 如果由area移出, 在這做move_out動作
+    if (env && env->is_area())
+    {
+        mapping info;
+        info = this_object()->query("area_info");
+        env->move_out(info["x_axis_old"], info["y_axis_old"], this_object());
+    }
+    // Move & run INIT function
     move_object(dest);
+    // 在移动进目标环境后可能被destruct，所以需要判断me
+    if (!me)
+        return -1;
 
+    // 如果移入的不是區域或虚空，則刪除area_info
+    if (!dest->is_area() && !dest->query("void"))
+        me->delete("area_info");
+    // 玩家对象自动look
     if (interactive(me) && living(me) && !raw)
     {
         command("look");
     }
 
     return 1;
+}
+
+// destruct时调用，建议自己重写此方法
+varargs void remove(string euid)
+{
 }
