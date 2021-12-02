@@ -57,10 +57,12 @@
 #define CORE_MESSAGE        CORE_DIR "inherit/message"
 #define CORE_MOVE           CORE_DIR "inherit/move"
 #define CORE_NAME           CORE_DIR "inherit/name"
+#define CORE_NOCLONE        CORE_DIR "inherit/noclone"
 #define CORE_DBSAVE         CORE_DIR "inherit/dbsave"
 #define CORE_ROOM           CORE_DIR "inherit/room"
 #define CORE_SAVE           CORE_DIR "inherit/save"
 #define CORE_TEAM           CORE_DIR "inherit/team"
+#define CORE_UNIQUE         CORE_DIR "inherit/unique"
 #define CORE_VRM            CORE_DIR "inherit/vrm"
 // 玩家特殊功能
 #define CORE_USER_COMBAT_RECORD CORE_DIR "inherit/user_combat_record"
