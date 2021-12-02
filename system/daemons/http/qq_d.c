@@ -100,17 +100,20 @@ protected void msg(mapping data)
 
 protected void receive_data(int fd, mixed result)
 {
-    int n = strsrch(result, "{");
-    // debug_message(result);
-    if (n == 4 && strsrch(result, "}}}") > 0)
+    int n1 = strsrch(result, "{");
+    int n2 = strsrch(result, "}}}}");
+    // debug_message(n1 + " " + n2);
+    if (n1 == 4 && n2 > 123)
     {
         string res;
         mixed json;
-        res = trim(result[n..]);
+        res = trim(result[n1..n2 + 3]);
         json = json_decode(res);
         // debug_message(sprintf("%O", json));
         msg(json["data"]);
     }
+    else
+        debug_message(result);
 }
 
 protected void receive_callback(int fd, mixed result)
