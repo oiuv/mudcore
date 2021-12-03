@@ -9,9 +9,9 @@ Date: 2019-04-01
 #ifndef MYSQL_H
 #define MYSQL_H
 
-#define DB_HOST     config("DB_HOST")
-#define DB_DATABASE config("DB_DATABASE")
-#define DB_USERNAME config("DB_USERNAME")
-#define DB_PASSWORD config("DB_PASSWORD")
+#define DB_HOST     env("DB_HOST")
+#define DB_DATABASE env("DB_DATABASE")
+#define DB_USERNAME env("DB_USERNAME")
+#define DB_PASSWORD env("DB_PASSWORD")
 
 #endif

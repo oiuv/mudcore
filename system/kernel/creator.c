@@ -1,16 +1,4 @@
 // 自动生成头文件列表
-#ifndef INHERIT_DIR
-#define INHERIT_DIR "/inherit/"
-#endif
-
-#ifndef DAEMON_DIR
-#define DAEMON_DIR "/system/daemons/"
-#endif
-
-#ifndef STD_DIR
-#define STD_DIR "/std/"
-#endif
-
 #ifndef INCLUDE_DIR
 #define INCLUDE_DIR "/include/"
 #endif
@@ -61,32 +49,38 @@ varargs string files(string *files, string prefix)
 
 private void create_inherit_include()
 {
+#ifdef INHERIT_DIR
     string file = terminal_colour(header, (["FILENAME":"inherit.h"]));
     string *files = deep_path_list(INHERIT_DIR);
 
     file += files(files, "");
 
-    write_file(INCLUDE_DIR"inherit.h", file, 1);
+    write_file(INCLUDE_DIR "inherit.h", file, 1);
+#endif
 }
 
 private void create_daemon_include()
 {
+#ifdef DAEMON_DIR
     string file = terminal_colour(header, (["FILENAME":"daemon.h"]));
     string *files = deep_path_list(DAEMON_DIR);
 
     file += files(files);
 
-    write_file(INCLUDE_DIR"daemon.h", file, 1);
+    write_file(INCLUDE_DIR "daemon.h", file, 1);
+#endif
 }
 
 private void create_std_include()
 {
+#ifdef STD_DIR
     string file = terminal_colour(header, (["FILENAME":"std.h"]));
     string *files = deep_path_list(STD_DIR);
 
     file += files(files, "STD");
 
-    write_file(INCLUDE_DIR"std.h", file, 1);
+    write_file(INCLUDE_DIR "std.h", file, 1);
+#endif
 }
 
 void create_all_include()

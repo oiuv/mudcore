@@ -14,5 +14,13 @@ LONG);
     set("exits", ([
         "down" : START_ROOM,
     ]));
+#else
+    set("exits", ([
+        "down" : ([
+            "filename" : CORE_DIR "world/area/void",
+            "x_axis" : 55,
+            "y_axis" : 5,
+        ]),
+    ]));
 #endif
 }

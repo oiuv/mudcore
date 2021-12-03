@@ -18,6 +18,7 @@ CORE_VOID_OB|/system/object/void|临时环境，示例登录房间
 
 名称|文件路径|核心功能
 -|-|-
+CORE_AREA_PATTERN_D|/system/daemons/area_pattern_d.c|区域模式环境样式模型管理
 CORE_CHANNEL_D|/system/daemons/channel_d.c|负责处理玩家聊天功能和频道管理
 CORE_CHAR_D|/system/daemons/char_d.c|负责处理角色数据，需开发者实现具体功能
 CORE_CHINESE_D|/system/daemons/chinese_d.c|负责处理中、英文对照，以及一些与中文相关的功能，字典存档`/data/e2c_dict.o`
@@ -31,3 +32,4 @@ CORE_NAME_D|/system/daemons/name_d.c|负责角色姓名记录与检测，默认�
 CORE_NATURE_D|/system/daemons/nature_d.c|负责控制游戏季节和天气变化
 CORE_TIME_D|/system/daemons/time_d.c|负责控制游戏系统时间和计划任务
 CORE_VIRTUAL_D|/system/daemons/virtual_d.c|负责虚拟对象处理
+CORE_INTERMUD_D|/system/daemons/intermud/i2d.c|MUD网际互联守护进程

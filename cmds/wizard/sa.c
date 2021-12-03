@@ -2,7 +2,6 @@
  *  設定區域目前所處座標的相關資料。
  */
 #include <ansi.h>
-#include <command.h>
 
 inherit CORE_CLEAN_UP;
 
