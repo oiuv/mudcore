@@ -13,7 +13,6 @@ inherit CORE_ACTION;
 inherit CORE_ATTACK;
 inherit CORE_COMMAND;
 inherit CORE_CONDITION;
-inherit CORE_CONDITION_MOD;
 inherit CORE_DBASE;
 inherit CORE_MESSAGE;
 inherit CORE_MOVE;

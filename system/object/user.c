@@ -48,6 +48,30 @@ void net_dead()
     say(query("name") + "断线了。\n");
 }
 
+// 玩家心跳事件
+void heart_beat()
+{
+    mapping condition;
+
+    if (mapp(condition = query("condition")))
+    {
+        foreach (string key, mapping value in condition)
+        {
+            if (value["time"] <= 0)
+            {
+                catch(replace_string(key, "#", "/")->stop_effect(this_object()));
+                delete("condition/" + key);
+                continue;
+            }
+
+            if (value["heart_beat"] > 0 && !(value["time"] % value["heart_beat"]))
+                catch(replace_string(key, "#", "/")->heart_beat_effect(this_object()));
+
+            add("condition/" + key + "/time", -1);
+        }
+    }
+}
+
 /**
  * 以下为玩家相关自定义方法
  */

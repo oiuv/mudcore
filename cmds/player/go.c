@@ -134,7 +134,7 @@ int do_room_move(object me, object env, string dir)
         return 1;
 
     msg_out = me->query("name") + "往" + dir_name + "离开了。";
-    message("vision", msg_out, environment(me), ({me}));
+    message("info", msg_out, environment(me), ({me}));
     msg_in = me->query("name") + "走了过来。";
     // move I to dest
     if (obj->is_area())
@@ -143,7 +143,7 @@ int do_room_move(object me, object env, string dir)
         {
             object *obs;
             obs = obj->query_inventory(dest["x_axis"], dest["y_axis"]);
-            tell_area(obj, dest["x_axis"], dest["y_axis"], msg_in, ({me}));
+            tell_area(obj, dest["x_axis"], dest["y_axis"], msg_in + "\n", ({me}));
             // 對進入的座標做init()動作
             if (sizeof(obs))
                 obs->init();
@@ -154,7 +154,7 @@ int do_room_move(object me, object env, string dir)
     else if (!me->move(obj))
         return notify_fail("移动失败！\n");
     else
-        message("vision", msg_in, environment(me), ({me}));
+        message("info", msg_in, environment(me), ({me}));
 
     return 1;
 }

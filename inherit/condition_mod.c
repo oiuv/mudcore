@@ -1,3 +1,13 @@
+/**
+ * @file condition_mod.c
+ * @author 雪风@mud.ren
+ * @brief buff接口，由状态实现文件继承使用，状态文件需声明以下变量并实现具体效果
+ * @version 0.1
+ * @date 2021-12-04
+ *
+ * @copyright Copyright (c) 2021
+ *
+ */
 #include <ansi.h>
 
 // 返回 Key 值
@@ -39,13 +49,13 @@ int query_default_condition_heart_beat()
 // 进入状态时的效果
 void start_effect(object ob)
 {
-    msg("vision", "$ME进入了「" + query_condition_name() + MAG "」的" + query_condition_type() + "状态。", ob);
+    msg("MAG", "$ME进入了「" + query_condition_name() + MAG "」的" + query_condition_type() + "状态。", ob);
 }
 
 // 结束状态时的效果
 void stop_effect(object ob)
 {
-    msg("info", "$ME失去了「" + query_condition_name() + HIC "」的" + query_condition_type() + "状态。", ob);
+    msg("CYN", "$ME失去了「" + query_condition_name() + CYN "」的" + query_condition_type() + "状态。", ob);
 }
 
 // 状态进行中的效果

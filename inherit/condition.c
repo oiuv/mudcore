@@ -1,3 +1,13 @@
+/**
+ * @file condition.c
+ * @author 雪风@mud.ren
+ * @brief 对象buff控制接口，需要通过heart_beat触发效果
+ * @version 0.1
+ * @date 2021-12-04
+ *
+ * @copyright Copyright (c) 2021
+ *
+ */
 #include <dbase.h>
 
 // 询问状态
