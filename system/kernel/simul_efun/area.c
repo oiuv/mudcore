@@ -193,6 +193,6 @@ varargs void tell_area(mixed area, int x, int y, string str, object *exclude)
     if (area && area->is_area())
     {
         object *obs = area->query_inventory(x, y);
-        message("area", str, obs, exclude);
+        message("tell_area", str, obs, exclude);
     }
 }

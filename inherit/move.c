@@ -47,6 +47,18 @@ varargs int move(mixed dest, int raw)
     // 如果移入的不是區域或虚空，則刪除area_info
     if (!dest->is_area() && !dest->query("void"))
         me->delete("area_info");
+    // debug：对没有用area_move到area的移动到随机坐标
+    if (dest->is_area() && !me->query("area_info"))
+    {
+        debug_message(sprintf("[!]%O -> %O", me, dest));
+        me->set("area_info/x_axis", random(dest->query("x_axis_size")));
+        me->set("area_info/y_axis", random(dest->query("y_axis_size")));
+    }
+    // GMCP
+    if (interactive(me))
+    {
+        me->gmcp("Room.Info.Get");
+    }
     // 玩家对象自动look
     if (interactive(me) && living(me) && !raw)
     {
