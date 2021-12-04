@@ -67,6 +67,11 @@ mixed compile_mob(string file)
 mixed compile_object(string file)
 {
     // todo 开发者自己实现
+    if (!strsrch(file, VOID_OB))
+    {
+        return compile_area(file);
+    }
+
     return 0;
 }
 

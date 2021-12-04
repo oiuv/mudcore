@@ -3,7 +3,7 @@ inherit CORE_DBASE;
 inherit CORE_NAME;
 inherit CORE_ROOM;
 
-private void create()
+private varargs void create(int x, int y, int z)
 {
     set("short", "时空中转站");
     set("long", @LONG
@@ -16,6 +16,10 @@ LONG);
     ]));
 #else
     set("exits", ([
+        "north" : __DIR__ "void/" + x + "," + (y + 1) + "," + z,
+        "south" : __DIR__ "void/" + x + "," + (y - 1) + "," + z,
+        "west" : __DIR__ "void/" + (x - 1) + "," + y + "," + z,
+        "east" : __DIR__ "void/" + (x + 1) + "," + y + "," + z,
         "down" : ([
             "filename" : CORE_DIR "world/area/void",
             "x_axis" : 55,
