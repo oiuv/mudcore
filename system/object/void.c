@@ -1,3 +1,7 @@
+/**
+ * @brief VOID_OB 房间模式示例，无边无际
+ *
+ */
 inherit CORE_CLEAN_UP;
 inherit CORE_DBASE;
 inherit CORE_NAME;
@@ -26,5 +30,6 @@ LONG);
             "y_axis" : 5,
         ]),
     ]));
+    setArea("void", x, y, z);
 #endif
 }

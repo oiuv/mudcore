@@ -31,6 +31,7 @@ void setup()
 // 从游戏中移除这个角色
 void remove()
 {
+    ::remove();
     // todo 玩家存档处理
     destruct(this_object());
 }

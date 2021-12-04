@@ -590,7 +590,7 @@ nomask int clean_up(int inherited)
 
 // 巫师可以 update 区域迷宫主对象强制更新迷宫，
 // 但此时迷宫中的玩家就要去 VOID 了。
-void remove(string euid)
+varargs void remove(string euid)
 {
     string fname = base_name(this_object());
     object m_room;

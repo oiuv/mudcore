@@ -68,7 +68,22 @@ varargs int move(mixed dest, int raw)
     return 1;
 }
 
-// destruct时调用，建议自己重写此方法
+// 建议自己重写此方法，可在destruct时调用
 varargs void remove(string euid)
 {
+    object env;
+    object me = this_object();
+
+    if (me->is_db_saved())
+        me->save();
+
+     // Leave environment
+    if (objectp(env = environment()))
+    {
+        // 區域使用
+        if (env->is_area())
+        {
+            env->move_out(me->query("area_info/x_axis"), me->query("area_info/y_axis"), me);
+        }
+    }
 }

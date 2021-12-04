@@ -46,7 +46,7 @@ void create()
 string query_save_file() { return DATA_DIR + "dbase_d"; }
 
 // 数据库对象析构函数
-int remove(string euid)
+varargs int remove(string euid)
 {
     if (previous_object() != find_object(SIMUL_EFUN_OB))
     {

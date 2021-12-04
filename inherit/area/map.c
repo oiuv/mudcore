@@ -744,10 +744,10 @@ varargs int do_look(object me, string arg)
         {
             str += "這裡的出口有 " NOR;
             while (i--)
-                str += exits[i] + (i ? "、" : "。");
+                str += exits[i] + (i ? "、" : "。\n");
         }
         else
-            str += "這裡沒有任何出口。";
+            str += "這裡沒有任何出口。\n";
     }
     // 顯示对象
     if (!option["map_obj_hidden"])

@@ -46,12 +46,8 @@ void receive_message(string type, string str)
         receive(YEL + str + NOR "\n");
         return;
 
-    case "MAP":
-        receive(str);
-        return;
-
     default:
-        receive(str + "\n");
+        receive(str);
     }
 }
 

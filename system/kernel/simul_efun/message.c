@@ -108,6 +108,15 @@ varargs void boardcast(string type, string msg, object me, object you, object *o
  */
 varargs void msg(string type, string msg, object me, object you, object *exclude)
 {
-    object *others = all_inventory(environment(me));
-    boardcast(type, msg, me, you, others, exclude);
+    object env = environment(me);
+    if (env)
+    {
+        object *others;
+        if (env->is_area())
+            others = env->query_inventory(me->query("area_info/x_axis"), me->query("area_info/y_axis"));
+        else
+            others = all_inventory(env);
+
+        boardcast(type, msg, me, you, others, exclude);
+    }
 }

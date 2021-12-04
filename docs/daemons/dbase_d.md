@@ -21,7 +21,7 @@ string *query_saved_object();
 int clear_object(mixed ob);
 // 清理所有对象
 int cleanup_all_save_object(int raw);
-int remove(string euid);
+varargs int remove(string euid);
 void mud_shutdown();
 ```
 

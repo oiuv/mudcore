@@ -2,21 +2,8 @@ inherit CORE_CLEAN_UP;
 #include <ansi.h>
 int main(object me, string arg)
 {
-    object env = environment(me);
     arg = arg || "...";
-    write(CYN "你说道：" + arg + NOR "\n");
-    if (env->is_area())
-    {
-        mapping info;
-        object *obs;
-        info = me->query("area_info");
-        obs = env->query_inventory(info["x_axis"], info["y_axis"]);
-        tell_area(env, info["x_axis"], info["y_axis"], me->name() + "說道﹕" + HIG + arg + NOR, ({me}));
-    }
-    else
-    {
-        message("say", me->name() + "說道﹕" + HIG + arg + NOR, env, me);
-    }
+    msg("MAG", "$ME说到：" + arg, me);
 
     return 1;
 }
