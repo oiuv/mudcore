@@ -61,6 +61,7 @@
 #define CORE_DB             CORE_DIR "inherit/DB"
 #define CORE_DBASE          CORE_DIR "inherit/dbase"
 #define CORE_GMCP           CORE_DIR "inherit/gmcp"
+#define CORE_LIVING         CORE_DIR "inherit/living"
 #define CORE_MESSAGE        CORE_DIR "inherit/message"
 #define CORE_MOVE           CORE_DIR "inherit/move"
 #define CORE_NAME           CORE_DIR "inherit/name"
@@ -73,6 +74,8 @@
 #define CORE_VRM            CORE_DIR "inherit/vrm"
 // 玩家特殊功能
 #define CORE_USER_COMBAT_RECORD CORE_DIR "inherit/user_combat_record"
+#define CORE_USER_QUEST         CORE_DIR "inherit/user_quest"
+#define CORE_USER               CORE_DIR "inherit/user"
 
 /* 其他 */
 #ifndef HTTP_PORT

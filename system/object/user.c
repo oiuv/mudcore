@@ -7,12 +7,7 @@ Version: v1.0
 Date: 2020-04-20
 *****************************************************************************/
 #include <ansi.h>
-inherit CORE_DBASE;
-inherit CORE_COMMAND;
-inherit CORE_MOVE;
-inherit CORE_NAME;
-inherit CORE_MESSAGE;
-inherit CORE_SAVE;
+inherit CORE_USER;
 
 void create()
 {

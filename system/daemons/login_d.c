@@ -22,7 +22,7 @@ History:
 #endif
 
 #ifndef MAX_NAME_LEN
-#define MAX_NAME_LEN 8
+#define MAX_NAME_LEN 5
 #endif
 
 nosave string *banned_name = ({
