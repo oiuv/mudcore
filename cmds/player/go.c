@@ -143,7 +143,7 @@ int do_room_move(object me, object env, string dir)
         {
             object *obs;
             obs = obj->query_inventory(dest["x_axis"], dest["y_axis"]);
-            tell_area(obj, dest["x_axis"], dest["y_axis"], msg_in + "\n", ({me}));
+            tell_area(obj, dest["x_axis"], dest["y_axis"], msg_in, ({me}));
             // 對進入的座標做init()動作
             if (sizeof(obs))
                 obs->init();
@@ -187,8 +187,8 @@ int do_area_move(object me, object env, string dir)
     if (function_exists("valid_leave", env) && !env->valid_leave(me, dir))
         return 1;
 
-    mout = "往" + dir_name + "離開。\n";
-    min = "走了過來。\n";
+    mout = "往" + dir_name + "離開。";
+    min = "走了過來。";
     new_env = environment(me);
 
     if (undefinedp(dir_name = default_dirs[dir]))

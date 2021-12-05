@@ -10,9 +10,10 @@ Date: 2019-03-12
 #include <localtime.h>
 
 inherit CORE_DBASE;
-
+// 聊天监听触发NPC
+#ifndef ROBOT_NPC
 #define ROBOT_NPC ({"/area/npc/ivy"})
-
+#endif
 int filter_listener(object ppl, string only, object me);
 
 nosave string msg_log;

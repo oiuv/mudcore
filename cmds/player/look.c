@@ -39,7 +39,7 @@ int look_room(object me, object env)
         return env->do_look(me);
     }
 
-    str = sprintf(HIC + "\n%s" + NOR + "%s\n    %s" + NOR,
+    str = sprintf(HIC + "%s" + NOR + "%s\n    %s" + NOR,
                     env->short(), wizardp(me) ? " - " + env : env->coordinate(),
                     sort_string(env->long(), 72, 4));
                     // env->long());

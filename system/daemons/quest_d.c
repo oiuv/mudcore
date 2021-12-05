@@ -379,7 +379,7 @@ protected int checkItem(object npc, object player, string quest_file)
             if (item_file == key[i])
             {
 
-                msg("vision", "$ME對著$YOU說道：看來你已經帶來了" + inv[j]->name() + "。\n", npc, player);
+                msg("vision", "$ME對著$YOU說道：看來你已經帶來了" + inv[j]->name() + "。", npc, player);
 
                 // 非複合物品
                 if (!function_exists("query_amount", inv[j]))

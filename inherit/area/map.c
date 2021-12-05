@@ -714,7 +714,7 @@ varargs int do_look(object me, string arg)
     if (arg)
     {
         if ((str = query_area_detail_arug(info["x_axis"], info["y_axis"], arg)))
-            message("vision", str + "\n", me);
+            message("vision", str, me);
         else
             return notify_fail("你要看什麼？\n");
         return 1;

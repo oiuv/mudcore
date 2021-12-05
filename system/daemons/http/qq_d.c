@@ -94,7 +94,7 @@ protected void msg(mapping data)
             msg = "[表情]" + messageChain["name"];
         }
         // 发送消息到MUD
-        message("info", HIG "【QQ群】" NOR + sender["memberName"] + "@" + sender["group"]["name"] + "：" + msg + "\n", users());
+        message("info", HIG "【QQ群】" NOR + sender["memberName"] + "@" + sender["group"]["name"] + "：" + msg, users());
     }
 }
 

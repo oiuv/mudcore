@@ -114,6 +114,7 @@
 /** 其它可定义设置
  * START_ROOM   游戏出生点
  * PRELOAD      游戏预加载目录或文件列表
+ * ROBOT_NPC    聊天触发NPC: ROBOT_NPC->receive_report(me, verb, arg);
  */
 
 /* 守护进程 */

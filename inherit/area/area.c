@@ -210,7 +210,7 @@ void remove()
             {
                 if (objectp(ob))
                 {
-                    message("vision", ob->name() + "化成輕飄飄的白煙消散了。\n", environment(ob));
+                    message("vision", ob->name() + "化成輕飄飄的白煙消散了。", environment(ob));
                     destruct(ob);
                     cnt++;
                 }

@@ -10,6 +10,7 @@ Date: 2019-03-14
 
 void receive_message(string type, string str)
 {
+    // debug_message(sprintf("receive_message %s %s", type, str));
     switch (type)
     {
     case "info":
@@ -45,9 +46,13 @@ void receive_message(string type, string str)
     case "YEL":
         receive(YEL + str + NOR "\n");
         return;
+    // 地图不加换行
+    case "MAP":
+        receive(str);
+        return;
 
     default:
-        receive(str);
+        receive(str + "\n");
     }
 }
 
