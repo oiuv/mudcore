@@ -829,8 +829,8 @@ nomask object query_maze_room(string str)
     object ob;
     string f;
 
-    if (previous_object() && (geteuid(previous_object()) != ROOT_UID))
-        return 0;
+    // if (previous_object() && (geteuid(previous_object()) != ROOT_UID))
+    //     return 0;
 
     if (!stringp(str) || str == "")
         return 0;

@@ -1,11 +1,8 @@
 /**
- * @brief VOID_OB 房间模式示例，无边无际
+ * @brief VOID_OB 房间模式示例，出口可为普通房间或区域坐标
  *
  */
-inherit CORE_CLEAN_UP;
-inherit CORE_DBASE;
-inherit CORE_NAME;
-inherit CORE_ROOM;
+inherit CORE_STD_ROOM;
 
 private varargs void create(int x, int y, int z)
 {
@@ -20,10 +17,7 @@ LONG);
     ]));
 #else
     set("exits", ([
-        "north" : __DIR__ "void/" + x + "," + (y + 1) + "," + z,
-        "south" : __DIR__ "void/" + x + "," + (y - 1) + "," + z,
-        "west" : __DIR__ "void/" + (x - 1) + "," + y + "," + z,
-        "east" : __DIR__ "void/" + (x + 1) + "," + y + "," + z,
+        "up" : CORE_DIR "world/area/maze/entry",
         "down" : ([
             "filename" : CORE_DIR "world/area/void",
             "x_axis" : 55,

@@ -2,7 +2,7 @@
  * @brief 区域模式示例，进入区域后可用sa指令建设地区
  *
  */
-inherit CORE_AREA;
+inherit CORE_STD_AREA;
 
 void create()
 {

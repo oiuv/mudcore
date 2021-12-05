@@ -3,7 +3,10 @@
 */
 
 #include <ansi.h>
-
+// 区域模式样式目录，可在 <globals.h> 中定义
+#ifndef AREA_PATTERN_DIR
+#define AREA_PATTERN_DIR    CORE_DIR "world/area_pattern/"
+#endif
 string *patterns = ({});
 
 void scanPattern(string dir)

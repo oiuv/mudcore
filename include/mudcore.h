@@ -14,14 +14,21 @@
 #ifndef DATA_DIR
 #define DATA_DIR "/data/"
 #endif
-// 日志目录，应该在 <globals.h> 中定义
+// 日志目录,和__LOG_DIR__保持一致，应该在 <globals.h> 中定义
 #ifndef LOG_DIR
 #define LOG_DIR "/log/"
 #endif
-// area模式目录，应该在 <globals.h> 中定义
-#ifndef AREA_PATTERN_DIR
-#define AREA_PATTERN_DIR    CORE_DIR "world/area_pattern/"
-#endif
+/** 其它可自定义游戏文件目录
+ * WORLD_DIR        游戏世界目录，定义后可使用虚拟对象接口
+ * MOB_DIR          游戏怪物目录，如定义可使用虚拟对象接口
+ * NATURE_DIR       游戏天气描述目录，定义后可自己实现特色天时
+ * QUEST_DIR        游戏任务目录，定义后可使用任务接口
+ * AREA_PATTERN_DIR 游戏区域模式样式目录，可自己配置模版
+ * DAEMON_DIR       游戏守护进程目录，定义后可自动生成守护进程头文件
+ * INHERIT_DIR      游戏接口目录，定义后可自动生成接口头文件
+ * STD_DIR          游戏标准对象目录，定义后可自动生成标准对象头文件
+ * INCLUDE_DIR      游戏头文件目录，定义后会保存自动生成的头文件在此目录
+ */
 
 /* 核心对象 */
 #define CORE_MASTER_OB      CORE_DIR "system/kernel/master"
@@ -76,26 +83,38 @@
 #define CORE_USER_COMBAT_RECORD CORE_DIR "inherit/user_combat_record"
 #define CORE_USER_QUEST         CORE_DIR "inherit/user_quest"
 #define CORE_USER               CORE_DIR "inherit/user"
+// 标准继承对象
+#define CORE_STD_AREA   CORE_DIR "inherit/std_area"
+#define CORE_STD_ROOM   CORE_DIR "inherit/std_room"
 
 /* 其他 */
+// WEB游戏端口
 #ifndef HTTP_PORT
 #define HTTP_PORT   8080
 #endif
-
+// 游戏管理员账号
 #ifndef WIZARD
 #define WIZARD  "mudren"
 #endif
-
+// 游戏欢迎界面
 #ifndef MOTD
 #define MOTD    CORE_DIR "system/etc/motd"
 #endif
-
+// 玩家性别描述
 #ifndef MALE
 #define MALE    "男性"
 #endif
 #ifndef FEMALE
 #define FEMALE  "女性"
 #endif
+// 可接任务上限
+#ifndef QUEST_SIZE
+#define QUEST_SIZE 20
+#endif
+/** 其它可定义设置
+ * START_ROOM   游戏出生点
+ * PRELOAD      游戏预加载目录或文件列表
+ */
 
 /* 守护进程 */
 #ifndef AREA_PATTERN_D

@@ -3,7 +3,6 @@
 // 战斗功能
 void fight(object me, object victim)
 {
-
 }
 
 

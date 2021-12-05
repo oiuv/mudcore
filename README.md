@@ -8,7 +8,7 @@
 
 LPMUD游戏开发框架核心代码，仅仅包括核心代码，可以在此基础上开发任何MUD，本框架需配合 FluffOS v2019使用。
 
-当前版本：`v1.4.0`
+当前版本：`v1.4.1`
 
 这个项目的诞生源于我的[LPC零基础开发教程](https://bbs.mud.ren)，在写教程的过程中，发现很多朋友并不关心底层细节，只想能直接用来开发项目，国内绝大多数项目是《东方故事2》底层的，都是在这类MUD基础上修改，优点是可以快速上手，但不够灵活。能不能把底层独立出来，开发任何类型的MUD都可以使用？在思考后，我开始了这个项目，特色是只提供底层代码和接口，不提供任何游戏性的内容，独立于个人项目之外，只需简单配置即可实现个人MUD开发。本项目不考虑旧版的兼容性，只支持 FluffOS v2019 版。
 
@@ -204,6 +204,7 @@ CORE_ENV_D|/system/daemons/env_d.c|游戏环境变量配置守护进程，默认
 CORE_LOGIN_D|/system/daemons/login_d.c|框架示例登录管理功能，可做开发参考
 CORE_NAME_D|/system/daemons/name_d.c|负责角色姓名记录与检测，默认存储位置`/data/name_d.o`
 CORE_NATURE_D|/system/daemons/nature_d.c|负责控制游戏季节和天气变化
+CORE_QUEST_D|/system/daemons/quest_d.c|游戏任务守护进程
 CORE_TIME_D|/system/daemons/time_d.c|负责控制游戏系统时间和计划任务
 CORE_VIRTUAL_D|/system/daemons/virtual_d.c|负责虚拟对象处理
 CORE_INTERMUD_D|/system/daemons/intermud/i2d.c|MUD网际互联守护进程

@@ -1,7 +1,7 @@
 /**
  * @file user.c
  * @author 雪风 (雪风@mud.ren)
- * @brief 玩家对象接口
+ * @brief 标准玩家对象接口
  * @version 0.1
  * @date 2021-12-04
  *
