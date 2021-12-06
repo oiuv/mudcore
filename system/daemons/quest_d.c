@@ -70,7 +70,7 @@ protected void insertRewarder(string npc_file, string quest_file)
     rewarder[npc_file] += ({quest_file});
 }
 
-void doScanQuest(string dir)
+varargs void doScanQuest(string dir)
 {
     string file;
     mixed *files, *dirent;

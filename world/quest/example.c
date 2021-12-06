@@ -23,10 +23,13 @@ int isQuest() { return 1; }
  */
 int isNewly() { return 0; }
 
+// 此任务可否放弃，特殊任务可限制放弃
+int noGiveUp() { return 0; }
+
 // 任務名稱
 string getName()
 {
-    return "旅途的开始";
+    return FCC(208)"旅途的开始"NOR;
 }
 
 // 任務描述
