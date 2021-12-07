@@ -9,7 +9,7 @@
 #define DEFAULT_YAXIS_SIZE  20
 
 // 區域大小限制
-#define AREA_XAXIS_MIN      19
+#define AREA_XAXIS_MIN      38
 #define AREA_YAXIS_MIN      11
 #define AREA_XAXIS_MAX     100
 #define AREA_YAXIS_MAX     100
