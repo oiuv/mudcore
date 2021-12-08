@@ -10,6 +10,6 @@
  */
 
 inherit CORE_LIVING;
-inherit CORE_GMCP;
 inherit CORE_USER_COMBAT_RECORD;
+inherit CORE_USER_GMCP;
 inherit CORE_USER_QUEST;

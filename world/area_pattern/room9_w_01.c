@@ -5,15 +5,15 @@
 
 int isAreaPattern() { return 1; }
 
-string getName() { return "房子[9格], 出口[南], 無底白框 "; }
+string getName() { return "房子[9格], 出口[西], 無底白框 "; }
 
 // icon樣子
 private mapping getIcon()
 {
     mapping icon = ([
         0: ({ "╔=","==","=╗" }),
-        1: ({ "║ ","  "," ║" }),
-        2: ({ "╚=","  ","=╝" }),
+        1: ({ "  ","  "," ║" }),
+        2: ({ "╚=","==","=╝" }),
     ]);
 
     return icon;
@@ -24,8 +24,8 @@ private mapping getBlock()
 {
     mapping block = ([
         0: ({1, 1, 1}),
-        1: ({1, 0, 1}),
-        2: ({1, 0, 1}),
+        1: ({0, 0, 1}),
+        2: ({1, 1, 1}),
     ]);
 
     return block;

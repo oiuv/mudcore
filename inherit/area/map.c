@@ -566,23 +566,23 @@ varargs string show_area(int x, int y, int type)
     x_size = sizeof(area[0]);
 
     if (y <= 5 || y_size <= 11)
-        y_start = 0;
+        y_start = 0;            // 上
     else if (y >= y_size - 6)
-        y_start = y_size - 11;
+        y_start = y_size - 11;  // 中
     else
-        y_start = y - 5;
+        y_start = y - 5;        // 下
 
     if (x <= 19 || x_size <= 38)
-        x_start = 0;
+        x_start = 0;            // 左
     else if (x >= x_size - 19)
-        x_start = x_size - 38;
+        x_start = x_size - 38;  // 中
     else
-        x_start = x - 19;
+        x_start = x - 19;       // 右
 
     // 建立即時地圖
     msg = sprintf(BBLU "╲" U " %-59s %s (%3d,%3d) " NOR + BBLU "╱\n" NOR,
                   query("name") + (area[y][x]["short"] ? " - " + area[y][x]["short"] : ""),
-                  (area[y][x]["no_fight"] ? "非戰區" : "戰鬥區"), x, y, );
+                  (area[y][x]["no_fight"] ? "安全区" : "戰鬥區"), x, y, );
 
     for (i = y_start; i < y_size && i < y_start + 11; i++)
     {
@@ -593,7 +593,7 @@ varargs string show_area(int x, int y, int type)
                 msg += (type != 4) ? "😃" : HIY "你" NOR;
             else if (undefinedp(area[i][j]["icon"]) &&
                      (!undefinedp(area[i][j]["room_exit"]) || !undefinedp(area[i][j]["area_exit"])))
-                msg += (type != 4) ? "💒" : HIW "◎" NOR;
+                msg += (type != 4) ? "🌀" : HIW "◎" NOR;
             else
             {
                 int check = 1;

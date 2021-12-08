@@ -171,7 +171,6 @@ CORE_CONDITION|/inherit/condition.c|角色增益状态控制接口，实现游�
 CORE_DB|/inherit/DB.c|MySQL数据库接口，可以优雅的操作数据库的增删改查
 CORE_DBASE|/inherit/dbase.c|数据存取功能接口，实现对象参数的增删改查功能
 CORE_DBSAVE|/inherit/dbsave.c|系统数据存取接口，配合 DBASE_D 使用
-CORE_GMCP|/inherit/gmcp.c|GMCP功能接口，可配合mudlet客户端使用
 CORE_LIVING|/inherit/living.c|生物对象功能接口，所有生物对接可直接继承使用
 CORE_MESSAGE|/inherit/message.c|玩家信息处理功能接口，实现分页显示
 CORE_MOVE|/inherit/move.c|对象移动接口，由角色、物品对象继承，方便移动
@@ -182,6 +181,7 @@ CORE_SAVE|/inherit/save.c|对象数据存取接口，主要是玩家角色使用
 CORE_TEAM|/inherit/team.c|角色组队功能接口，实现组队相关功能
 CORE_UNIQUE|/inherit/unique.c|对象唯一性功能接口，注意和noclone不同，唯一性允许复制，但仅限一次
 CORE_USER_COMBAT_RECORD|/inherit/user_combat_record.c|玩家战斗记录功能，实现玩家战斗数据记录
+CORE_USER_GMCP|/inherit/user_gmcp.c|玩家GMCP功能接口，可配合mudlet客户端使用
 CORE_USER_QUEST|/inherit/user_quest.c|玩家任务功能接口，实现玩家任务记录与管理
 CORE_USER|/inherit/user.c|玩家对象功能接口
 CORE_VRM|/inherit/vrm.c|随机迷宫功能接口，实现随机迷宫功能

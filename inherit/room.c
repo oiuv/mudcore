@@ -170,7 +170,7 @@ void remove_random_exit()
 }
 
 // 增加一个出口
-void addExit(string dir, string dest)
+void addExit(string dir, mixed dest)
 {
     mapping exits = query("exits");
     if (!mapp(exits))
@@ -179,7 +179,7 @@ void addExit(string dir, string dest)
         exits[dir] = dest;
 }
 
-void add_exit(string dir, string dest)
+void add_exit(string dir, mixed dest)
 {
     addExit(dir, dest);
 }
