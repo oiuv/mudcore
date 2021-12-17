@@ -145,7 +145,7 @@ protected void confirmAssign(string input, object player, string quest_file)
 
 protected void doAssignQuest(object npc, object player, string quest_file)
 {
-    int i, message_size;
+    int i = 0, message_size;
     string *assignMessage;
 
     assignMessage = quest_file->getAssignMessage();
@@ -156,16 +156,13 @@ protected void doAssignQuest(object npc, object player, string quest_file)
     //     msg("vision", assignMessage[i], npc, player);
     if (message_size)
     {
-        i = 0;
         foreach (string info in assignMessage)
         {
             call_out((: msg :), i, "info", info, npc, player);
             i++;
         }
-        call_out((: tell_object :), i, player, HIW "\n你要接受這一個任務嗎？ (Y/n) " NOR);
     }
-    else
-        tell_object(player, HIW "\n你要接受這一個任務嗎？ (Y/n) " NOR);
+    call_out((: tell_object :), i, player, HIW "\n你要接受這一個任務嗎？ (Y/n)\n" NOR);
     input_to("confirmAssign", player, quest_file);
 }
 

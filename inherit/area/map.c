@@ -736,6 +736,16 @@ varargs int do_look(object me, string arg)
     if (option["map_build"])
         op = op | 8;
 
+    // 长描述
+    if (!option["map_long_hidden"])
+    {
+        string map_long = query_data(info["x_axis"], info["y_axis"], "long");
+        if (map_long)
+        {
+            message("long", map_long, me);
+        }
+    }
+
     // 出口提示
     if (!option["map_exits_hidden"])
     {
@@ -752,6 +762,7 @@ varargs int do_look(object me, string arg)
     // 顯示对象
     if (!option["map_obj_hidden"])
         str += show_objects(info["x_axis"], info["y_axis"], 0);
+
     message("vision", str, me);
     // 顯示地圖
     if (!option["map_hidden"])
