@@ -1,5 +1,5 @@
 /* map.c write by -Acme-
-   這裡負責地圖的顯示、对象的移動以及一些設定等等。
+   这里負責地圖的顯示、对象的移動以及一些設定等等。
 */
 
 #include <ansi.h>
@@ -659,7 +659,7 @@ varargs string show_objects(int x, int y, int type)
         return "";
 
     if (sizeof(area[y][x]["objects"]) >= 30)
-        return "這裡的東西太多，一時看不清楚...\n";
+        return "这里的東西太多，一時看不清楚...\n";
     // todo 增加排序
     foreach (ob in area[y][x]["objects"])
     {
@@ -714,7 +714,7 @@ varargs int do_look(object me, string arg)
     if (arg)
     {
         if ((str = query_area_detail_arug(info["x_axis"], info["y_axis"], arg)))
-            message("vision", str, me);
+            message("vision", ansi(str), me);
         else
             return notify_fail("你要看什麼？\n");
         return 1;
@@ -742,7 +742,7 @@ varargs int do_look(object me, string arg)
         string map_long = query_data(info["x_axis"], info["y_axis"], "long");
         if (map_long)
         {
-            message("long", map_long, me);
+            message("long", ansi(map_long), me);
         }
     }
 
@@ -752,12 +752,12 @@ varargs int do_look(object me, string arg)
         exits = query_exits(info["x_axis"], info["y_axis"], 1);
         if ((i = sizeof(exits)))
         {
-            str += "這裡的出口有 " NOR;
+            str += "这里的出口有 " NOR;
             while (i--)
                 str += exits[i] + (i ? "、" : "。\n");
         }
         else
-            str += "這裡沒有任何出口。\n";
+            str += "这里沒有任何出口。\n";
     }
     // 顯示对象
     if (!option["map_obj_hidden"])

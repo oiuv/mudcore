@@ -1,4 +1,4 @@
-#define GMCP_LOG 50
+#define GMCP_LOG 10
 
 nosave string *gmcp_log = ({});
 

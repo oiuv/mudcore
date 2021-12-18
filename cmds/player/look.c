@@ -8,6 +8,7 @@ Version: v1.0
 #include <ansi.h>
 inherit CORE_CLEAN_UP;
 
+int look_obj(object me, object ob);
 int look_room(object me, object env);
 string desc_of_objects(object *obs);
 string look_all_inventory_of_room(object me, object env);
@@ -15,13 +16,28 @@ string look_all_inventory_of_room(object me, object env);
 int main(object me, string arg)
 {
     object env = environment(me);
+    object ob;
 
     if (!arg || arg == "here")
         return look_room(me, env);
+    else if (ob = present(arg, env))
+        return look_obj(me, ob);
+    else if (env->is_area())
+        return env->do_look(me, arg);
     else
-    {
         return notify_fail(YEL "MUDCORE仅提供最基础的指令功能，更多look功能需要开发者自己实现。\n" NOR);
-    }
+}
+
+int look_obj(object me, object ob)
+{
+    string msg = ob->query("long");
+
+    if (msg)
+        tell_object(me, msg + "\n");
+    else
+        tell_object(me, (ob->short() || "这个对象") + "普普通通，没有什么好看的……\n");
+
+    return 1;
 }
 
 int look_room(object me, object env)
