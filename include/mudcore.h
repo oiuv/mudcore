@@ -88,10 +88,6 @@
 #define CORE_STD_ROOM   CORE_DIR "inherit/std_room"
 
 /* 其他 */
-// WEB游戏端口
-#ifndef HTTP_PORT
-#define HTTP_PORT   8080
-#endif
 // 游戏管理员账号
 #ifndef WIZARD
 #define WIZARD  "mudren"

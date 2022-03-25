@@ -31,7 +31,6 @@ nosave string *banned_name = ({
 
 // 内部调用的函数
 protected void welcome(object ob);
-protected void get_encoding(string arg, object ob);
 protected void get_id(string arg, object ob);
 protected void get_passwd(string pass, object ob);
 protected void check_ok(object ob);
@@ -67,16 +66,7 @@ protected void add_banned_name(string *name)
 // 登录入口
 void login(object ob)
 {
-    write("\n");
-    if( query_ip_port() == HTTP_PORT)
-    {
-        welcome(ob);
-    }
-    else
-    {
-        write(HIY "^_^!Do you want to use GBK encoding?(y or n)" NOR);
-        input_to("get_encoding", ob);
-    }
+    welcome(ob);
 }
 
 protected void welcome(object ob)
@@ -85,15 +75,6 @@ protected void welcome(object ob)
 
     write("\n^_^!请输入你的登录ID:");
     input_to("get_id", ob);
-}
-
-protected void get_encoding(string yn, object ob)
-{
-    if (yn[0] == 'y' || yn[0] == 'Y')
-    {
-        set_encoding("GBK");
-    }
-    welcome(ob);
 }
 
 protected void get_id(string arg, object ob)
