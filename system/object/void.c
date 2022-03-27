@@ -11,11 +11,6 @@ private varargs void create(int x, int y, int z)
 这里是多维宇宙的时空中转站，正常情况下，没有人能来到这里。
 LONG);
     set("void", 1); // 特殊环境标记
-#ifdef START_ROOM
-    set("exits", ([
-        "down" : START_ROOM,
-    ]));
-#else
     set("exits", ([
         "up" : CORE_DIR "world/area/maze/entry",
         "down" : ([
@@ -25,5 +20,4 @@ LONG);
         ]),
     ]));
     setArea("void", x, y, z);
-#endif
 }

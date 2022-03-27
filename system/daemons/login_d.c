@@ -213,6 +213,11 @@ protected void check_ok(object ob)
 // 进入游戏
 void enter_world(object ob, object user)
 {
+#ifdef START_ROOM
+    string start_room = START_ROOM;
+#else
+    string start_room = VOID_OB;
+#endif
     user->set_temp("login_ob", ob);
     ob->set_temp("user_ob", user);
     if (interactive(ob))
@@ -225,8 +230,8 @@ void enter_world(object ob, object user)
     user->add("login_times", 1);
     user->save(); // 保存玩家数据
 
-    user->move(VOID_OB);
-    tell_room(VOID_OB, user->short() + "连线进入这个世界。\n", ({user}));
+    user->move(start_room);
+    tell_room(start_room, user->short() + "连线进入这个世界。\n", ({user}));
 }
 
 // 断线重连

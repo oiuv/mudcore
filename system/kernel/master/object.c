@@ -11,21 +11,6 @@
 mixed compile_object(string str)
 {
     // debug_message("[CORE_MASTER_OB]->compile_object():" + str);
-
-#ifdef WORLD_DIR
-    if (sscanf(str, WORLD_DIR + "%*s", str))
-    {
-        return call_other(VIRTUAL_D, "compile_area", str);
-    }
-#endif
-
-#ifdef MOB_DIR
-    if (sscanf(str, MOB_DIR + "%*s", str))
-    {
-        return call_other(VIRTUAL_D, "compile_mob", str);
-    }
-#endif
-
     return call_other(VIRTUAL_D, "compile_object", str);
 }
 

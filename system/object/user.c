@@ -23,9 +23,7 @@ void setup()
     seteuid(getuid(this_object()));
     set_heart_beat(1);
     enable_living();
-#ifdef CHAR_D
     CHAR_D->setup(this_object());
-#endif
 }
 
 // 从游戏中移除这个角色

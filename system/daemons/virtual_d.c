@@ -63,14 +63,29 @@ mixed compile_mob(string file)
 
     return ob;
 }
-// 其他虚拟对象功能
+// 虚拟对象功能路由
 mixed compile_object(string file)
 {
-    // todo 开发者自己实现
+#ifdef WORLD_DIR
+    if (sscanf(str, WORLD_DIR + "%*s", str))
+    {
+        return call_other(VIRTUAL_D, "compile_area", str);
+    }
+#endif
+
+#ifdef MOB_DIR
+    if (sscanf(str, MOB_DIR + "%*s", str))
+    {
+        return call_other(VIRTUAL_D, "compile_mob", str);
+    }
+#endif
+
     if (!strsrch(file, CORE_DIR "world/area/"))
     {
         return compile_area(file);
     }
+
+    // todo 开发者自己实现
 
     return 0;
 }

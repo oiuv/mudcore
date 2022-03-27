@@ -113,9 +113,7 @@ void attack()
     if (sizeof(enemies) && objectp(opponent = element_of(enemies)))
     {
         set_temp("last_opponent", opponent);
-#ifdef COMBAT_D
         COMBAT_D->fight(this_object(), opponent);
-#endif
         return;
     }
     else
