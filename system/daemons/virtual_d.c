@@ -67,16 +67,16 @@ mixed compile_mob(string file)
 mixed compile_object(string file)
 {
 #ifdef WORLD_DIR
-    if (sscanf(str, WORLD_DIR + "%*s", str))
+    if (sscanf(file, WORLD_DIR + "%*s", file))
     {
-        return call_other(VIRTUAL_D, "compile_area", str);
+        return call_other(VIRTUAL_D, "compile_area", file);
     }
 #endif
 
 #ifdef MOB_DIR
-    if (sscanf(str, MOB_DIR + "%*s", str))
+    if (sscanf(file, MOB_DIR + "%*s", file))
     {
-        return call_other(VIRTUAL_D, "compile_mob", str);
+        return call_other(VIRTUAL_D, "compile_mob", file);
     }
 #endif
 
