@@ -1,12 +1,10 @@
-/**
- * @file living.c
- * @author 雪风 (雪风@mud.ren)
- * @brief 标准生物对象接口，所有生物对象继承使用
- * @version 0.1
- * @date 2021-12-04
- *
- * @copyright Copyright (c) 2021
- *
+/*
+ * @Author: 雪风@mud.ren
+ * @Date: 2022-03-28 14:11:38
+ * @LastEditTime: 2022-03-28 14:15:27
+ * @LastEditors: 雪风
+ * @Description: 标准生物对象接口，所有生物对象继承使用
+ *  https://bbs.mud.ren
  */
 
 inherit CORE_ACTION;
@@ -19,3 +17,5 @@ inherit CORE_MOVE;
 inherit CORE_NAME;
 inherit CORE_SAVE;
 inherit CORE_TEAM;
+
+int is_living() { return query_temp("living"); }

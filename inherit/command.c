@@ -56,11 +56,11 @@ nomask void enable_living()
     else
         set_living_name(query("name"));
 
-    if (!query_temp("actived"))
+    if (!query_temp("living"))
     {
         enable_commands();
         parse_init();
-        set_temp("actived", 1);
+        set_temp("living", 1);
         add_action("command_hook", "", 1);
     }
 
@@ -72,9 +72,9 @@ nomask void enable_living()
 
 nomask void disable_living(string type)
 {
-    if (query_temp("actived"))
+    if (query_temp("living"))
     {
         disable_commands();
-        delete_temp("actived");
+        delete_temp("living");
     }
 }
