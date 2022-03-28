@@ -126,7 +126,7 @@ system/kernel|系统核心文件，包括master对象和simul_efun对象
 system/daemons|系统守护进程
 system/object|系统核心对象，包括登录对象、基本玩家对象和 VOID 环境
 
-#### 核心对象
+### 核心对象
 
 名称|文件路径|核心功能
 -|-|-
@@ -136,7 +136,7 @@ CORE_LOGIN_OB|/system/object/login|示例登陆对象，仅供参考，正式开
 CORE_USER_OB|/system/object/user|示例玩家对象，仅供参考，正式开发千万不要继承使用
 CORE_VOID_OB|/system/object/void|临时环境，示例登录房间
 
-#### 系统头文件(Include Headers)
+### 系统头文件(Include Headers)
 
 头文件在 `/include/` 目录中，主要是常量宏定义和函数声明，框架基本提供如下头文件：
 
@@ -155,7 +155,7 @@ socket_err.h|驱动提供，配合 socket_error() 使用
 socket.h|定义 socket 类型，配合 socket_create() 使用
 type.h|驱动提供，配合 typeof() 使用
 
-#### 继承特征(Inherit Objects)
+### 继承特征(Inherit Objects)
 
 继承文件在 `/inherit/` 目录，实现了核心的功能片段，方便直接使用，具体参考 `/docs/inherit/` 目录。基本提供如下继承文件：
 
@@ -186,7 +186,7 @@ CORE_USER_QUEST|/inherit/user_quest.c|玩家任务功能接口，实现玩家任
 CORE_USER|/inherit/user.c|玩家对象功能接口
 CORE_VRM|/inherit/vrm.c|随机迷宫功能接口，实现随机迷宫功能
 
-#### 守护进程(Daemons)
+### 守护进程(Daemons)
 
 守护进程是独立出来的系统服务，每个进程有自己的API可以调用，具体参考 `/docs/dameons/` 目录。
 
@@ -214,7 +214,7 @@ CORE_INTERMUD_D|/system/daemons/intermud/i2d.c|MUD网际互联守护进程
 * iqa_d.c : 智能答问机器人
 * qq_d.c : QQ群聊天互通机器人
 
-#### 系统函数(Simul-Efuns)
+### 系统函数(Simul-Efuns)
 
 除驱动自带的 efun 外，框架提供了部分模拟外部函数，具体使用参考 `/docs/simul_efun/` 目录，或查看函数源码（`/system/kernel/simul_efun/`）。
 
@@ -271,3 +271,7 @@ sort_string|根据指定宽度换行显示内容，中文支持更友好
 sum|返回一组数值的和
 tail|输出文件尾部最多10行内容到屏幕
 unicode|UNICODE编码转字符，如 unicode(65) 或 unicode(0x41) 返回值为 A
+
+### 默认指令
+
+泥芯框架提供了部分基础指令辅助使用，具体指令参考`/mudcore/cmds/`目录。
