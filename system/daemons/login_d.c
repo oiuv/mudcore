@@ -50,7 +50,8 @@ void reconnect(object ob, object user);
 
 protected void create()
 {
-    // write(YEL "[LOGIN_D]->create():" + this_object() + "\n" NOR);
+    // 自动加载谓词指令列表
+    VERB_D->rehash();
 }
 
 string short()

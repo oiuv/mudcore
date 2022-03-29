@@ -42,7 +42,21 @@ nomask int command_hook(string arg)
     else if (CHANNEL_D->do_channel(me, verb, arg))
         ;
     else
-        return 0;
+    {
+        mixed err = parse_sentence(arg ? verb + " " + arg : verb, 0);
+        // debug_message("err = " + err);
+        if (intp(err))
+        {
+            switch (err)
+            {
+            case 1: // verb 匹配成功
+                return 1;
+            default:
+                return 0;
+            }
+        }
+        return notify_fail(err);
+    }
 
     return 1;
 }

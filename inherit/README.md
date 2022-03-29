@@ -1,3 +1,11 @@
+<!--
+ * @Author: 雪风@mud.ren
+ * @Date: 2022-03-29 15:54:01
+ * @LastEditTime: 2022-03-29 15:54:01
+ * @LastEditors: 雪风
+ * @Description:
+ *  https://bbs.mud.ren
+-->
 mudcore 框架提供的功能模块，游戏LIB可选择性的继承使用。
 
 名称|文件|说明
@@ -25,4 +33,5 @@ CORE_USER_COMBAT_RECORD|/inherit/user_combat_record.c|玩家战斗记录功能�
 CORE_USER_GMCP|/inherit/user_gmcp.c|玩家GMCP功能接口，可配合mudlet客户端使用
 CORE_USER_QUEST|/inherit/user_quest.c|玩家任务功能接口，实现玩家任务记录与管理
 CORE_USER|/inherit/user.c|玩家对象功能接口
+CORE_VERB|/inherit/verb.c|自然语法分析指令功能接口
 CORE_VRM|/inherit/vrm.c|随机迷宫功能接口，实现随机迷宫功能

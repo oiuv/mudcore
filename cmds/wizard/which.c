@@ -12,7 +12,7 @@ int main(object me, string arg)
     if (!arg)
         return help(me);
 
-    file = COMMAND_D->find_command(arg);
+    file = COMMAND_D->find_command(arg) || VERB_D->getVerb(arg);
     if (!file)
         write("没有找到 " + arg + " 这个命令。\n");
     else

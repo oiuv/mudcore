@@ -8,13 +8,13 @@
 
 LPMUD游戏开发框架核心代码，仅仅包括核心代码，可以在此基础上开发任何MUD，本框架需配合 FluffOS v2019使用。
 
-当前版本：`v1.4.1`
+当前版本：`v1.4.2`
 
 这个项目的诞生源于我的[LPC零基础开发教程](https://bbs.mud.ren)，在写教程的过程中，发现很多朋友并不关心底层细节，只想能直接用来开发项目，国内绝大多数项目是《东方故事2》底层的，都是在这类MUD基础上修改，优点是可以快速上手，但不够灵活。能不能把底层独立出来，开发任何类型的MUD都可以使用？在思考后，我开始了这个项目，特色是只提供底层代码和接口，不提供任何游戏性的内容，独立于个人项目之外，只需简单配置即可实现个人MUD开发。本项目不考虑旧版的兼容性，只支持 FluffOS v2019 版。
 
  - 框架下载地址：https://github.com/mudcore/mudcore
  - 国内镜像地址：https://gitee.com/mudcore/mudcore
- - 框架基础示例：https://gitee.com/mudcore/demo (可在此基础上直接开发新MUD)
+ - 框架基础示例：https://gitee.com/mudcore/mud (可在此基础上直接开发新MUD)
  - 框架使用教程：https://bbs.mud.ren/threads/99 (在现有MUD中集成MudCore框架)
 
 致谢：本框架开发代码、结构、功能和思路上大量的参考借鉴了ES2系列游戏、重生的世界MUD、火影忍者MUD、DeadSouls等，感谢这些优秀MUD。
@@ -184,6 +184,7 @@ CORE_USER_COMBAT_RECORD|/inherit/user_combat_record.c|玩家战斗记录功能�
 CORE_USER_GMCP|/inherit/user_gmcp.c|玩家GMCP功能接口，可配合mudlet客户端使用
 CORE_USER_QUEST|/inherit/user_quest.c|玩家任务功能接口，实现玩家任务记录与管理
 CORE_USER|/inherit/user.c|玩家对象功能接口
+CORE_VERB|/inherit/verb.c|自然语法分析指令功能接口
 CORE_VRM|/inherit/vrm.c|随机迷宫功能接口，实现随机迷宫功能
 
 ### 守护进程(Daemons)
@@ -201,13 +202,14 @@ CORE_COMMAND_D|/system/daemons/command_d.c|负责指令及别名处理功能
 CORE_DBASE_D|/system/daemons/dbase_d.c|负责系统数据存档处理，默认存储位置`/data/dbase_d.o`
 CORE_EMOTE_D|/system/daemons/emote_d.c|负责管理游戏表情动作和相应功能，默认存储位置`/data/emote_d.o`
 CORE_ENV_D|/system/daemons/env_d.c|游戏环境变量配置守护进程，默认配置文件为`/data/.env`
+CORE_INTERMUD_D|/system/daemons/intermud/i2d.c|MUD网际互联守护进程
 CORE_LOGIN_D|/system/daemons/login_d.c|框架示例登录管理功能，可做开发参考
 CORE_NAME_D|/system/daemons/name_d.c|负责角色姓名记录与检测，默认存储位置`/data/name_d.o`
 CORE_NATURE_D|/system/daemons/nature_d.c|负责控制游戏季节和天气变化
 CORE_QUEST_D|/system/daemons/quest_d.c|游戏任务守护进程
 CORE_TIME_D|/system/daemons/time_d.c|负责控制游戏系统时间和计划任务
+CORE_VERB_D|/system/daemons/verb_d.c|自然语法谓词指令守护进程
 CORE_VIRTUAL_D|/system/daemons/virtual_d.c|负责虚拟对象处理
-CORE_INTERMUD_D|/system/daemons/intermud/i2d.c|MUD网际互联守护进程
 
 另外，在MUDCORE的`/system/daemons/http/`下面提供了二个http服务示例：
 
@@ -247,6 +249,7 @@ debug|随机颜色输出内容
 deep_path_list|获取指定目录及子目录下的文件列表
 element_of_weighted|根据权重随机返回元素，权重高机率大
 env|读取或设置游戏自定义配置的值(config的别名)
+expand_keys|把键为数组的映射展示
 file_exists|判断文件是否存在
 getcid|返回复制对象的ID
 graph_draw|自定义进度条绘图
@@ -265,7 +268,7 @@ print_r|数组打印功能，格式化输出，开发调试用
 process_bar|显示指定百分比的进度条
 pronoun|返回中文人称代词
 range|返回指定范围内符合条件的数值
-read_lines|以数组的形式返回文件每一行内容 并跳过 `#` 注释行
+read_lines|以数组的形式返回文件每一行内容，并跳过空行和`#`或`;`开头的注释行
 remove_ansi|清理 ansi 颜色代码
 sort_string|根据指定宽度换行显示内容，中文支持更友好
 sum|返回一组数值的和

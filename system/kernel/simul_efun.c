@@ -8,6 +8,7 @@
 #include "simul_efun/charset.c"
 #include "simul_efun/color.c"
 #include "simul_efun/element_of_weighted.c"
+#include "simul_efun/expand_keys.c"
 #include "simul_efun/file.c"
 #include "simul_efun/gender.c"
 #include "simul_efun/graph_draw.c"

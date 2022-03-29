@@ -25,10 +25,9 @@ private nosave mapping default_aliases = ([
     "d":"go down",
     "u":"go up",
     "i":"inventory",
-    "l":"look",
 ]);
 
-nosave mapping commands = ([ ]);
+nosave mapping commands = ([]);
 
 nomask mapping query_commands()
 {
@@ -141,4 +140,9 @@ object find_command(string verb)
 string short()
 {
     return "指令精灵(COMMAND_D)";
+}
+
+protected void create()
+{
+    rehash();
 }

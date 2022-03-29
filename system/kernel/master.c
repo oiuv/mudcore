@@ -5,6 +5,7 @@
 #include "master/flag.c"
 #include "master/include.c"
 #include "master/object.c"
+#include "master/parser.c"
 #include "master/preload.c"
 #include "master/uid.c"
 #include "master/valid.c"

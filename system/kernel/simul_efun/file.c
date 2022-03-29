@@ -1,12 +1,12 @@
-/*****************************************************************************
-Copyright: 2019, Mud.Ren
-File name: file.c
-Description: 文件读取与处理相关模拟函数
-Author: xuefeng
-Version: v1.0
-Date: 2019-03-12
-History:
-*****************************************************************************/
+/*
+ * @Author: 雪风@mud.ren
+ * @Date: 2022-03-29 10:38:10
+ * @LastEditTime: 2022-03-29 11:16:56
+ * @LastEditors: 雪风
+ * @Description: 文件读取与处理相关模拟函数
+ *  https://bbs.mud.ren
+ */
+
 // 判断文件是否存在
 int file_exists(string file)
 {
@@ -17,7 +17,7 @@ string *read_lines(string file)
 {
     if (file_exists(file))
     {
-        return filter_array(explode(read_file(file), "\n"), (: $1[0] != '#' && $1[0] != ';' :));
+        return filter_array(explode(read_file(file), "\n"), (: trim($1) != "" && $1[0] != '#' && $1[0] != ';' :));
     }
     else
         error("文件 " + file + " 不存在！");
@@ -75,4 +75,17 @@ int tail(string path)
     }
 
     return 0;
+}
+
+mixed lpc_file(string str)
+{
+    if (!file_exists(str))
+    {
+        if (file_exists(str + ".c"))
+            return str + ".c";
+        else
+            return 0;
+    }
+    else
+        return str;
 }

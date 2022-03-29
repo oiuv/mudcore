@@ -19,15 +19,16 @@
 #define LOG_DIR "/log/"
 #endif
 /** 其它可自定义游戏文件目录
- * WORLD_DIR        游戏世界目录，定义后可使用虚拟对象接口
- * MOB_DIR          游戏怪物目录，如定义可使用虚拟对象接口
- * NATURE_DIR       游戏天气描述目录，定义后可自己实现特色天时
- * QUEST_DIR        游戏任务目录，定义后可使用任务接口
- * AREA_PATTERN_DIR 游戏区域模式样式目录，可自己配置模版
- * DAEMON_DIR       游戏守护进程目录，定义后可自动生成守护进程头文件
- * INHERIT_DIR      游戏接口目录，定义后可自动生成接口头文件
- * STD_DIR          游戏标准对象目录，定义后可自动生成标准对象头文件
- * INCLUDE_DIR      游戏头文件目录，定义后会保存自动生成的头文件在此目录
+* AREA_PATTERN_DIR 游戏区域模式样式目录，可自己配置模版
+* DAEMON_DIR       游戏守护进程目录，定义后可自动生成守护进程头文件
+* INCLUDE_DIR      游戏头文件目录，定义后会保存自动生成的头文件在此目录
+* INHERIT_DIR      游戏接口目录，定义后可自动生成接口头文件
+* MOB_DIR          游戏怪物目录，如定义可使用虚拟对象接口
+* NATURE_DIR       游戏天气描述目录，定义后可自己实现特色天时
+* QUEST_DIR        游戏任务目录，定义后可使用任务接口
+* STD_DIR          游戏标准对象目录，定义后可自动生成标准对象头文件
+* VERB_DIR         游戏谓词指令目录，定义后会使用谓词语法分析指令
+* WORLD_DIR        游戏世界目录，定义后可使用虚拟对象接口
  */
 
 /* 核心对象 */
@@ -52,6 +53,7 @@
 #define CORE_NATURE_D       CORE_DIR "system/daemons/nature_d"
 #define CORE_QUEST_D        CORE_DIR "system/daemons/quest_d"
 #define CORE_TIME_D         CORE_DIR "system/daemons/time_d"
+#define CORE_VERB_D         CORE_DIR "system/daemons/verb_d"
 #define CORE_VIRTUAL_D      CORE_DIR "system/daemons/virtual_d"
 
 #define CORE_INTERMUD_D             CORE_DIR "system/daemons/intermud/i2d"
@@ -77,6 +79,7 @@
 #define CORE_SAVE           CORE_DIR "inherit/save"
 #define CORE_TEAM           CORE_DIR "inherit/team"
 #define CORE_UNIQUE         CORE_DIR "inherit/unique"
+#define CORE_VERB           CORE_DIR "inherit/verb"
 #define CORE_VRM            CORE_DIR "inherit/vrm"
 // 玩家特殊功能
 #define CORE_USER_COMBAT_RECORD CORE_DIR "inherit/user_combat_record"
@@ -172,6 +175,10 @@
 
 #ifndef TIME_D
 #define TIME_D      CORE_TIME_D
+#endif
+
+#ifndef VERB_D
+#define VERB_D   CORE_VERB_D
 #endif
 
 #ifndef VIRTUAL_D

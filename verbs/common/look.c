@@ -1,64 +1,120 @@
-/*****************************************************************************
-Copyright: 2020, Mud.Ren
-File name: look.c
-Description: 游戏基本的look指令
-Author: xuefeng
-Version: v1.0
-*****************************************************************************/
-#include <ansi.h>
-inherit CORE_CLEAN_UP;
+inherit CORE_VERB;
 
-int look_obj(object me, object ob);
+#include <ansi.h>
+
 int look_room(object me, object env);
 string desc_of_objects(object *obs);
 string look_all_inventory_of_room(object me, object env);
 
-int main(object me, string arg)
+protected void create()
 {
-    object env = environment(me);
-    object ob;
-
-    if (!arg || arg == "here")
-        return look_room(me, env);
-    else if (ob = present(arg, env))
-        return look_obj(me, ob);
-    else if (env->is_area())
-        return env->do_look(me, arg);
-    else
-        return notify_fail(YEL "MUDCORE仅提供最基础的指令功能，更多look功能需要开发者自己实现。\n" NOR);
+    verb::create();
+    setVerb("look");
+    setSynonyms("l");
+    setRules("", "STR", "OBJ", "at STR", "at OBJ", "on OBJ", "in OBJ", "inside OBJ",
+             "at OBJ in OBJ", "at OBJ inside OBJ", "at OBJ on OBJ", "at STR on OBJ");
+    setErrorMessage("你想看什么?");
 }
 
-int look_obj(object me, object ob)
+mixed can_look()
 {
-    string msg = ob->query("long");
-
-    if (msg)
-        tell_object(me, msg + "\n");
+    if (!environment(this_player()))
+        return "你的四周灰蒙蒙地一片，什么也没有。\n";
     else
-        tell_object(me, (ob->short() || "这个对象") + "普普通通，没有什么好看的……\n");
+        return 1;
+}
+
+mixed can_look_obj(mixed *data...)
+{
+    // debug_message(sprintf("can_look_obj : %O", data));
+    return can_look();
+}
+
+mixed can_look_str(mixed *data...) {
+    // debug_message(sprintf("can_look_str : %O", data));
+    return can_look();
+}
+
+// mixed can_verb_str(mixed *data...) {
+//     debug_message(sprintf("can_verb_str : %O", data));
+//     return can_look();
+// }
+
+mixed can_verb_rule(mixed *data...)
+{
+    // debug_message(sprintf("can_verb_rule : %O", data));
+    return can_look();
+}
+
+mixed can_verb_word_str(mixed *data...)
+{
+    // debug_message(sprintf("can_verb_word_str : %O", data));
+    return can_look();
+}
+
+mixed do_look()
+{
+    object me = this_player();
+    object env = environment(me);
+
+    return look_room(me, env);
+}
+
+mixed do_verb_rule(mixed *data...)
+{
+    // debug_message(sprintf("do_verb_rule : %O", data));
+    debug("你想干什么？");
+    return 1;
+}
+
+mixed do_look_at_str(string str, string arg)
+{
+    object me = this_player();
+    object env = environment(me);
+    object ob = present(str, env);
+
+    if (str == "here")
+    {
+        return do_look();
+    }
+
+    if (ob && userp(ob))
+    {
+        tell_object(ob, me->short() + "认真的看了你一眼。\n");
+        printf("%s 是一位 %d 级的%s。\n", ob->short(), ob->query("lv"), ob->query("gender"));
+    }
+    else
+        debug("这里没有你想看的人物呢。");
 
     return 1;
 }
 
+mixed do_look_str(string str, string arg)
+{
+    return do_look_at_str(str, arg);
+}
+
+varargs mixed do_look_obj(mixed *data...)
+{
+    // debug_message(sprintf("do_look_obj : %O", data));
+    return 1;
+}
+
+// 查看环境(此方法推荐放在环境中)
 int look_room(object me, object env)
 {
     string str, *dirs;
     mapping exits;
 
-    if (!env)
-    {
-        tell_object(me, "你的四周灰蒙蒙地一片，什么也没有。\n");
-        return 1;
-    }
     if (env->is_area())
     {
         return env->do_look(me);
     }
 
     str = sprintf(HIC + "%s" + NOR + "%s\n    %s" + NOR,
-                    env->short(), wizardp(me) ? " - " + env : env->coordinate(),
-                    sort_string(env->long(), 72, 4));
-                    // env->long());
+                  env->short(), wizardp(me) ? " - " + env : env->coordinate(),
+                  sort_string(env->long(), 72, 4));
+    // env->long());
 
     if (mapp(exits = env->query("exits")))
     {
