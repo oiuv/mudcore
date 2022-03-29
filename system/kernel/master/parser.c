@@ -8,7 +8,7 @@
  */
 #include <parser_error.h>
 
-// string parse_command_all_word() { return "all"; }
+string parse_command_all_word() { return "all"; }
 
 string *parse_command_prepos_list()
 {

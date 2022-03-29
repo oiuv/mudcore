@@ -60,18 +60,12 @@ mixed do_look()
     return look_room(me, env);
 }
 
-mixed do_verb_rule(mixed *data...)
-{
-    // debug_message(sprintf("do_verb_rule : %O", data));
-    debug("你想干什么？");
-    return 1;
-}
-
 mixed do_look_at_str(string str, string arg)
 {
     object me = this_player();
     object env = environment(me);
     object ob = present(str, env);
+    mapping exits = env->query("exits");
 
     if (str == "here")
     {
@@ -83,6 +77,10 @@ mixed do_look_at_str(string str, string arg)
         tell_object(ob, me->short() + "认真的看了你一眼。\n");
         printf("%s 是一位 %d 级的%s。\n", ob->short(), ob->query("lv"), ob->query("gender"));
     }
+    else if (stringp(exits[str]))
+        return look_room(me, load_object(exits[str]));
+    else if (mapp(exits[str]))
+        debug("此方向是区域环境，无法观察。");
     else
         debug("这里没有你想看的人物呢。");
 
@@ -97,6 +95,13 @@ mixed do_look_str(string str, string arg)
 varargs mixed do_look_obj(mixed *data...)
 {
     // debug_message(sprintf("do_look_obj : %O", data));
+    return 1;
+}
+
+mixed do_verb_rule(mixed *data...)
+{
+    // debug_message(sprintf("do_verb_rule : %O", data));
+    debug("你想干什么？");
     return 1;
 }
 
