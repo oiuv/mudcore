@@ -1,12 +1,11 @@
-/*****************************************************************************
-Copyright: 2019, Mud.Ren
-File name: name.c
-Description: 游戏对象名称设置接口
-Author: xuefeng
-Version: v1.0
-Date: 2019-03-15
-History:
-*****************************************************************************/
+/*
+ * @Author: 雪风@mud.ren
+ * @Date: 2022-03-30 14:09:10
+ * @LastEditTime: 2022-03-30 14:09:10
+ * @LastEditors: 雪风
+ * @Description: 游戏对象名称设置接口
+ *  https://bbs.mud.ren
+ */
 
 nosave string *my_id;
 
@@ -79,4 +78,9 @@ string long()
 string *id_list()
 {
     return my_id;
+}
+
+string *parse_command_id_list()
+{
+    return my_id || ({this_object()->query("id")});
 }

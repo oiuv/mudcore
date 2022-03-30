@@ -4,7 +4,7 @@ inherit CORE_VERB;
 
 int look_room(object me, object env);
 string desc_of_objects(object *obs);
-string look_all_inventory_of_room(object me, object env);
+string list_all_inventory_of_object(object me, object env);
 
 protected void create()
 {
@@ -12,7 +12,7 @@ protected void create()
     setVerb("look");
     setSynonyms("l");
     setRules("", "STR", "OBJ", "at STR", "at OBJ", "on OBJ", "in OBJ", "inside OBJ",
-             "at OBJ in OBJ", "at OBJ inside OBJ", "at OBJ on OBJ", "at STR on OBJ");
+             "at OBJ in OBJ", "OBJ inside OBJ", "at OBJ on OBJ", "at STR on OBJ");
     setErrorMessage("你想看什么?");
 }
 
@@ -24,22 +24,6 @@ mixed can_look()
         return 1;
 }
 
-mixed can_look_obj(mixed *data...)
-{
-    // debug_message(sprintf("can_look_obj : %O", data));
-    return can_look();
-}
-
-mixed can_look_str(mixed *data...) {
-    // debug_message(sprintf("can_look_str : %O", data));
-    return can_look();
-}
-
-// mixed can_verb_str(mixed *data...) {
-//     debug_message(sprintf("can_verb_str : %O", data));
-//     return can_look();
-// }
-
 mixed can_verb_rule(mixed *data...)
 {
     // debug_message(sprintf("can_verb_rule : %O", data));
@@ -49,6 +33,23 @@ mixed can_verb_rule(mixed *data...)
 mixed can_verb_word_str(mixed *data...)
 {
     // debug_message(sprintf("can_verb_word_str : %O", data));
+    return can_look();
+}
+
+mixed direct_look_obj(object ob, string id)
+{
+    return environment(this_player()) == environment(ob);
+}
+
+mixed direct_verb_rule(mixed *data...)
+{
+    // debug_message(sprintf("direct_verb_rule : %O", data));
+    return can_look();
+}
+
+mixed direct_verb_word_obj(mixed *data...)
+{
+    // debug_message(sprintf("direct_verb_word_obj : %O", data));
     return can_look();
 }
 
@@ -64,25 +65,18 @@ mixed do_look_at_str(string str, string arg)
 {
     object me = this_player();
     object env = environment(me);
-    object ob = present(str, env);
     mapping exits = env->query("exits");
 
     if (str == "here")
     {
         return do_look();
     }
-
-    if (ob && userp(ob))
-    {
-        tell_object(ob, me->short() + "认真的看了你一眼。\n");
-        printf("%s 是一位 %d 级的%s。\n", ob->short(), ob->query("lv"), ob->query("gender"));
-    }
     else if (stringp(exits[str]))
         return look_room(me, load_object(exits[str]));
     else if (mapp(exits[str]))
         debug("此方向是区域环境，无法观察。");
     else
-        debug("这里没有你想看的人物呢。");
+        debug("这里没有你想看的呢。");
 
     return 1;
 }
@@ -92,16 +86,51 @@ mixed do_look_str(string str, string arg)
     return do_look_at_str(str, arg);
 }
 
-varargs mixed do_look_obj(mixed *data...)
+mixed do_look_at_obj(object ob)
 {
-    // debug_message(sprintf("do_look_obj : %O", data));
+    object me = this_player();
+
+    if (userp(ob))
+    {
+        msg("info", "$ME认真的看了$YOU一眼。", me, ob);
+        printf("%s 是一位 %d 级的%s。\n", ob->short(), ob->query("lv"), ob->query("gender"));
+    }
+    else
+    {
+        printf("%s\n", ob->long());
+    }
+
+    return 1;
+}
+
+mixed do_look_at_obj_in_obj(object ob1, object ob2, string id1, string id2)
+{
+    printf("%s\n", ob1->long());
+    return 1;
+}
+
+mixed do_look_obj(object ob)
+{
+    return do_look_at_obj(ob);
+}
+
+mixed do_look_in_obj(object ob)
+{
+    if (sizeof(all_inventory(ob)))
+    {
+        debug(sprintf("%s里有:\n%s", ob->short(), list_all_inventory_of_object(ob, ob)));
+    }
+    else
+    {
+        debug(sprintf("%s里什么也没有。", ob->short()));
+    }
+
     return 1;
 }
 
 mixed do_verb_rule(mixed *data...)
 {
-    // debug_message(sprintf("do_verb_rule : %O", data));
-    debug("你想干什么？");
+    debug(sprintf("do_verb_rule : %O", data));
     return 1;
 }
 
@@ -137,7 +166,7 @@ int look_room(object me, object env)
     {
         str += "    这里没有任何出路。\n";
     }
-    str += look_all_inventory_of_room(me, env);
+    str += list_all_inventory_of_object(me, env);
     tell_object(me, str);
     return 1;
 }
@@ -179,7 +208,7 @@ string desc_of_objects(object *obs)
     return "";
 }
 
-string look_all_inventory_of_room(object me, object env)
+string list_all_inventory_of_object(object me, object env)
 {
     object *inv;
     object *obs;
