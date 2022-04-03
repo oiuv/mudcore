@@ -277,4 +277,4 @@ unicode|UNICODE编码转字符，如 unicode(65) 或 unicode(0x41) 返回值为 
 
 ### 默认指令
 
-泥芯框架提供了部分基础指令辅助使用，具体指令参考`/mudcore/cmds/`目录。
+泥芯框架提供了部分基础指令辅助使用，具体指令参考`/mudcore/cmds/`目录和`/mudcore/verbs/`目录。

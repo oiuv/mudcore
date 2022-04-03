@@ -35,8 +35,8 @@ varargs int move(mixed dest, int raw)
     if (env && env->is_area())
     {
         mapping info;
-        info = this_object()->query("area_info");
-        env->move_out(info["x_axis_old"], info["y_axis_old"], this_object());
+        info = me->query("area_info");
+        env->move_out(info["x_axis_old"], info["y_axis_old"], me);
     }
     // Move & run INIT function
     move_object(dest);
@@ -45,9 +45,9 @@ varargs int move(mixed dest, int raw)
         return -1;
 
     // 如果移入的不是區域或虚空，則刪除area_info
-    if (!dest->is_area() && !dest->query("void"))
+    if (!dest->is_area() && me->query("area_info") && !dest->query("void"))
         me->delete("area_info");
-    // debug：对没有用area_move到area的移动到随机坐标
+    // 对没有用area_move到area的移动到随机坐标
     if (dest->is_area() && !me->query("area_info"))
     {
         debug_message(sprintf("[!]%O -> %O", me, dest));

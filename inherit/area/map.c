@@ -681,18 +681,6 @@ varargs string show_objects(int x, int y, int type)
             str += sprintf("  %s\n", ob->short());
     }
 
-    /* debug
-    whos = all_inventory(this_object());
-    str += sprintf("\n====== Environment_Objects (%d) ======\n", sizeof(whos));
-    for (i = 0; i < sizeof(whos); i++)
-    {
-        str += sprintf("  %s(%s) -> (%d,%d)\n",
-                       whos[i]->query("name"),
-                       whos[i]->query("id"),
-                       whos[i]->query("area_info/x_axis"),
-                       whos[i]->query("area_info/y_axis"));
-    }
-    */
     return str;
 }
 
