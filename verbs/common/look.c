@@ -71,14 +71,21 @@ mixed do_look_at_str(string str, string arg)
     {
         return do_look();
     }
-    else if (stringp(exits[str]))
-        return look_room(me, load_object(exits[str]));
-    else if (mapp(exits[str]))
-        debug("此方向是区域环境，无法观察。");
-    else
-        debug("这里没有你想看的呢。");
+    // 查看出口方向
+    if (mapp(exits))
+    {
+        if (stringp(exits[str]))
+            return look_room(me, load_object(exits[str]));
+        else if (mapp(exits[str]))
+            debug("此方向是区域环境，无法观察。");
+            return 0;
+    }
+    if (env->is_area())
+        return env->do_look(me, str);
 
-    return 1;
+    debug("这里没有你想看的呢。");
+
+    return 0;
 }
 
 mixed do_look_str(string str, string arg)

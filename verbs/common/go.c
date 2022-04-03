@@ -7,7 +7,7 @@ Version: v1.0
 *****************************************************************************/
 #include <ansi.h>
 #include <type.h>
-inherit CORE_CLEAN_UP;
+inherit CORE_VERB;
 
 int do_area_move(object me, object env, string dir);
 int do_room_move(object me, object env, string dir);
@@ -60,19 +60,24 @@ nosave mapping r_dirs = ([
 
 nosave mapping empty_mapping = ([]);
 
-int main(object me, string arg)
+protected void create()
 {
-    object env;
+    verb::create();
+    setVerb("go");
+    setSynonyms("move");
+    setRules("STR");
+    setErrorMessage("你想去哪儿？");
+}
 
-    if (!arg)
-        return notify_fail("你要往哪个方向走？\n");
+mixed can_go_str(string dir, string arg)
+{
+    return 1;
+}
 
-    if (!objectp(me))
-        return 1;
-
-    env = environment(me);
-    if (!env)
-        return notify_fail("你哪里也去不了。\n");
+int do_go_str(string dir, string arg)
+{
+    object me = this_player();
+    object env = environment(me);
 
     if (env->is_area())
         return do_area_move(me, env, arg);
@@ -184,7 +189,7 @@ int do_area_move(object me, object env, string dir)
         dir_name = dir;
 
     // 檢查area是否合法的移動并通过valid_leave实现移动
-    if (function_exists("valid_leave", env) && !env->valid_leave(me, dir))
+    if (function_exists("moveObject", env) && !env->moveObject(me, dir))
         return 1;
 
     mout = "往" + dir_name + "離開。";

@@ -12,14 +12,14 @@ inherit AREA_PROMPT_ICON;
 mixed *area;
 
 // Location Of Objects
-// 所有存在对象的座標另成一個集合，以方便快速查找
-string *LOO = ({});
+// 所有存在非区域自动载入对象的座標另成一個集合，以方便快速查找
+nosave string *LOO = ({});
 
 // 不能用一般設定方法的項目 (區域形式的出口，要用特別的方式設定)
-string *set_data_resist = ({"objects", "loaded", "loads", "area_exit"});
+nosave string *set_data_resist = ({"objects", "loaded", "loads", "area_exit"});
 
 // 不能用一般刪除方法的項目 (可能是區域管理用的項目或其它特別的項目)
-string *delete_data_resist = ({"objects", "loaded", "loads"});
+nosave string *delete_data_resist = ({"objects", "loaded", "loads"});
 
 varargs int do_look(object me, string arg);
 
@@ -73,7 +73,6 @@ mapping query_loaded(int x, int y)
 }
 
 // 查詢區域中某座標的对象集
-//mapping *query_inventory(int x, int y)
 object *query_inventory(int x, int y)
 {
     if (!check_scope(x, y))
@@ -303,9 +302,8 @@ int move_out(int x, int y, object ob)
     return 1;
 }
 
-// 進行移動
-// 对象是否合法的在區域中移動
-int valid_leave(object ob, string dir)
+// 移动指定对象到当前区域指定方向
+int moveObject(object ob, string dir)
 {
     int x, y, x_past, y_past;
     x_past = ob->query("area_info/x_axis");
@@ -476,6 +474,12 @@ int valid_leave(object ob, string dir)
         return 0;
 
     return 1;
+}
+// 移动对象（兼容性别名，不推荐使用）
+int valid_leave(object ob, string dir)
+{
+    debug_message("[警告]请使用 moveObject 方法代替 valid_leave");
+    return moveObject(ob, dir);
 }
 
 ////////////////////////////////////////////////////////////

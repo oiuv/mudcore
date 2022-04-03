@@ -4,7 +4,7 @@
 
 #include <ansi.h>
 
-mapping icon = ([]);
+nosave mapping icon = ([]);
 
 mapping query_icon() { return icon; }
 
