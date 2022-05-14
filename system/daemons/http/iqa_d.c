@@ -1,36 +1,25 @@
-/**
- * @file iqa_d.c 智能应答机器人
- * @author 雪风@mud.ren
- * @brief https://apis.baidu.com/store/detail/eef864e1-6f2e-4631-befc-5afe35cab769
- * @version 1.0
- * @date 2021-06-13
- *
- * @copyright Copyright (c) 2021 mud.ren
- *
+/*
+ * @Author: 雪风@mud.ren
+ * @Date: 2022-05-15 00:50:12
+ * @LastEditTime: 2022-05-15 01:16:41
+ * @LastEditors: 雪风
+ * @Description: 智能应答机器人(https://apis.baidu.com/store/detail/eef864e1-6f2e-4631-befc-5afe35cab769)
+ *  https://bbs.mud.ren
  */
+inherit CORE_HTTP;
+
 #include <ansi.h>
 
-#define STREAM 1
-#define EESUCCESS 1
+nosave string host = env("IQA_URL") || "http://jisuapiareacode.api.bdymkt.com/iqa/query?question=";
+nosave string AppCode = env("AppCode");
 
-nosave string host = env("IQA_HOST") || "jisuapiareacode.api.bdymkt.com";
-nosave string addr = env("IQA_ADDR") || "157.255.71.211 80";
-nosave string path = env("IQA_PATH") || "/iqa/query?question=";
-nosave string AppCode = env("IQA_CODE") || env("AppCode");
-nosave mapping status = ([]);
 nosave object receiver;
 
-protected void write_data(int fd)
-{
-    socket_write(fd, status[fd]["http"]);
-}
-
-protected void receive_data(int fd, mixed result)
+protected void response(mixed result)
 {
     string res;
     // debug_message(result);
     res = trim(result[strsrch(result, "content") + 10 .. strsrch(result, "relquestion") - 4]);
-    // debug_message(result);
     // 清理转义字符
     res = replace_string(res, "\\r", "\r");
     res = replace_string(res, "\\n", "\n");
@@ -44,35 +33,12 @@ protected void receive_data(int fd, mixed result)
         return;
     }
     CHANNEL_D->do_channel(receiver, "chat", res);
-    // 释放连接
-    socket_close(fd);
-}
-
-protected void receive_callback(int fd, mixed result, string addr)
-{
-}
-
-protected void socket_shutdown(int fd)
-{
-    socket_close(fd);
 }
 
 // 智能问答
 void iqa(object me, string arg)
 {
-    int fd;
-    int ret;
-
     receiver = me;
 
-    fd = socket_create(STREAM, "receive_callback", "socket_shutdown");
-    status[fd] = ([]);
-    status[fd]["http"] = "POST " + path + arg + " HTTP/1.1\nHost: " + host + "\nContent-Type: application/json;charset=UTF-8\nX-Bce-Signature: AppCode/" + AppCode + "\r\n\r\n";
-
-    ret = socket_connect(fd, addr, "receive_data", "write_data");
-    if (ret != EESUCCESS)
-    {
-        tell_object(receiver, "服务器连接失败。\n");
-        socket_close(fd);
-    }
+    Http::post(host + arg,"",(["Content-Type":"application/json;charset=UTF-8", "X-Bce-Signature":"AppCode/" + AppCode]));
 }

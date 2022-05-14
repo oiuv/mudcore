@@ -1,75 +1,74 @@
-/** QQ_D QQ群消息转发机器人
- *
- * 机器人服务端使用mirai开源框架，需要自己配置QQ API服务器
- * 服务器配置文档：https://github.com/project-mirai/mirai-api-http
- * mirai-api-http 版本：v2.1.0
- *
+/*
+ * @Author: 雪风@mud.ren
+ * @Date: 2022-05-14 20:26:39
+ * @LastEditTime: 2022-05-15 01:17:01
+ * @LastEditors: 雪风
+ * @Description: QQ_D QQ群消息转发机器人，机器人服务端使用mirai开源框架，需要自己配置QQ API服务器
+ *  服务器配置文档：https://bbs.mud.ren/threads/163
  */
+inherit CORE_HTTP;
+
 #include <ansi.h>
 
-#define STREAM 1
-#define EESUCCESS 1
+#define STATE_VERIFYING 0
+#define STATE_BINDING 1
+#define STATE_CONNECTING 2
+#define STATE_CONNECTED 3
+
 // QQ消息API服务器配置
-nosave string host = env("MIRAI_HOST") || "mud.ren";
-nosave string addr = env("MIRAI_ADDR") || "118.190.104.241 8006";
+nosave string host = env("MIRAI_HOST") || "http://mud.ren:8006";
 nosave string mirai_verifyKey = env("MIRAI_KEY") || "QQ7300637-6427";
 nosave int mirai_qq = env("MIRAI_QQ") || 21791131;
 // 游戏消息转发到指定的QQ群
 nosave int group = env("MIRAI_GROUP") || 9783836;
-nosave mapping status = ([]);
+
 nosave string session;
+nosave int readyState;
 
 protected void bind();
 protected void websocket();
 protected void msg(mixed data);
 protected void send(string msg);
 
-protected void http(int fd)
-{
-    socket_write(fd, status[fd]["http"]);
-}
-
-protected void receive_verify(int fd, mixed result)
+protected void response(mixed result)
 {
     int n = strsrch(result, "{");
-    // debug_message(result);
+    Debug && debug_message(result);
+
     if (n > 0)
     {
         mixed json;
         json = json_decode(trim(result[n..]));
-        // debug_message(sprintf("%O", json));
-        session = json["session"];
-    }
-
-    if (stringp(session))
-    {
-        socket_close(fd);
-        debug_message("QQ_D 开始认证！");
-        bind();
-    }
-}
-
-protected void receive_bind(int fd, mixed result)
-{
-    int n = strsrch(result, "{");
-    // debug_message(result);
-    if (n > 0)
-    {
-        mixed json;
-        json = json_decode(trim(result[n..]));
-        // debug_message(sprintf("%O", json));
-        if (!json["code"])
+        Debug && debug_message(sprintf("%O", json));
+        switch (readyState)
         {
-            socket_close(fd);
-            debug_message("QQ_D 认证完成！");
-            websocket();
+        case STATE_VERIFYING:
+            if (json["session"])
+            {
+                debug_message("QQ_D 认证完成！");
+                session = json["session"];
+                debug_message("QQ_D 开始绑定！");
+                bind();
+            }
+            break;
+        case STATE_BINDING:
+            if (!json["code"])
+            {
+                debug_message("QQ_D 绑定完成！");
+                debug_message("QQ_D 连接ＷＳ！");
+                websocket();
+            }
+            break;
+        case STATE_CONNECTING:
+            readyState = STATE_CONNECTED;
+            debug_message("QQ_D 连接成功！");
+            break;
+        case STATE_CONNECTED:
+            msg(json["data"]);
+        default:
+            break;
         }
     }
-}
-protected void receive_msg(int fd, mixed result)
-{
-    // debug_message(sprintf("QQ_D receive_msg(fd = %d, result = %O)", fd, result));
-    socket_close(fd);
 }
 
 // 可重写此方法以适应自己的MUD
@@ -77,6 +76,10 @@ protected void msg(mapping data)
 {
     mapping sender, messageChain;
     string type;
+    if (!data)
+    {
+        return;
+    }
 
     sender = data["sender"];
     type = data["type"];
@@ -98,42 +101,10 @@ protected void msg(mapping data)
     }
 }
 
-protected void receive_data(int fd, mixed result)
-{
-    int n1 = strsrch(result, "{");
-    int n2 = strsrch(result, "}}}}");
-    // debug_message(n1 + " " + n2);
-    if (n1 == 4 && n2 > 123)
-    {
-        string res;
-        mixed json;
-        res = trim(result[n1..n2 + 3]);
-        json = json_decode(res);
-        // debug_message(sprintf("%O", json));
-        msg(json["data"]);
-    }
-    else
-        debug_message(result);
-}
-
-protected void receive_callback(int fd, mixed result)
-{
-    // debug_message(sprintf("QQ_D receive_callback(fd = %d, result = %O)", fd, result));
-}
-
-protected void socket_shutdown(int fd)
-{
-    // debug_message(sprintf("QQ_D socket_shutdown(fd = %d)", fd));
-    socket_close(fd);
-}
-
 /* 游戏消息转发QQ群调用此方法 */
 varargs void send(string msg, int qun)
 {
-    int fd;
-    int ret;
     string body;
-    string path = "/sendGroupMessage";
     string qq_qun = group + "";
     if (qun)
     {
@@ -159,78 +130,34 @@ RAW;
         "msg":msg,
     ]));
 
-    fd = socket_create(STREAM, "receive_callback", "socket_shutdown");
-    status[fd] = ([]);
-    status[fd]["http"] = "POST " + path + " HTTP/1.1\nHost: " + host + "\nContent-Type: application/json\nContent-Length: " + sizeof(string_encode(body, "utf-8")) + "\r\n\r\n" + body;
-    // debug_message(status[fd]["http"]);
-    ret = socket_connect(fd, addr, "receive_msg", "http");
-    if (ret != EESUCCESS)
-    {
-        debug_message("消息服务器连接失败。\n");
-        socket_close(fd);
-    }
+    Http::post(host + "/sendGroupMessage", body);
 }
 
 // 连接websocket
 protected void websocket()
 {
-    int fd;
-    int ret;
-    string path = "/all?verifyKey=" + mirai_verifyKey + "&sessionKey=" + session;
-
-    fd = socket_create(STREAM, "receive_callback", "socket_shutdown");
-    status[fd] = ([]);
-    status[fd]["http"] = "GET " + path + " HTTP/1.1\nHost: " + host + "\nUpgrade: websocket\nConnection: Upgrade\r\n\r\n";
-
-    ret = socket_connect(fd, addr, "receive_data", "http");
-    if (ret != EESUCCESS)
-    {
-        debug_message("WebSocket服务器连接失败。\n");
-        socket_close(fd);
-    }
+    readyState = STATE_CONNECTING;
+    Http::ws(host + "/all?verifyKey=" + mirai_verifyKey + "&sessionKey=" + session);
 }
 // 绑定session到QQ
 protected void bind()
 {
-    int fd;
-    int ret;
-    string path = "/bind";
-    string body = "{\"sessionKey\":\"" + session + "\",\"qq\":\"" + mirai_qq + "\"}";
-
-    fd = socket_create(STREAM, "receive_callback", "socket_shutdown");
-    status[fd] = ([]);
-    status[fd]["http"] = "POST " + path + " HTTP/1.1\nHost: " + host + "\nContent-Type: application/json\nContent-Length: " + strlen(body) + "\r\n\r\n" + body;
-    // debug_message(status[fd]["http"]);
-    ret = socket_connect(fd, addr, "receive_bind", "http");
-    if (ret != EESUCCESS)
-    {
-        debug_message("激活服务器连接失败。\n");
-        socket_close(fd);
-    }
+    readyState = STATE_BINDING;
+    Http::post(host + "/bind", (["sessionKey":session, "qq":mirai_qq]), (["Content-Type":"application/json"]));
 }
+
 // 认证获取session
 protected void verify()
 {
-    int fd;
-    int ret;
-    string path = "/verify";
-    string body = "{\"verifyKey\":\"" + mirai_verifyKey + "\"}";
-
-    fd = socket_create(STREAM, "receive_callback", "socket_shutdown");
-    status[fd] = ([]);
-    status[fd]["http"] = "POST " + path + " HTTP/1.1\nHost: " + host + "\nContent-Type: application/json\nContent-Length: " + strlen(body) + "\r\n\r\n" + body;
-    // debug_message(status[fd]["http"]);
-    ret = socket_connect(fd, addr, "receive_verify", "http");
-    if (ret != EESUCCESS)
-    {
-        debug_message("认证服务器连接失败。\n");
-        socket_close(fd);
-    }
+    readyState = STATE_VERIFYING;
+    Http::post(host + "/verify", (["verifyKey":mirai_verifyKey]), (["Content-Type":"application/json"]));
 }
 
-protected void create()
+void create()
 {
+    Http::create();
     seteuid(ROOT_UID);
+    // Debug = 1;
     // 初始化认证，请继承调用
-    // verify();
+    verify();
 }

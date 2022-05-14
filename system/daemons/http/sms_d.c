@@ -1,33 +1,23 @@
-/**
- * @file sms_d.c 短信验证码守护进程
- * @author 雪风@mud.ren
- * @brief https://apis.baidu.com/store/detail/b1a3e224-2faa-462c-9075-8a42fc1e9e16
- * @version 1.0
- *
- * @copyright Copyright (c) 2021 mud.ren
- *
+/*
+ * @Author: 雪风@mud.ren
+ * @Date: 2022-05-12 22:19:07
+ * @LastEditTime: 2022-05-15 01:17:15
+ * @LastEditors: 雪风
+ * @Description: 短信验证码守护进程
+ *  https://apis.baidu.com/store/detail/b1a3e224-2faa-462c-9075-8a42fc1e9e16
  */
+inherit CORE_HTTP;
+
 #include <ansi.h>
 
-#define STREAM 1
-#define EESUCCESS 1
-
-nosave string host = env("SMS_HOST") || "gwgp-wtxhytukujk.n.bdcloudapi.com";
-nosave string addr = env("SMS_ADDR") || "153.37.235.160 80";
-nosave string path = env("SMS_PATH") || "/chuangxin/dxjk";
-nosave string AppCode = env("SMS_CODE") || env("AppCode");
-nosave mapping status = ([]);
+nosave string host = env("SMS_URL") || "http://gwgp-wtxhytukujk.n.bdcloudapi.com/chuangxin/dxjk";
+nosave string AppCode = env("AppCode");
 nosave object receiver;
 
-protected void write_data(int fd)
-{
-    socket_write(fd, status[fd]["http"]);
-}
-
-protected void receive_data(int fd, mixed result)
+protected void response(mixed result)
 {
     int n = strsrch(result, "{");
-
+    debug_message("response: " + result);
     if (n > 0)
     {
         result = json_decode(trim(result[n..]));
@@ -41,28 +31,15 @@ protected void receive_data(int fd, mixed result)
             tell_object(receiver, BRED + result["Message"] + NOR "\n");
         }
     }
-
-    // 释放连接
-    socket_close(fd);
-}
-
-protected void receive_callback(int fd, mixed result, string addr)
-{
-}
-
-protected void socket_shutdown(int fd)
-{
-    socket_close(fd);
 }
 
 // 发送短信
 void sms(object me, mixed code, mixed mobile)
 {
-    int fd;
-    int ret;
-    string tpl, arg;
+    string tpl;
 
     receiver = me;
+    // Debug = 1;
     if (intp(code))
     {
         tpl = "【雪风】你的验证码是：" + code + "，请勿泄漏于他人！";
@@ -71,26 +48,13 @@ void sms(object me, mixed code, mixed mobile)
     {
         tpl = code;
     }
-    arg = "?content=" + tpl + "&mobile=" + mobile;
 
     if (!AppCode)
     {
         error("请先配置短信API AppCode！");
     }
+    Http::get(host, (["content":tpl, "mobile":mobile]), (["Content-Type":"application/json;charset=UTF-8", "X-Bce-Signature":"AppCode/" + AppCode]));
 
-    fd = socket_create(STREAM, "receive_callback", "socket_shutdown");
-    status[fd] = ([]);
-    status[fd]["http"] = "GET " + path + arg + " HTTP/1.1\nHost: " + host + "\nContent-Type: application/json;charset=UTF-8\nX-Bce-Signature: AppCode/" + AppCode + "\r\n\r\n";
-
-    ret = socket_connect(fd, addr, "receive_data", "write_data");
-    if (ret != EESUCCESS)
-    {
-        tell_object(receiver, "服务器连接失败。\n");
-        socket_close(fd);
-    }
-    else
-    {
-        // 记录日志
-        log_file("mobile", "[" + ctime() + "]" + mobile + "\t" + me->short() + "\t" + query_ip_number(me) + "\n");
-    }
+    // 记录日志
+    log_file("mobile", "[" + ctime() + "]" + mobile + "\t" + me->short() + "\t" + query_ip_number(me) + "\n");
 }
