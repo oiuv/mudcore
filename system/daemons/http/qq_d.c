@@ -1,9 +1,9 @@
 /*
  * @Author: 雪风@mud.ren
  * @Date: 2022-05-14 20:26:39
- * @LastEditTime: 2022-05-15 01:17:01
+ * @LastEditTime: 2022-05-15 12:27:10
  * @LastEditors: 雪风
- * @Description: QQ_D QQ群消息转发机器人，机器人服务端使用mirai开源框架，需要自己配置QQ API服务器
+ * @Description: QQ_D QQ群消息转发机器人，机器人服务端使用Mirai开源框架，需要自己配置QQ API服务器
  *  服务器配置文档：https://bbs.mud.ren/threads/163
  */
 inherit CORE_HTTP;
@@ -16,19 +16,18 @@ inherit CORE_HTTP;
 #define STATE_CONNECTED 3
 
 // QQ消息API服务器配置
-nosave string host = env("MIRAI_HOST") || "http://mud.ren:8006";
-nosave string mirai_verifyKey = env("MIRAI_KEY") || "QQ7300637-6427";
-nosave int mirai_qq = env("MIRAI_QQ") || 21791131;
+nosave string Base_uri = env("MIRAI_HOST") || "http://mud.ren:8006";
+nosave string Mirai_verifyKey = env("MIRAI_KEY") || "QQ7300637-6427";
+nosave int Mirai_qq = env("MIRAI_QQ") || 21791131;
 // 游戏消息转发到指定的QQ群
-nosave int group = env("MIRAI_GROUP") || 9783836;
+nosave int Group = env("MIRAI_GROUP") || 9783836;
 
-nosave string session;
-nosave int readyState;
+nosave string Session;
+nosave int ReadyState;
 
 protected void bind();
 protected void websocket();
 protected void msg(mixed data);
-protected void send(string msg);
 
 protected void response(mixed result)
 {
@@ -40,13 +39,13 @@ protected void response(mixed result)
         mixed json;
         json = json_decode(trim(result[n..]));
         Debug && debug_message(sprintf("%O", json));
-        switch (readyState)
+        switch (ReadyState)
         {
         case STATE_VERIFYING:
             if (json["session"])
             {
                 debug_message("QQ_D 认证完成！");
-                session = json["session"];
+                Session = json["session"];
                 debug_message("QQ_D 开始绑定！");
                 bind();
             }
@@ -60,7 +59,7 @@ protected void response(mixed result)
             }
             break;
         case STATE_CONNECTING:
-            readyState = STATE_CONNECTED;
+            ReadyState = STATE_CONNECTED;
             debug_message("QQ_D 连接成功！");
             break;
         case STATE_CONNECTED:
@@ -105,12 +104,12 @@ protected void msg(mapping data)
 varargs void send(string msg, int qun)
 {
     string body;
-    string qq_qun = group + "";
+    string qq_qun = Group + "";
     if (qun)
     {
         qq_qun = qun + "";
     }
-    // body = "{\"sessionKey\":\"" + session + "\",\"target\":" + qq_qun + ",\"messageChain\":[{\"type\":\"Plain\",\"text\":\"" + msg + "\"}]}";
+    // body = "{\"sessionKey\":\"" + Session + "\",\"target\":" + qq_qun + ",\"messageChain\":[{\"type\":\"Plain\",\"text\":\"" + msg + "\"}]}";
     // 美化格式，不用转义
     body = @RAW
 {
@@ -125,32 +124,32 @@ varargs void send(string msg, int qun)
 }
 RAW;
     body = terminal_colour(body, ([
-        "session":session,
+        "session":Session,
         "group":qq_qun,
         "msg":msg,
     ]));
 
-    Http::post(host + "/sendGroupMessage", body);
+    Http::post(Base_uri + "/sendGroupMessage", body);
 }
 
 // 连接websocket
 protected void websocket()
 {
-    readyState = STATE_CONNECTING;
-    Http::ws(host + "/all?verifyKey=" + mirai_verifyKey + "&sessionKey=" + session);
+    ReadyState = STATE_CONNECTING;
+    Http::ws(Base_uri + "/all?verifyKey=" + Mirai_verifyKey + "&sessionKey=" + Session);
 }
 // 绑定session到QQ
 protected void bind()
 {
-    readyState = STATE_BINDING;
-    Http::post(host + "/bind", (["sessionKey":session, "qq":mirai_qq]), (["Content-Type":"application/json"]));
+    ReadyState = STATE_BINDING;
+    Http::post(Base_uri + "/bind", (["sessionKey":Session, "qq":Mirai_qq]), (["Content-Type":"application/json"]));
 }
 
 // 认证获取session
 protected void verify()
 {
-    readyState = STATE_VERIFYING;
-    Http::post(host + "/verify", (["verifyKey":mirai_verifyKey]), (["Content-Type":"application/json"]));
+    ReadyState = STATE_VERIFYING;
+    Http::post(Base_uri + "/verify", (["verifyKey":Mirai_verifyKey]), (["Content-Type":"application/json"]));
 }
 
 void create()

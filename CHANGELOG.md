@@ -1,7 +1,7 @@
 <!--
  * @Author: 雪风@mud.ren
  * @Date: 2022-03-29 15:56:47
- * @LastEditTime: 2022-05-11 21:51:13
+ * @LastEditTime: 2022-05-15 14:40:48
  * @LastEditors: 雪风
  * @Description:
  *  https://bbs.mud.ren
@@ -10,7 +10,7 @@
 
 ### 2022年5月
 
-* 增加Http客户端
+* 增加Http客户端，优化相关示例项目
 * 增加MSP接口
 
 ### 2022年3月

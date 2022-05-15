@@ -1,7 +1,7 @@
 /*
  * @Author: 雪风@mud.ren
  * @Date: 2022-05-11 11:42:27
- * @LastEditTime: 2022-05-15 01:16:19
+ * @LastEditTime: 2022-05-15 10:01:26
  * @LastEditors: 雪风
  * @Description: HTTP客户端
  *  https://bbs.mud.ren
@@ -55,11 +55,17 @@ protected void write_data(int fd)
 
 protected void receive_data(int fd, mixed result)
 {
-    if (!strsrch(result, "HTTP/1.1 101 Switching Protocols"))
+    mixed *status = allocate(3);
+
+    sscanf(result, "%s %d %s\r\n", status[0], status[1], status[2]);
+
+    if (status[1] == 101)
     {
         Status[fd]["status"] = STATE_WEBSOCKET;
     }
+
     response(result);
+
     if (Status[fd]["status"] != STATE_WEBSOCKET)
     {
         // 释放连接
