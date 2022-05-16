@@ -1,7 +1,7 @@
 /*
  * @Author: 雪风@mud.ren
  * @Date: 2022-05-11 11:42:27
- * @LastEditTime: 2022-05-15 10:01:26
+ * @LastEditTime: 2022-05-16 17:00:36
  * @LastEditors: 雪风
  * @Description: HTTP客户端
  *  https://bbs.mud.ren
@@ -14,7 +14,6 @@
 #define STATE_OPEN 1
 #define STATE_CONNECTED 2
 #define STATE_CLOSED 3
-#define STATE_WEBSOCKET 101
 
 nosave mapping Host;
 nosave mapping Host_fd;
@@ -43,6 +42,10 @@ protected void socket_shutdown(int fd)
 // 客户端响应，请重写此接口处理响应
 protected void response(mixed result)
 {
+    // mixed *status = allocate(3);
+
+    // sscanf(result, "%s %d %s\r\n", status[0], status[1], status[2]);
+
     debug_message(result);
 }
 
@@ -55,18 +58,9 @@ protected void write_data(int fd)
 
 protected void receive_data(int fd, mixed result)
 {
-    mixed *status = allocate(3);
-
-    sscanf(result, "%s %d %s\r\n", status[0], status[1], status[2]);
-
-    if (status[1] == 101)
-    {
-        Status[fd]["status"] = STATE_WEBSOCKET;
-    }
-
     response(result);
 
-    if (Status[fd]["status"] != STATE_WEBSOCKET)
+    if (!stringp(Status[fd]["header"]["Connection"]) || lower_case(Status[fd]["header"]["Connection"]) == "close")
     {
         // 释放连接
         socket_shutdown(fd);
@@ -103,7 +97,7 @@ protected void on_resolve(string host, string addr, int key)
     }
 }
 
-protected object request(string method, string url, mixed data, mapping header)
+nomask protected object request(string method, string url, mixed data, mapping header)
 {
     int fd;
     string host, path;
@@ -173,6 +167,7 @@ protected object request(string method, string url, mixed data, mapping header)
     Status[fd]["port"] = port;
     Status[fd]["path"] = path;
     Status[fd]["http"] = method + " " + path + " HTTP/1.1\r\nHost: " + host + headers + "\r\n\r\n" + body;
+    Status[fd]["header"] = header || ([]);
 
     Debug && debug_message(sprintf("Status : %O", Status));
 
@@ -208,6 +203,17 @@ varargs object post(string url, mixed body, mapping header)
     }
 
     return request("POST", url, body, header);
+}
+
+varargs object head(string url, mapping query, mapping header)
+{
+    if (!url)
+    {
+        error("Miss 'url' argument to 'head'.");
+        return 0;
+    }
+
+    return request("HEAD", url, query, header);
 }
 
 varargs object ws(string url, mapping query, mapping header)

@@ -1,40 +1,31 @@
 /*
  * @Author: 雪风@mud.ren
  * @Date: 2022-05-15 14:28:31
- * @LastEditTime: 2022-05-15 14:39:17
+ * @LastEditTime: 2022-05-16 18:12:51
  * @LastEditors: 雪风
- * @Description: 手机号码查吉凶（https://apis.baidu.com/store/detail/6a94c060-1519-417f-b4ce-36662753324a）
+ * @Description: 手机号码查吉凶
  *  https://bbs.mud.ren
  */
 inherit CORE_HTTP;
 
 #include <ansi.h>
 
-nosave string Url = env("LUCK_URL") || "http://jisuapimobileluck.api.bdymkt.com/mobileluck/query?mobile=";
-nosave string AppCode = env("AppCode") || "5ce8d2dcf3e84749b9b46eaae4740070";
+nosave string Url = env("LUCK_URL") || "http://api.oiuv.cn/api/mobile/";
 nosave object Receiver;
 
 protected void response(mixed result)
 {
-    string res;
+    mixed *status = allocate(3);
+    sscanf(result, "%s %d %s\r\n", status[0], status[1], status[2]);
 
-    if (sscanf(result, "%*s\r\n%s\r\n0", res))
-        CHANNEL_D->do_channel(Receiver, "chat", sprintf("%O", json_decode(res)));
-}
-
-// 分包传输（transfer-encoding: chunked）处理
-protected void receive_data(int fd, mixed result)
-{
-    if (strsrch(result, "transfer-encoding: chunked") < 0)
+    if (status[1] == 200)
     {
-        response(result);
-        socket_shutdown(fd);
+        CHANNEL_D->do_channel(Receiver, "chat", sprintf("%O", json_decode(trim(result[strsrch(result, "{")..]))));
     }
 }
 
 void query(object me, int mobile)
 {
     Receiver = me;
-    // Debug = 1;
-    Http::post(Url + mobile, "", (["Content-Type":"application/json;charset=UTF-8", "X-Bce-Signature":"AppCode/" + AppCode]));
+    Http::get(Url + mobile);
 }
