@@ -1,7 +1,7 @@
 /*
  * @Author: 雪风@mud.ren
  * @Date: 2022-05-14 20:26:39
- * @LastEditTime: 2022-05-15 12:27:10
+ * @LastEditTime: 2022-05-16 20:30:32
  * @LastEditors: 雪风
  * @Description: QQ_D QQ群消息转发机器人，机器人服务端使用Mirai开源框架，需要自己配置QQ API服务器
  *  服务器配置文档：https://bbs.mud.ren/threads/163
@@ -158,5 +158,5 @@ void create()
     seteuid(ROOT_UID);
     // Debug = 1;
     // 初始化认证，请继承调用
-    verify();
+    // verify();
 }
