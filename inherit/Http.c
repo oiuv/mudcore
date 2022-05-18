@@ -1,7 +1,7 @@
 /*
  * @Author: 雪风@mud.ren
  * @Date: 2022-05-11 11:42:27
- * @LastEditTime: 2022-05-16 17:00:36
+ * @LastEditTime: 2022-05-18 13:55:32
  * @LastEditors: 雪风
  * @Description: HTTP客户端
  *  https://bbs.mud.ren
@@ -166,7 +166,7 @@ nomask protected object request(string method, string url, mixed data, mapping h
     Status[fd]["host"] = host;
     Status[fd]["port"] = port;
     Status[fd]["path"] = path;
-    Status[fd]["http"] = method + " " + path + " HTTP/1.1\r\nHost: " + host + headers + "\r\n\r\n" + body;
+    Status[fd]["http"] = method + " " + path + " HTTP/1.1\r\nHost: " + host + (port == 80 ? "" : ":" + port) + headers + "\r\n\r\n" + body;
     Status[fd]["header"] = header || ([]);
 
     Debug && debug_message(sprintf("Status : %O", Status));
