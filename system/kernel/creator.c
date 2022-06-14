@@ -55,7 +55,7 @@ private void create_inherit_include()
 
     file += files(files, "");
 
-    write_file(INCLUDE_DIR "inherit.h", file, 1);
+    write_file(INCLUDE_DIR "_inherit.h", file, 1);
 #endif
 }
 
@@ -67,7 +67,7 @@ private void create_daemon_include()
 
     file += files(files);
 
-    write_file(INCLUDE_DIR "daemon.h", file, 1);
+    write_file(INCLUDE_DIR "_daemon.h", file, 1);
 #endif
 }
 
@@ -79,7 +79,7 @@ private void create_std_include()
 
     file += files(files, "STD");
 
-    write_file(INCLUDE_DIR "std.h", file, 1);
+    write_file(INCLUDE_DIR "_std.h", file, 1);
 #endif
 }
 
