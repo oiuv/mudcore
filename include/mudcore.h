@@ -69,6 +69,7 @@
 #define CORE_CONDITION      CORE_DIR "inherit/condition"
 #define CORE_DB             CORE_DIR "inherit/DB"
 #define CORE_DBASE          CORE_DIR "inherit/dbase"
+#define CORE_HTTP           CORE_DIR "inherit/Http"
 #define CORE_LIVING         CORE_DIR "inherit/living"
 #define CORE_MESSAGE        CORE_DIR "inherit/message"
 #define CORE_MOVE           CORE_DIR "inherit/move"

@@ -2,6 +2,17 @@
 
 nosave string *gmcp_log = ({});
 
+// msp_oob("!!SOUND(10001.wav L=1 V=100 U=https://mud.ren/storage/wav/)");
+// msp_oob("!!MUSIC(1001.mp3 L=1 V=100 U=https://mud.ren/storage/wav/)");
+void msp_oob(string req)
+{
+#if efun_defined(telnet_msp_oob)
+    efun::telnet_msp_oob(req);
+#else
+    receive("<当前驱动不支持efun telnet_msp_oob()>\n");
+#endif
+}
+
 protected int dump_gmcp_log()
 {
     write(implode(gmcp_log, "\n") + "\n");

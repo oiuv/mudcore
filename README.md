@@ -194,6 +194,7 @@ CORE_CONDITION|/inherit/condition.c|角色增益状态控制接口，实现游�
 CORE_DB|/inherit/DB.c|MySQL数据库接口，可以优雅的操作数据库的增删改查
 CORE_DBASE|/inherit/dbase.c|数据存取功能接口，实现对象参数的增删改查功能
 CORE_DBSAVE|/inherit/dbsave.c|系统数据存取接口，配合 DBASE_D 使用
+CORE_HTTP|/inherit/Http.c|HTTP客户端，方便发起http请求
 CORE_LIVING|/inherit/living.c|生物对象功能接口，所有生物对接可直接继承使用
 CORE_MESSAGE|/inherit/message.c|玩家信息处理功能接口，实现分页显示
 CORE_MOVE|/inherit/move.c|对象移动接口，由角色、物品对象继承，方便移动
