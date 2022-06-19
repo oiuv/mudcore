@@ -8,28 +8,53 @@
 
 LPMUD游戏开发框架核心代码，仅仅包括核心代码，可以在此基础上开发任何MUD，本框架需配合 FluffOS v2019使用。
 
-当前版本：`v1.4.2`
+当前版本：`v1.4.*`
 
-这个项目的诞生源于我的[LPC零基础开发教程](https://bbs.mud.ren)，在写教程的过程中，发现很多朋友并不关心底层细节，只想能直接用来开发项目，国内绝大多数项目是《东方故事2》底层的，都是在这类MUD基础上修改，优点是可以快速上手，但不够灵活。能不能把底层独立出来，开发任何类型的MUD都可以使用？在思考后，我开始了这个项目，特色是只提供底层代码和接口，不提供任何游戏性的内容，独立于个人项目之外，只需简单配置即可实现个人MUD开发。本项目不考虑旧版的兼容性，只支持 FluffOS v2019 版。
+这个项目的诞生源于我的[LPC零基础开发教程](https://bbs.mud.ren)，在写教程的过程中，发现很多同学并不关心底层细节，只想能直接开发游戏项目，国内绝大多数MUD游戏都是《东方故事2》底层，在已有MUD基础上修改的优点是可以快速上手，但这个算不上独立的游戏框架。能不能把底层独立出来，开发任何类型的MUD都可以使用？在思考后，我开始了这个项目，特色是只提供底层代码和接口，几乎不提供任何游戏性的内容，独立于游戏项目之外，只需简单配置即可实现MUD游戏开发。
+
+> 本项目不考虑旧版驱动的兼容性，只支持 FluffOS v2019 以后的版本。
 
  - 框架下载地址：https://github.com/mudcore/mudcore
  - 国内镜像地址：https://gitee.com/mudcore/mudcore
- - 框架基础示例：https://gitee.com/mudcore/mud (可在此基础上直接开发新MUD)
- - 框架使用教程：https://bbs.mud.ren/threads/99 (在现有MUD中集成MudCore框架)
+ - 框架示例项目：https://github.com/mudcore/mymud
+ - 框架基础模板：https://github.com/mudcore/mud (可用模板直接开发新MUD)
+ - 框架使用教程：https://bbs.mud.ren/threads/66
+ - 框架集成示例：https://bbs.mud.ren/threads/99
 
 致谢：本框架开发代码、结构、功能和思路上大量的参考借鉴了ES2系列游戏、重生的世界MUD、火影忍者MUD、DeadSouls等，感谢这些优秀MUD。
 
 ## 框架特色
 
-框架提供大量常用模拟外部函数和最基本的游戏底层（包括指令系统、聊天频道、表情系统和档案存取功能），可以用来快速开发个人的MUD，框架部分独立维护，更新升级不影响个人项目。个人项目目录结构和功能灵活自主，框架提供的功能可灵活选择使用，只需要继承对应模块即可。
-
-注意：项目开发不要继承 **CORE_LOGIN_OB** 和 **CORE_USER_OB**，这二个为示例文件，仅供演示和参考，请务必自己实现登录对象和玩家对象。
+框架提供大量常用模拟外部函数和最基本的游戏底层（包括指令系统、聊天频道、表情系统和档案存取功能），可以用来快速开发MUD游戏，框架部分独立维护，更新升级不影响个人项目。个人项目目录结构和功能灵活自主，框架提供的功能可灵活选择使用，只需要继承对应模块即可。
 
 ## 框架使用说明
 
-把本框架放在你的MUD项目中，推荐保持默认目录名称 `mudcore`，并做如下配置：
+### 安装
 
-1. 运行时配置文件<config.ini>中定义包含文件目录：
+如果你是新项目使用mudcore框架，请直接使用[mudcore项目模板](https://github.com/mudcore/mud)安装：
+
+```bash
+git clone --recurse-submodules https://github.com/mudcore/mud.git
+```
+
+如果是已有MUD集成框架，请把本框架放在你的MUD项目中（保持默认目录名称 `mudcore`），推荐安装方式：
+
+1. 如果你的游戏使用git管理，请添加框架为子模块：
+
+```bash
+git submodule add https://github.com/mudcore/mudcore.git
+```
+2. 如果你的游戏没有使用git管理，请在游戏目录直接安装框架：
+
+```bash
+git clone https://github.com/mudcore/mudcore.git
+```
+
+### 配置
+
+如果你使用[mudcore项目模板](https://github.com/mudcore/mud)安装，不需要做任何配置可直接运行，否则请按以下配置集成框架到你的MUD游戏中：
+
+1. 运行时配置文件<config.ini>中定义包含mudcore框架文件目录：
 
 ```ini
 include directories : /include:/mudcore/include
@@ -48,23 +73,7 @@ include directories : /include:/mudcore/include
 #include <mudcore.h>
 ```
 
-3. 主控对象文件继承框架对象：
-
-```
-inherit CORE_MASTER_OB;
-```
-
-4. 模拟外部函数文件继承框架对象：
-
-```
-inherit CORE_SIMUL_EFUN_OB;
-```
-
-只需要以上配置，你的MUD基本框架就可以正常启动，并自带登录注册功能。
-
 对新MUD开发，如果不想使用框架提供的登录注册功能，请在 <globals.h> 中定义连线对象`LOGIN_OB` 和 `USER_OB` 指向自己实现功能的文件。
-
-个人开发MUD不建议直接修改 `mudcore` 的任何代码，如果需要增加功能，请通过继承和覆盖的方式实现。
 
 如果需要预加载，请定义 `PRELOAD` 并指定文件列表位置，在对应文件列出预加载对象文件。
 
@@ -102,21 +111,35 @@ int help(object me)
 }
 ```
 
-如果你是使用泥芯框架从零开始开发新游戏，可参考框架使用演示教程：https://bbs.mud.ren/threads/66
+3. 主控对象文件继承框架对象（可选）：
 
-除了新开发游戏，老游戏也可以引入框架并使用框架的功能，具体参考：https://bbs.mud.ren/threads/99
+```c
+inherit CORE_MASTER_OB;
+```
 
-## 框架功能介绍
+4. 模拟外部函数文件继承框架对象（可选）：
 
-### 目录结构
+```c
+inherit CORE_SIMUL_EFUN_OB;
+```
+
+注意：项目开发不要继承 **CORE_LOGIN_OB** 和 **CORE_USER_OB**，这二个为示例文件，仅供演示和参考，请务必自己实现登录对象和玩家对象。
+
+> 提示：请务必不要直接修改 `mudcore` 的任何代码，如果需要增加功能，请通过继承和覆盖的方式实现。
+
+使用泥芯框架从零开始开发新游戏详细示例教程：https://bbs.mud.ren/threads/66
+
+## 框架目录结构
 
 目录|说明
 -|-
-cmds|框架提供的基本指令，可覆盖
+cmds|框架提供的基本action指令
 docs|开发者文档，包括框架模拟外部函数说明文档等
-include|框架头文件
+include|框架头文件，包括fluffos驱动内置头文件
 inherit|框架特性继承文件
 system|系统文件目录
+verbs|框架提供的基本parser指令
+world|框架示例世界环境
 
 #### system系统目录
 
@@ -155,7 +178,7 @@ socket_err.h|驱动提供，配合 socket_error() 使用
 socket.h|定义 socket 类型，配合 socket_create() 使用
 type.h|驱动提供，配合 typeof() 使用
 
-### 继承特征(Inherit Objects)
+### 继承特征模块(Inherit Objects)
 
 继承文件在 `/inherit/` 目录，实现了核心的功能片段，方便直接使用，具体参考 `/docs/inherit/` 目录。基本提供如下继承文件：
 
@@ -202,6 +225,7 @@ CORE_COMMAND_D|/system/daemons/command_d.c|负责指令及别名处理功能
 CORE_DBASE_D|/system/daemons/dbase_d.c|负责系统数据存档处理，默认存储位置`/data/dbase_d.o`
 CORE_EMOTE_D|/system/daemons/emote_d.c|负责管理游戏表情动作和相应功能，默认存储位置`/data/emote_d.o`
 CORE_ENV_D|/system/daemons/env_d.c|游戏环境变量配置守护进程，默认配置文件为`/data/.env`
+CORE_EVER_QUEST_D|/system/daemons/ever_quest_d.c|随机任务守护进程
 CORE_INTERMUD_D|/system/daemons/intermud/i2d.c|MUD网际互联守护进程
 CORE_LOGIN_D|/system/daemons/login_d.c|框架示例登录管理功能，可做开发参考
 CORE_NAME_D|/system/daemons/name_d.c|负责角色姓名记录与检测，默认存储位置`/data/name_d.o`
@@ -211,10 +235,11 @@ CORE_TIME_D|/system/daemons/time_d.c|负责控制游戏系统时间和计划任�
 CORE_VERB_D|/system/daemons/verb_d.c|自然语法谓词指令守护进程
 CORE_VIRTUAL_D|/system/daemons/virtual_d.c|负责虚拟对象处理
 
-另外，在MUDCORE的`/system/daemons/http/`下面提供了二个http服务示例：
+另外，在MUDCORE的`/system/daemons/http/`下面提供了http服务示例：
 
-* iqa_d.c : 智能答问机器人
-* qq_d.c : QQ群聊天互通机器人
+* iqa_d.c : 智能答问守护进程
+* qq_d.c : QQ群聊天互通守护进程
+* sms_d.c : 手机验证码短信守护进程
 
 ### 系统函数(Simul-Efuns)
 

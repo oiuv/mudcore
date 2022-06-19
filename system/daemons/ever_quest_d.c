@@ -122,13 +122,13 @@ public string generate_information(object knower, object who, string topic);
 打听消息的时候系统把打听的对象和打听消息的人，关键字传递给该
 函数，取它的返回结果。
 
-QUEST_D提供的消息API：
+EVER_QUEST_D提供的消息API：
 
-QUEST_D->add_quest(QUEST_OBJECT);
-QUEST_D->set_information(QUEST_OBJECT, key, information);
-QUEST_D->query_information(QUEST_OBJECT, key);
-QUEST_D->remove_information(QUEST_OBJECT, key);
-QUEST_D->remove_all_information(QUEST_OBJECT);
+EVER_QUEST_D->add_quest(QUEST_OBJECT);
+EVER_QUEST_D->set_information(QUEST_OBJECT, key, information);
+EVER_QUEST_D->query_information(QUEST_OBJECT, key);
+EVER_QUEST_D->remove_information(QUEST_OBJECT, key);
+EVER_QUEST_D->remove_all_information(QUEST_OBJECT);
 
 QUEST_OB必须提供的消息接口：
 
