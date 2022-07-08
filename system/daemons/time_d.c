@@ -179,12 +179,15 @@ string week_period(int week, int style)
 {
     mixed w = ({
         ({"星期日", "星期一", "星期二", "星期三", "星期四", "星期五", "星期六"}),
+        ({"礼拜日", "礼拜一", "星期二", "礼拜三", "礼拜四", "礼拜五", "礼拜六"}),
         ({"日曜日", "月曜日", "火曜日", "水曜日", "木曜日", "金曜日", "土曜日"}),
+        ({"太阳日", "太阴日", "荧惑日", "辰星日", "岁星日", "太白日", "镇星日"}),
+        ({"日神日", "月神日", "火神日", "水神日", "木神日", "金神日", "土神日"}),
     });
 
-    if (abs(week) > 6 || abs(style) > 1)
+    if (week < 0 || week > 6 || style < 0 || style > 4)
     {
-        return "";
+        return "🆖";
     }
 
     return w[style][week];
@@ -237,10 +240,6 @@ varargs string game_time_description(string arg, int style)
 {
     if (!arg)
         arg = "混沌";
-    if (!style)
-    {
-        style = 1;
-    }
 
     return time_description(arg, game_time, style);
 }
@@ -249,10 +248,7 @@ varargs string real_time_description(string arg, int style)
 {
     if (!arg)
         arg = "公元";
-    if (!style)
-    {
-        style = 0;
-    }
+
     return time_description(arg, real_time, style);
 }
 
