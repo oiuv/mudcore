@@ -14,9 +14,11 @@ inherit CORE_DBSAVE;
 // 游戏时间戳
 private int gametime;
 
-// 游戏时间和现实时间换算（现实tick秒是游戏scale秒）
+// 游戏时间和现实时间换算（现实tick秒是游戏１分钟）
 private nosave int tick;
+// 默认为６０(秒)，非特殊情况不要改动
 private nosave int scale;
+// 游戏纪元起始年
 private nosave int year;
 
 // localtime()
@@ -68,7 +70,7 @@ int query_realtime()
 }
 
 // 设置游戏时钟转换比率
-void set_scale(int t, int s, int y)
+varargs void set_scale(int t, int y, int s)
 {
     if (t)
         tick = t;
@@ -234,7 +236,7 @@ string time_description(string title, int *t, int style)
 varargs string game_time_description(string arg, int style)
 {
     if (!arg)
-        arg = "魔幻";
+        arg = "混沌";
     if (!style)
     {
         style = 1;
@@ -420,19 +422,17 @@ int reset_gametime(int time)
     return save();
 }
 
-// 游戏时间每scale秒执行一次
+// 现实时间每tick秒（游戏时间每scale秒）执行一次
 varargs void process_gametime(int timestamp)
 {
     // 设置游戏localtime
     game_time = analyse_time(timestamp);
+    game_time[LT_YEAR] -= 1969; // 游戏元年
     if (year)
     {
-        game_time[LT_YEAR] = year;
+        game_time[LT_YEAR] += year - 1;
     }
-    else
-    {
-        game_time[LT_YEAR] -= 1969;
-    }
+
     // 执行计划任务
     process_crontab(game_crontab, game_time);
 }
@@ -478,14 +478,14 @@ void heart_beat()
 }
 
 // 默认时间设置，可用set_scale重定义
-// 现实２秒 = 游戏１分钟
-// 现实２分钟 = 游戏１小时
-// 现实４８分钟 = 游戏１天
-// 现实１天 = 游戏３０天
+// 现实５秒 = 游戏１分钟（１２倍）
+// 现实５分钟 = 游戏１小时
+// 现实２小时 = 游戏１天
+// 现实１个月 = 游戏１年
 protected void create()
 {
-    // 设置2秒为游戏世界1分钟
-    tick = 2;
+    // 设置5秒为游戏世界1分钟
+    tick = 5;
     scale = 60;
     // 取得游戏时间
     restore();
