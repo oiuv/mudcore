@@ -28,11 +28,11 @@ int main(object me, string file)
     }
     if (objectp(load_object(file)))
     {
-        debug("编译成功!");
+        cecho("编译成功!");
     }
     else
     {
-        debug("失败，文件不存在!");
+        cecho("失败，文件不存在!");
     }
 
     return 1;

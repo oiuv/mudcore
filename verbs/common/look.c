@@ -77,13 +77,13 @@ mixed do_look_at_str(string str, string arg)
         if (stringp(exits[str]))
             return look_room(me, load_object(exits[str]));
         else if (mapp(exits[str]))
-            debug("此方向是区域环境，无法观察。");
+            cecho("此方向是区域环境，无法观察。");
             return 0;
     }
     if (env->is_area())
         return env->do_look(me, str);
 
-    debug("这里没有你想看的呢。");
+    cecho("这里没有你想看的呢。");
 
     return 0;
 }
@@ -125,11 +125,11 @@ mixed do_look_in_obj(object ob)
 {
     if (sizeof(all_inventory(ob)))
     {
-        debug(sprintf("%s里有:\n%s", ob->short(), list_all_inventory_of_object(ob, ob)));
+        cecho(sprintf("%s里有:\n%s", ob->short(), list_all_inventory_of_object(ob, ob)));
     }
     else
     {
-        debug(sprintf("%s里什么也没有。", ob->short()));
+        cecho(sprintf("%s里什么也没有。", ob->short()));
     }
 
     return 1;
@@ -137,7 +137,7 @@ mixed do_look_in_obj(object ob)
 
 mixed do_verb_rule(mixed *data...)
 {
-    debug(sprintf("do_verb_rule : %O", data));
+    debug(data);
     return 1;
 }
 

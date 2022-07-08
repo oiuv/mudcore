@@ -18,16 +18,16 @@ int main(object me, string arg)
     {
         if (err = catch(res = call_other(ob, explode(arg2, " "))))
         {
-            debug("运行报错啦~>详细错误信息请看日志记录<：\n" + err);
+            cecho("运行报错啦~>详细错误信息请看日志记录<：\n" + err);
         }
         else
         {
-            debug("result = " + res);
+            cecho("result = " + res);
         }
     }
     else
     {
-        debug("没有找到对象 " + arg1);
+        cecho("没有找到对象 " + arg1);
     }
 
     return 1;

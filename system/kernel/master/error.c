@@ -44,7 +44,7 @@ void error_handler(mapping map, int flag)
     str += sprintf("%O\n", map);
 
     if (flag)
-        debug("出错啦！详情记录在 error_handler 日志。");
+        cecho("出错啦！详情记录在 error_handler 日志。");
     else
         printf("%s", map["error"]);
 

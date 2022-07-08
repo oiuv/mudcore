@@ -7,7 +7,7 @@ int main(object me, string arg)
         return 0;
 
     COMMAND_D->rehash();
-    debug("指令已更新!\n");
+    cecho("指令已更新!\n");
 
     return 1;
 }

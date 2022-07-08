@@ -30,12 +30,15 @@ void debug(mixed arg)
 {
     string *color = ({HIB, HIC, HIG, HIM, HIR, HIW, HIY});
 
-    if (objectp(arg))
-    {
-        arg = file_name(arg);
-    }
+    debug_message(sprintf("%s%O%s", element_of(color), arg, NOR));
+}
 
-    write(element_of(color) + arg + NOR "\n");
+// 带随机颜色的消息显示
+void cecho(mixed msg)
+{
+    string *color = ({HIB, HIC, HIG, HIM, HIR, HIW, HIY});
+
+    write(element_of(color) + msg + NOR "\n");
 }
 
 // 进度条

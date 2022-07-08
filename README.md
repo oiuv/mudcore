@@ -263,6 +263,7 @@ bitmap_font|处理中英文字符并点阵输出
 bitSet|返回数值指定位为1的值
 break_string|根据指定宽度换行显示内容
 cat|输出文件内容到屏幕
+cecho|随机颜色显示内容到屏幕
 check_control|判断指定字符串是否包含控制字符
 check_return|判断指定字符串是否包含换行符
 check_space|判断指定字符串是否包含空格
@@ -271,7 +272,7 @@ chinese|返回指定字符串的中文名称
 color_cat|彩色输出内容到屏幕
 color_len|统计字符串中颜色占用的长度
 config|读取或设置游戏自定义配置的值
-debug|随机颜色输出内容
+debug|随机颜色输出内容至驱动控制台
 deep_path_list|获取指定目录及子目录下的文件列表
 element_of_weighted|根据权重随机返回元素，权重高机率大
 env|读取或设置游戏自定义配置的值(config的别名)

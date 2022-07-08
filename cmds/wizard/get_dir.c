@@ -15,7 +15,7 @@ int main(object me, string arg)
     }
     else
     {
-        debug(arg + " 不是一个有效目录。");
+        cecho(arg + " 不是一个有效目录。");
     }
 
     return 1;
