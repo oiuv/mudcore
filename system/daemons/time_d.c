@@ -11,6 +11,8 @@ Date: 2020-04-21
 
 inherit CORE_DBSAVE;
 
+int *game_localtime(int timestamp);
+
 // 游戏时间戳
 private int gametime;
 
@@ -87,8 +89,13 @@ int *query_scale()
 }
 
 // 返回游戏localtime()
-int *query_game_time()
+varargs int *query_game_time(int timestamp)
 {
+    if (timestamp)
+    {
+        return game_localtime(timestamp);
+    }
+
     return game_time;
 }
 
@@ -334,6 +341,23 @@ int *analyse_time(int t)
     return ret;
 }
 
+int *game_localtime(int timestamp)
+{
+    int *localtime;
+    // 设置游戏localtime
+    localtime = analyse_time(timestamp);
+    localtime[LT_YEAR] -= 1969; // 游戏元年
+    if (year > 0)
+    {
+        localtime[LT_YEAR] += year - 1;
+    }
+    if (year < 0)
+    {
+        localtime[LT_YEAR] = -year;
+    }
+    return localtime;
+}
+
 // 执行计划任务
 void process_crontab(mixed *crontab, int *timearray)
 {
@@ -422,12 +446,7 @@ int reset_gametime(int time)
 varargs void process_gametime(int timestamp)
 {
     // 设置游戏localtime
-    game_time = analyse_time(timestamp);
-    game_time[LT_YEAR] -= 1969; // 游戏元年
-    if (year)
-    {
-        game_time[LT_YEAR] += year - 1;
-    }
+    game_time = game_localtime(timestamp);
 
     // 执行计划任务
     process_crontab(game_crontab, game_time);
@@ -468,7 +487,7 @@ void heart_beat()
     if (!(time() % tick))
     {
         gametime += scale;
-        process_gametime(++gametime);
+        process_gametime(gametime);
     }
 
 }
