@@ -65,7 +65,7 @@ int query_gametime()
     return gametime;
 }
 
-// 返回现实时间戳（time()
+// 返回现实时间戳：time()
 int query_realtime()
 {
     return time();
@@ -88,10 +88,10 @@ int *query_scale()
     return ({tick, scale, year});
 }
 
-// 返回游戏localtime()
+// 返回游戏localtime()，不指定参数为当前游戏时间
 varargs int *query_game_time(int timestamp)
 {
-    if (timestamp)
+    if (!nullp(timestamp))
     {
         return game_localtime(timestamp);
     }
