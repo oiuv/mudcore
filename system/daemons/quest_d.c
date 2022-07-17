@@ -152,17 +152,18 @@ protected void doAssignQuest(object npc, object player, string quest_file)
     message_size = sizeof(assignMessage);
 
     // 訊息顯示可以用成一句一句說，先做成一次噴出來
-    // for (i = 0; i < message_size; i++)
-    //     msg("vision", assignMessage[i], npc, player);
-    if (message_size)
-    {
-        foreach (string info in assignMessage)
-        {
-            call_out((: msg :), i, "info", info, npc, player);
-            i++;
-        }
-    }
-    call_out((: tell_object :), i, player, HIW "\n你要接受這一個任務嗎？ (Y/n)\n" NOR);
+    for (i = 0; i < message_size; i++)
+        msg("vision", assignMessage[i], npc, player);
+    tell_object(player, HIW "\n你要接受這一個任務嗎？ (Y/n)\n" NOR);
+    // if (message_size)
+    // {
+    //     foreach (string info in assignMessage)
+    //     {
+    //         call_out((: msg :), i, "info", info, npc, player);
+    //         i++;
+    //     }
+    // }
+    // call_out((: tell_object :), i, player, HIW "\n你要接受這一個任務嗎？ (Y/n)\n" NOR);
     input_to("confirmAssign", player, quest_file);
 }
 
