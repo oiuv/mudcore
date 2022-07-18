@@ -42,9 +42,8 @@ protected string getItemFile(object item)
     string file;
     if (!objectp(item))
         return "";
-    file = file_name(item);
-    if (sscanf(file, "%s#%*d", file) != 2)
-        return "";
+    file = base_name(item);
+
     return file + ".c";
 }
 
@@ -372,12 +371,12 @@ protected int checkItem(object npc, object player, string quest_file)
         {
             item_file = getItemFile(inv[j]);
 
-            // write("    身上物品：" + inv[j]->short() + " (" + item_file + ")\n");
+            // debug("身上物品：" + inv[j]->short() + " (" + item_file + ")");
             // 同一個檔名
             if (item_file == key[i])
             {
 
-                msg("vision", "$ME對著$YOU說道：看來你已經帶來了" + inv[j]->name() + "。", npc, player);
+                msg("vision", "$ME對著$YOU說道：看來你已經帶來了" + inv[j]->name() + "。\n", npc, player);
 
                 // 非複合物品
                 if (!function_exists("query_amount", inv[j]))
