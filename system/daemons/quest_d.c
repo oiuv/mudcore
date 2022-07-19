@@ -82,17 +82,17 @@ varargs void doScanQuest(string dir)
     if (!sizeof(files))
     {
         if (file_size(dir) == -2)
-            write("QUESTD: 任務目錄是空的。 (" + dir + ")\n");
+            write("QUESTD: 任务目錄是空的。 (" + dir + ")\n");
         else
-            write("QUESTD: 沒有這個任務目錄。 (" + dir + ")\n");
+            write("QUESTD: 沒有这个任务目錄。 (" + dir + ")\n");
         return;
     }
 
-    // 清空，整個重掃
+    // 清空，整个重掃
     assigner = ([]);
     rewarder = ([]);
 
-    write("掃瞄任務中 " + dir + " ...\n\n");
+    write("掃瞄任务中 " + dir + " ...\n\n");
 
     foreach (dirent in files)
     {
@@ -101,7 +101,7 @@ varargs void doScanQuest(string dir)
 
         if (!file->isQuest())
         {
-            write(" -> 非任務檔.\n");
+            write(" -> 非任务檔.\n");
             continue;
         }
 
@@ -125,19 +125,19 @@ protected void confirmAssign(string input, object player, string quest_file)
         }
         else if (input[0] == 'n' || input[0] == 'N')
         {
-            tell_object(player, HIB "(你放棄接受任務：" + quest_file->getName() + ")\n" NOR);
+            tell_object(player, HIB "(你放弃接受任务：" + quest_file->getName() + ")\n" NOR);
             return;
         }
         else
         {
-            tell_object(player, HIW "\n你要接受這一個任務嗎？ (Y/n) " NOR);
+            tell_object(player, HIW "\n你要接受这一个任务吗？ (Y/n) " NOR);
             input_to("confirmAssign", player, quest_file);
             return;
         }
     }
 
-    // 接受任務
-    tell_object(player, HIY "(你接受了任務：" + quest_file->getName() + ")\n" NOR);
+    // 接受任务
+    tell_object(player, HIY "(你接受了任务：" + quest_file->getName() + ")\n" NOR);
     player->setToDo(quest_file);
     player->save();
 }
@@ -150,10 +150,10 @@ protected void doAssignQuest(object npc, object player, string quest_file)
     assignMessage = quest_file->getAssignMessage();
     message_size = sizeof(assignMessage);
 
-    // 訊息顯示可以用成一句一句說，先做成一次噴出來
+    // 訊息顯示可以用成一句一句說，先做成一次噴出来
     for (i = 0; i < message_size; i++)
         msg("vision", assignMessage[i], npc, player);
-    tell_object(player, HIW "\n你要接受這一個任務嗎？ (Y/n)\n" NOR);
+    tell_object(player, HIW "\n你要接受这一个任务吗？ (Y/n)\n" NOR);
     // if (message_size)
     // {
     //     foreach (string info in assignMessage)
@@ -162,11 +162,11 @@ protected void doAssignQuest(object npc, object player, string quest_file)
     //         i++;
     //     }
     // }
-    // call_out((: tell_object :), i, player, HIW "\n你要接受這一個任務嗎？ (Y/n)\n" NOR);
+    // call_out((: tell_object :), i, player, HIW "\n你要接受这一个任务吗？ (Y/n)\n" NOR);
     input_to("confirmAssign", player, quest_file);
 }
 
-// 取得可解的任務index值
+// 取得可解的任务index值
 protected int *getQuestIndex(object player, string npc_file)
 {
     int i;
@@ -180,11 +180,11 @@ protected int *getQuestIndex(object player, string npc_file)
         if (player->getToDo(quest_file[i]))
             continue;
 
-        // 已經完成了而且不是可重複解的任務
-        if (player->isSolved(quest_file[i]) != -1 && !quest_file[i]->isNewly())
+        // 已經完成了而且不是可重複解的任务
+        if (player->isSolved(quest_file[i]) && !quest_file[i]->isNewly())
             continue;
 
-        // 前置條件達到才有機會接受任務
+        // 前置條件達到才有機會接受任务
         if (!quest_file[i]->preCondition(player))
             continue;
 
@@ -201,14 +201,14 @@ protected void getSelect(string input, object player, object npc, int *index)
 
     if (!input || input == "")
     {
-        tell_object(player, "請選擇？");
+        tell_object(player, "请选择？");
         input_to("getSelect", player, npc, index);
         return;
     }
 
     if (sscanf(input, "%d", select) != 1)
     {
-        tell_object(player, "請輸入數字，請選擇？");
+        tell_object(player, "请输入数字，请选择？");
         input_to("getSelect", player, npc, index);
         return;
     }
@@ -218,7 +218,7 @@ protected void getSelect(string input, object player, object npc, int *index)
 
     if (select < 0 || select > sizeof(index))
     {
-        tell_object(player, "請輸入正確的數字，請選擇？");
+        tell_object(player, "请输入正确的数字，请选择？");
         input_to("getSelect", player, npc, index);
         return;
     }
@@ -250,7 +250,7 @@ int doAssign(object npc, object player)
 
     if (player->getToDoListSize() >= QUEST_SIZE)
     {
-        tell_object(player, HIW "你的任務日誌滿了。\n" NOR);
+        tell_object(player, HIW "你的任务日志满了。\n" NOR);
         return 0;
     }
 
@@ -259,22 +259,22 @@ int doAssign(object npc, object player)
 
     if (!sizeof(index))
     {
-        tell_object(player, HIW + npc->name() + "對著你微笑示意。\n" NOR);
+        tell_object(player, HIW + npc->name() + "对着你微笑示意。\n" NOR);
         return 0;
     }
 
-    // 只有一個任務可以解的話，就不列出選項
+    // 只有一个任务可以解的話，就不列出選項
     if (sizeof(index) == 1)
     {
         doAssignQuest(npc, player, quest_file[index[0]]);
         return 1;
     }
 
-    msg = "你目前可以向" + npc->name() + "取得的任務有：\n";
-    msg += "   0. 取消，不接受任何任務。\n";
+    msg = "你目前可以向" + npc->name() + "取得的任务有：\n";
+    msg += "   0. 取消，不接受任何任务。\n";
     for (i = 0; i < sizeof(index); i++)
         msg += sprintf("  %2d. %s\n", i + 1, quest_file[index[i]]->getName());
-    msg += "\n請選擇？";
+    msg += "\n请选择？";
 
     tell_object(player, msg);
     input_to("getSelect", player, npc, index);
@@ -356,7 +356,7 @@ protected int checkItem(object npc, object player, string quest_file)
     inv = all_inventory(player);
     inv_size = sizeof(inv);
 
-    // 任務需要的物品
+    // 任务需要的物品
     for (i = 0; i < size; i++)
     {
         // 該物品已經搜集好了
@@ -372,11 +372,11 @@ protected int checkItem(object npc, object player, string quest_file)
             item_file = getItemFile(inv[j]);
 
             // debug("身上物品：" + inv[j]->short() + " (" + item_file + ")");
-            // 同一個檔名
+            // 同一个檔名
             if (item_file == key[i])
             {
 
-                msg("vision", "$ME對著$YOU說道：看來你已經帶來了" + inv[j]->name() + "。\n", npc, player);
+                msg("vision", "$ME对着$YOU说到：看来你已经带来了" + inv[j]->name() + "。\n", npc, player);
 
                 // 非複合物品
                 if (!function_exists("query_amount", inv[j]))
@@ -389,7 +389,7 @@ protected int checkItem(object npc, object player, string quest_file)
                 else
                 {
 
-                    // 任務需要的數量 - 已經給予的數量 = 還需要多少的物品
+                    // 任务需要的數量 - 已經給予的數量 = 還需要多少的物品
                     need_amount = value[i] - player->getItem(quest_file, key[i]);
                     amount = inv[j]->query_amount();
 
@@ -427,17 +427,17 @@ protected int isReward(object npc, object player, string quest_file)
     int i, message_size;
     string *rewardMessage;
 
-    // write("【任務系統】檢查物品....\n");
+    // write("【任务系統】檢查物品....\n");
     if (!checkItem(npc, player, quest_file))
         return 0;
-    // write("【任務系統】檢查殺怪物....\n");
+    // write("【任务系統】檢查殺怪物....\n");
     if (!checkKill(npc, player, quest_file))
         return 0;
-    // write("【任務系統】檢查自訂條件....\n");
+    // write("【任务系統】檢查自訂條件....\n");
     if (!quest_file->postCondition(player, npc))
         return 0;
 
-    // 從任務表移除
+    // 從任务表移除
     player->delToDo(quest_file);
 
     // 已解
@@ -448,7 +448,7 @@ protected int isReward(object npc, object player, string quest_file)
     rewardMessage = quest_file->getRewardMessage();
     message_size = sizeof(rewardMessage);
 
-    // 訊息顯示可以用成一句一句說，先做成一次噴出來
+    // 訊息顯示可以用成一句一句說，先做成一次噴出来
     for (i = 0; i < message_size; i++)
         msg("info", rewardMessage[i], npc, player);
     // if (message_size)
@@ -483,11 +483,11 @@ int doReward(object npc, object player)
 
     for (i = 0; i < quest_size; i++)
     {
-        // 沒有接這個任務
+        // 沒有接这个任务
         if (!player->getToDo(quest_file[i]))
             continue;
 
-        // 任務條件達到才能完成
+        // 任务條件達到才能完成
         if (!isReward(npc, player, quest_file[i]))
             continue;
 

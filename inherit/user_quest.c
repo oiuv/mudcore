@@ -166,12 +166,12 @@ mapping getToDo(string quest_file)
 }
 
 /* 檢查是否已經解過
-       -1: 未解過
-   others: 解過
+       0 : 未解過
+       1 : 解過
  */
 int isSolved(string quest_file)
 {
-    return member_array(quest_file, solved||({}));
+    return member_array(quest_file, solved || ({})) > -1;
 }
 
 void delToDo(string quest_file)
