@@ -2,13 +2,9 @@
 
 ![mudcore](https://api.mud.ren/storage/uploads/2020/02/13/c5a880553865b046d14c13b042318438.png)
 
-[![Created Badge](https://badges.pufler.dev/created/oiuv/mudcore)](https://github.com/oiuv/mudcore)
-[![Updated Badge](https://badges.pufler.dev/updated/oiuv/mudcore)](https://github.com/oiuv/mudcore)
-[![Visits Badge](https://badges.pufler.dev/visits/oiuv/mudcore)](https://github.com/oiuv/mudcore)
-
 LPMUD游戏开发框架核心代码，仅仅包括核心代码，可以在此基础上开发任何MUD，本框架需配合 FluffOS v2019使用。
 
-当前版本：`v1.4.*`
+当前版本：`v1.5.*`
 
 这个项目的诞生源于我的[LPC零基础开发教程](https://bbs.mud.ren)，在写教程的过程中，发现很多同学并不关心底层细节，只想能直接开发游戏项目，国内绝大多数MUD游戏都是《东方故事2》底层，在已有MUD基础上修改的优点是可以快速上手，但这个算不上独立的游戏框架。能不能把底层独立出来，开发任何类型的MUD都可以使用？在思考后，我开始了这个项目，特色是只提供底层代码和接口，几乎不提供任何游戏性的内容，独立于游戏项目之外，只需简单配置即可实现MUD游戏开发。
 
