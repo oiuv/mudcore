@@ -403,7 +403,8 @@ mixed query_door(string dir, string prop)
 //replaces the program in this_object()
 void replace_program(string ob)
 {
-    if (replaceable(previous_object()))
+    // debug(call_stack());
+    if (replaceable(this_object()))
     {
         efun::replace_program(ob);
     }
