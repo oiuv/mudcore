@@ -22,6 +22,7 @@ mixed compile_area(string file)
 
     if (file_size(virtual + ".c") < 1)
     {
+        log_file("virtual", sprintf("[%s]%s %O\n", ctime(), file, all_previous_objects()));
         return 0;
     }
 

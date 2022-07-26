@@ -67,6 +67,7 @@
 #define CORE_COMMAND        CORE_DIR "inherit/command"
 #define CORE_CONDITION_MOD  CORE_DIR "inherit/condition_mod"
 #define CORE_CONDITION      CORE_DIR "inherit/condition"
+#define CORE_CURL           CORE_DIR "inherit/CURL"
 #define CORE_DB             CORE_DIR "inherit/DB"
 #define CORE_DBASE          CORE_DIR "inherit/dbase"
 #define CORE_HTTP           CORE_DIR "inherit/Http"

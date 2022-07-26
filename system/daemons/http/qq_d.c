@@ -33,11 +33,12 @@ protected void response(mixed result)
 {
     int n = strsrch(result, "{");
     Debug && debug_message(result);
+    result = trim(result[n..]);
 
-    if (n > 0)
+    if (n > 0 && result[<1..] == "}")
     {
         mixed json;
-        json = json_decode(trim(result[n..]));
+        json = json_decode(result);
         Debug && debug_message(sprintf("%O", json));
         switch (ReadyState)
         {
