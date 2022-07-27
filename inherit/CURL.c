@@ -1,5 +1,5 @@
 /**
- * @brief CURL接口
+ * @brief CURL接口: CORE_CURL
  *
  */
 
@@ -30,7 +30,8 @@ protected void on_close(int fd)
     map_delete(fd_msg, fd);
 }
 
-object curl(string arg)
+// int external_start(int, string | string *, string | function, string | function, string | function | void);
+object curl(mixed arg)
 {
 #if efun_defined(external_start)
     int fd;
