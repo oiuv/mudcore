@@ -1,5 +1,5 @@
 /**
- * @brief CURL接口: CORE_CURL
+ * @brief 外部命令接口: CORE_CMD
  *
  */
 
@@ -31,17 +31,14 @@ protected void on_close(int fd)
 }
 
 // int external_start(int, string | string *, string | function, string | function, string | function | void);
-object curl(mixed arg)
+object exec(int cmd, mixed arg)
 {
 #if efun_defined(external_start)
     int fd;
-    int CURL_CMD = 1;
-    if (__ARCH__ == "Microsoft Windows")
-        CURL_CMD = 2;
 
     if (!arg)
         arg = "";
-    fd = external_start(CURL_CMD, arg, "on_read", "on_write", "on_close");
+    fd = external_start(cmd, arg, "on_read", "on_write", "on_close");
 
     if (!fd_msg)
     {
