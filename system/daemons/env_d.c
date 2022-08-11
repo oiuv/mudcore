@@ -34,7 +34,7 @@ void create()
             }
             else if (is_numeric(value))
             {
-                value = atoi(value);
+                value = to_int(value);
             }
 
             set(key, value);

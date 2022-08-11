@@ -36,7 +36,7 @@ int main(object me, string arg)
     }
     else
     {
-        x = atoi(arg);
+        x = to_int(arg);
     }
 
     if (x < 1 || x > 1114109)

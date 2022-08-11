@@ -59,7 +59,7 @@ mixed compile_mob(string file)
     if (file_size(virtual + ".c") < 1)
         return "对象不存在！";
 
-    if (!(ob = new(virtual, atoi(path[n]))))
+    if (!(ob = new(virtual, to_int(path[n]))))
         return "编译失败！";
 
     return ob;
