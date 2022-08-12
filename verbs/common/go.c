@@ -96,7 +96,10 @@ int do_room_move(object me, object env, string dir)
     if (!mapp(exit = env->query("exits")) || undefinedp(exit[dir]))
     {
         if (query_verb() == "go")
-            return notify_fail("这个方向没有出路。\n");
+        {
+            cecho("这个方向没有出路。");
+            return 0;
+        }
     }
 
     dest = exit[dir];
