@@ -77,8 +77,10 @@ mixed do_look_at_str(string str, string arg)
         if (stringp(exits[str]))
             return look_room(me, load_object(exits[str]));
         else if (mapp(exits[str]))
+        {
             cecho("此方向是区域环境，无法观察。");
             return 0;
+        }
     }
     if (env->is_area())
         return env->do_look(me, str);
