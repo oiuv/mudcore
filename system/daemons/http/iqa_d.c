@@ -3,15 +3,15 @@
  * @Date: 2022-05-15 00:50:12
  * @LastEditTime: 2022-05-16 20:04:25
  * @LastEditors: 雪风
- * @Description: 智能应答机器人(https://apis.baidu.com/store/detail/eef864e1-6f2e-4631-befc-5afe35cab769)
+ * @Description: 智能问答机器人(https://www.jisuapi.com/api/iqa/)
  *  https://bbs.mud.ren
  */
 inherit CORE_HTTP;
 
 #include <ansi.h>
 
-nosave string Url = env("IQA_URL") || "http://jisuapiareacode.api.bdymkt.com/iqa/query?question=";
-nosave string AppCode = env("AppCode");
+nosave string Url = env("IQA_URL") || "http://api.jisuapi.com/iqa/query";
+nosave string AppCode = env("AppKey");
 
 nosave object Receiver;
 
@@ -42,8 +42,8 @@ void iqa(object me, string arg)
 
     if (!AppCode)
     {
-        error("请先配置AppCode！");
+        error("请先配置AppKey！");
     }
 
-    Http::post(Url + arg, 0, (["Content-Type":"application/json;charset=UTF-8", "X-Bce-Signature":"AppCode/" + AppCode]));
+    Http::get(Url, (["appkey":AppCode, "question":arg]), (["Content-Type":"application/json;charset=UTF-8"]));
 }
