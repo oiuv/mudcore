@@ -10,7 +10,7 @@ inherit CORE_HTTP;
 
 #include <ansi.h>
 
-nosave string Url = env("LUCK_URL") || "http://api.oiuv.cn/api/mobile/";
+nosave string Url = "http://api.oiuv.cn/api/mobile/";
 nosave object Receiver;
 
 protected void response(mixed result)

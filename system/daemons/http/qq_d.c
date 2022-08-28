@@ -35,7 +35,7 @@ protected void response(mixed result)
     Debug && debug_message(result);
     result = trim(result[n..]);
 
-    if (n > 0 && result[<1..] == "}")
+    if (n == 4 && result[<4..] == "}}}}")
     {
         mixed json;
         json = json_decode(result);
@@ -137,7 +137,7 @@ RAW;
 protected void websocket()
 {
     ReadyState = STATE_CONNECTING;
-    Http::ws(Base_uri + "/all?verifyKey=" + Mirai_verifyKey + "&sessionKey=" + Session);
+    Http::ws(Base_uri + "/message?verifyKey=" + Mirai_verifyKey + "&sessionKey=" + Session);
 }
 // 绑定session到QQ
 protected void bind()
@@ -155,8 +155,7 @@ protected void verify()
 
 void create()
 {
-    Http::create();
-    seteuid(ROOT_UID);
+    // 调试用，开启后会记录数据到驱动控制台debug.log
     // Debug = 1;
     // 初始化认证，请继承调用
     // verify();

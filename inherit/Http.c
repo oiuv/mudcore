@@ -15,18 +15,10 @@
 #define STATE_CONNECTED 2
 #define STATE_CLOSED 3
 
-nosave mapping Host;
-nosave mapping Host_fd;
-nosave mapping Status;
+nosave mapping Host = ([]);
+nosave mapping Host_fd = ([]);
+nosave mapping Status = ([]);
 nosave int Debug;
-
-// 初始化
-void create()
-{
-    Host = ([]);
-    Host_fd = ([]);
-    Status = ([]);
-}
 
 protected void receive_callback(mixed *data...)
 {
@@ -49,13 +41,6 @@ protected void response(mixed result)
     debug_message(result);
 }
 
-protected void write_data(int fd)
-{
-    Status[fd]["status"] = STATE_CONNECTED;
-    Debug && debug_message("write_data: " + Status[fd]["http"]);
-    socket_write(fd, Status[fd]["http"]);
-}
-
 protected void receive_data(int fd, mixed result)
 {
     response(result);
@@ -65,6 +50,13 @@ protected void receive_data(int fd, mixed result)
         // 释放连接
         socket_shutdown(fd);
     }
+}
+
+protected void write_data(int fd)
+{
+    Status[fd]["status"] = STATE_CONNECTED;
+    Debug && debug_message("write_data: " + Status[fd]["http"]);
+    socket_write(fd, Status[fd]["http"]);
 }
 
 protected void connect(string host, string addr)

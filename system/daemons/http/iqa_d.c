@@ -10,7 +10,7 @@ inherit CORE_HTTP;
 
 #include <ansi.h>
 
-nosave string Url = env("IQA_URL") || "http://api.jisuapi.com/iqa/query";
+nosave string Url = "http://api.jisuapi.com/iqa/query";
 nosave string AppCode = env("AppKey");
 
 nosave object Receiver;
