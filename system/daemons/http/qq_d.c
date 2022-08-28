@@ -35,7 +35,7 @@ protected void response(mixed result)
     Debug && debug_message(result);
     result = trim(result[n..]);
 
-    if (n == 4 && result[<4..] == "}}}}")
+    if (pcre_match(result,"^{.+}$") || pcre_match(result,"^{.+}}$") || pcre_match(result,"^{.+}}}}$"))
     {
         mixed json;
         json = json_decode(result);
