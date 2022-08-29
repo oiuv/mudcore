@@ -35,9 +35,13 @@ protected void response(mixed result)
     Debug && debug_message(result);
     result = trim(result[n..]);
 
-    if (pcre_match(result,"^{.+}$") || pcre_match(result,"^{.+}}$") || pcre_match(result,"^{.+}}}}$"))
+    if (pcre_match(result, "^{.+}$"))
     {
         mixed json;
+        if (ReadyState == STATE_CONNECTED && !pcre_match(result, "^{\"syncId\":.+}}}}$"))
+        {
+            return; // 消息不完整，无法解析json，直接丢弃处理
+        }
         json = json_decode(result);
         Debug && debug_message(sprintf("%O", json));
         switch (ReadyState)
