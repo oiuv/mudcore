@@ -31,10 +31,13 @@ nosave string *banned_name = ({
 
 // 内部调用的函数
 protected void welcome(object ob);
+protected void signin(object ob);
 protected void get_id(string arg, object ob);
 protected void get_passwd(string pass, object ob);
 protected void check_ok(object ob);
+protected void signup(object ob);
 protected void confirm_id(string yn, object ob);
+protected void register(object ob);
 protected void get_name(string arg, object ob);
 protected void new_password(string pass, object ob);
 protected void confirm_password(string pass, object ob);
@@ -73,7 +76,12 @@ void login(object ob)
 protected void welcome(object ob)
 {
     color_cat(MOTD);
+    // 提示登录
+    signin(ob);
+}
 
+protected void signin(object ob)
+{
     write("\n^_^!请输入你的登录ID:");
     input_to("get_id", ob);
 }
@@ -112,9 +120,7 @@ protected void get_id(string arg, object ob)
         }
     }
     // 进入注册流程
-    write(WHT "\n使用[" HIC + (string)ob->query("id") + NOR + WHT "]这个ID将会"
-              "创造一个新的账号，您确定吗(" HIY "y/n" NOR + WHT ")？" NOR);
-    input_to("confirm_id", ob);
+    signup(ob);
 }
 
 nomask int check_password(string str, string password)
@@ -200,8 +206,7 @@ protected void check_ok(object ob)
         {
             destruct(user);
             // 进入创建角色流程
-            write("\n请输入您游戏角色的" HIY "名字" NOR "(不要超过" HIY + chinese_number(MAX_NAME_LEN) + NOR "个汉字)：");
-            input_to("get_name", ob);
+            register(ob);
         }
     }
     else
@@ -291,6 +296,12 @@ protected void relogin(string yn, object ob, object user)
 /**
  * 账号创建流程
  */
+protected void signup(object ob)
+{
+    write(WHT "\n使用[" HIC + (string)ob->query("id") + NOR + WHT "]这个ID将会"
+              "创造一个新的账号，您确定吗(" HIY "y/n" NOR + WHT ")？" NOR);
+    input_to("confirm_id", ob);
+}
 
 protected void confirm_id(string yn, object ob)
 {
@@ -354,13 +365,18 @@ protected void confirm_password(string pass, object ob)
         return;
     }
 
-    write("\n请输入您游戏角色的" HIY "名字" NOR "(不要超过" HIY + chinese_number(MAX_NAME_LEN) + NOR "个汉字)：");
-    input_to("get_name", ob);
+    // 角色注册流程
+    register(ob);
 }
 
 /**
  * 角色注册流程
  */
+protected void register(object ob)
+{
+    write("\n请输入您游戏角色的" HIY "名字" NOR "(不要超过" HIY + chinese_number(MAX_NAME_LEN) + NOR "个汉字)：");
+    input_to("get_name", ob);
+}
 
 protected void get_name(string arg, object ob)
 {
