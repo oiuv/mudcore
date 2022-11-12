@@ -1,5 +1,5 @@
 // 列出当前玩家对象可用的所有局部函数
-inherit CORE_CLEAN_UP;
+inherit _CLEAN_UP;
 
 int main(object me, string arg)
 {

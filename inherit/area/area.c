@@ -4,9 +4,10 @@
 
 #include "area.h"
 
-inherit CORE_CLEAN_UP;
-inherit CORE_DBASE;
-inherit CORE_SAVE;
+inherit _CLEAN_UP;
+inherit _DBASE;
+inherit _NAME;
+inherit _SAVE;
 
 inherit AREA_MAP;
 

@@ -4,7 +4,7 @@ File name: variables.c
 Description: 管理员专用，显示指定对象所有全局变量的值
 Author: xuefeng
 *****************************************************************************/
-inherit CORE_CLEAN_UP;
+inherit _CLEAN_UP;
 
 int help(object me);
 

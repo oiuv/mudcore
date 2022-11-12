@@ -1,5 +1,4 @@
 #include <ansi.h>
-inherit CORE_CLEAN_UP;
 
 #define STREAM 1
 #define EESUCCESS 1

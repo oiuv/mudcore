@@ -10,7 +10,7 @@
  */
 #include <ansi.h>
 
-inherit CORE_STD_ROOM;
+inherit CORE_ROOM;
 
 varargs void create(int x, int y, int z)
 {

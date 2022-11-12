@@ -1,12 +1,16 @@
 <!--
  * @Author: 雪风@mud.ren
  * @Date: 2022-03-29 15:56:47
- * @LastEditTime: 2022-05-15 14:40:48
+ * @LastEditTime: 2022-11-15 14:40:48
  * @LastEditors: 雪风
  * @Description:
  *  https://bbs.mud.ren
 -->
 ## 更新日志
+
+### 2022年11月
+
+* 优化代码结构，为所有CORE_INHERIT增加_INHERIT，让功能的继承和覆盖更灵活
 
 ### 2022年8月
 

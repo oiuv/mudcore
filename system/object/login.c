@@ -1,13 +1,13 @@
 /*****************************************************************************
-Copyright: 2020, Mud.Ren
+Copyright: 2022, Mud.Ren
 File name: login.c
-Description: 登录示例对象 LOGIN_OB，仅供参考，不要继承使用
+Description: 登录示例对象 LOGIN_OB，可继承使用
 Author: xuefeng
-Version: v1.0
-Date: 2020-04-20
+Version: v1.1
+Date: 2022-11-11
 *****************************************************************************/
-inherit CORE_DBASE;
-inherit CORE_SAVE;
+inherit _DBASE;
+inherit _SAVE;
 
 void time_out();
 string query_save_file();
@@ -32,6 +32,11 @@ void net_dead()
     debug_message(this_object() + " net_dead!");
     remove_call_out("time_out");
     call_out("time_out", 1);
+}
+
+void terminal_type(string term)
+{
+    set_temp("terminal_type", term);
 }
 
 /**

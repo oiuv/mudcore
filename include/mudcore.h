@@ -88,9 +88,6 @@
 #define CORE_USER_GMCP          CORE_DIR "inherit/user_gmcp"
 #define CORE_USER_QUEST         CORE_DIR "inherit/user_quest"
 #define CORE_USER               CORE_DIR "inherit/user"
-// 标准继承对象
-#define CORE_STD_AREA   CORE_DIR "inherit/std_area"
-#define CORE_STD_ROOM   CORE_DIR "inherit/std_room"
 
 /* 其他 */
 // 游戏管理员账号
@@ -118,7 +115,90 @@
  * ROBOT_NPC    聊天触发NPC: ROBOT_NPC->receive_report(me, verb, arg);
  */
 
-/* 守护进程 */
+/* inherit 特性文件 (覆盖用)*/
+#ifndef _ACTION
+#define _ACTION         CORE_ACTION
+#endif
+#ifndef _AREA
+#define _AREA           CORE_AREA
+#endif
+#ifndef _ATTACK
+#define _ATTACK         CORE_ATTACK
+#endif
+#ifndef _CLEAN_UP
+#define _CLEAN_UP       CORE_CLEAN_UP
+#endif
+#ifndef _CMD
+#define _CMD            CORE_CMD
+#endif
+#ifndef _COMMAND
+#define _COMMAND        CORE_COMMAND
+#endif
+#ifndef _CONDITION_MOD
+#define _CONDITION_MOD  CORE_CONDITION_MOD
+#endif
+#ifndef _CONDITION
+#define _CONDITION      CORE_CONDITION
+#endif
+#ifndef _DB
+#define _DB             CORE_DB
+#endif
+#ifndef _DBASE
+#define _DBASE          CORE_DBASE
+#endif
+#ifndef _HTTP
+#define _HTTP           CORE_HTTP
+#endif
+#ifndef _LIVING
+#define _LIVING         CORE_LIVING
+#endif
+#ifndef _MESSAGE
+#define _MESSAGE        CORE_MESSAGE
+#endif
+#ifndef _MOVE
+#define _MOVE           CORE_MOVE
+#endif
+#ifndef _NAME
+#define _NAME           CORE_NAME
+#endif
+#ifndef _NOCLONE
+#define _NOCLONE        CORE_NOCLONE
+#endif
+#ifndef _DBASE
+#define _DBASE          CORE_DBSAVE
+#endif
+#ifndef _ROOM
+#define _ROOM           CORE_ROOM
+#endif
+#ifndef _SAVE
+#define _SAVE           CORE_SAVE
+#endif
+#ifndef _TEAM
+#define _TEAM           CORE_TEAM
+#endif
+#ifndef _UNIQUE
+#define _UNIQUE         CORE_UNIQUE
+#endif
+#ifndef _VERB
+#define _VERB           CORE_VERB
+#endif
+#ifndef _VRM
+#define _VRM            CORE_VRM
+#endif
+#ifndef _USER_COMBAT_RECORD
+#define _USER_COMBAT_RECORD CORE_USER_COMBAT_RECORD
+#endif
+#ifndef _USER_GMCP
+#define _USER_GMCP          CORE_USER_GMCP
+#endif
+#ifndef _USER_QUEST
+#define _USER_QUEST         CORE_USER_QUEST
+#endif
+#ifndef _USER
+#define _USER               CORE_USER
+#endif
+
+/* 守护进程 (覆盖用)*/
 #ifndef AREA_PATTERN_D
 #define AREA_PATTERN_D   CORE_AREA_PATTERN_D
 #endif
@@ -180,18 +260,18 @@
 #endif
 
 #ifndef VERB_D
-#define VERB_D   CORE_VERB_D
+#define VERB_D      CORE_VERB_D
 #endif
 
 #ifndef VIRTUAL_D
 #define VIRTUAL_D   CORE_VIRTUAL_D
 #endif
 
+/* 核心对象 (覆盖用)*/
 #ifndef SIMUL_EFUN_OB
 #define SIMUL_EFUN_OB    CORE_SIMUL_EFUN_OB
 #endif
 
-/* 核心对象 */
 #ifndef MASTER_OB
 #define MASTER_OB   CORE_MASTER_OB
 #endif

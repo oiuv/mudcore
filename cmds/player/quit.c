@@ -1,5 +1,3 @@
-inherit CORE_CLEAN_UP;
-
 int main(object me, string arg)
 {
     write("Bye，欢迎下次光临^_^\n");

@@ -9,7 +9,7 @@
  *
  */
 
-inherit CORE_LIVING;
-inherit CORE_USER_COMBAT_RECORD;
-inherit CORE_USER_GMCP;
-inherit CORE_USER_QUEST;
+inherit _LIVING;
+inherit _USER_COMBAT_RECORD;
+inherit _USER_GMCP;
+inherit _USER_QUEST;

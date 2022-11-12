@@ -9,7 +9,7 @@ inherit CORE_VRM;
 void create()
 {
     //迷宫房间所继承的对象的档案名称
-    set_inherit_room( CORE_STD_ROOM );
+    set_inherit_room( CORE_ROOM );
 
     //迷宫房间里的怪物
     // set_maze_npcs(({}));

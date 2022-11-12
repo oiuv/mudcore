@@ -7,15 +7,15 @@
  *  https://bbs.mud.ren
  */
 
-inherit CORE_ACTION;
-inherit CORE_ATTACK;
-inherit CORE_COMMAND;
-inherit CORE_CONDITION;
-inherit CORE_DBASE;
-inherit CORE_MESSAGE;
-inherit CORE_MOVE;
-inherit CORE_NAME;
-inherit CORE_SAVE;
-inherit CORE_TEAM;
+inherit _ACTION;
+inherit _ATTACK;
+inherit _COMMAND;
+inherit _CONDITION;
+inherit _DBASE;
+inherit _MESSAGE;
+inherit _MOVE;
+inherit _NAME;
+inherit _SAVE;
+inherit _TEAM;
 
 int is_living() { return query_temp("living"); }

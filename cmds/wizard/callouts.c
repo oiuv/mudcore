@@ -5,7 +5,7 @@ Description: 管理员专用，显示系统延时函数信息
 Author: xuefeng
 Version: v1.0
 *****************************************************************************/
-inherit CORE_CLEAN_UP;
+inherit _CLEAN_UP;
 
 int main(object me, string arg)
 {

@@ -1,6 +1,6 @@
 // efun call_other
 #include <ansi.h>
-inherit CORE_CLEAN_UP;
+inherit _CLEAN_UP;
 
 int help(object me);
 

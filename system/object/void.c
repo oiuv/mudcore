@@ -2,7 +2,7 @@
  * @brief VOID_OB 房间模式示例，出口可为普通房间或区域坐标
  *
  */
-inherit CORE_STD_ROOM;
+inherit CORE_ROOM;
 
 private varargs void create(int x, int y, int z)
 {

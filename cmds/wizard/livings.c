@@ -1,5 +1,5 @@
 // 列出游戏所有活着的对象
-inherit CORE_CLEAN_UP;
+inherit _CLEAN_UP;
 
 int main(object me, string arg)
 {

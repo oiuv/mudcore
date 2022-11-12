@@ -1,13 +1,13 @@
 /*****************************************************************************
-Copyright: 2020, Mud.Ren
+Copyright: 2022, Mud.Ren
 File name: user.c
-Description: 用户示例对象 USER_OB，仅供参考，不要继承使用
+Description: 用户示例对象 USER_OB，可继承使用
 Author: xuefeng
-Version: v1.0
-Date: 2020-04-20
+Version: v1.1
+Date: 2022-11-11
 *****************************************************************************/
 #include <ansi.h>
-inherit CORE_USER;
+inherit _USER;
 
 void create()
 {
@@ -36,6 +36,18 @@ void remove()
 
 // 判断是否是 user 对象文件，和 efun userp() 稍有区别
 int is_user() { return clonep(); }
+
+void window_size(int width, int height)
+{
+    set_temp("window_size/width", width);
+    set_temp("window_size/height", height);
+    message("system", "终端窗口大小设置为 " + width + " × " + height + "。\n", this_object());
+}
+
+void receive_environ(string var, string value)
+{
+    set_temp("env/" + var, value);
+}
 
 // 玩家断线处理
 void net_dead()

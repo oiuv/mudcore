@@ -1,3 +1,5 @@
+// telnet extensions support，包括GMCP、MSP等所有相关协议配置
+
 #define GMCP_LOG 10
 
 nosave string *gmcp_log = ({});

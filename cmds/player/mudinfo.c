@@ -1,5 +1,4 @@
 #include <ansi.h>
-inherit CORE_CLEAN_UP;
 
 string duration()
 {

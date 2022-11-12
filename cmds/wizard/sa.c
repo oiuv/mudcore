@@ -3,7 +3,7 @@
  */
 #include <ansi.h>
 
-inherit CORE_CLEAN_UP;
+inherit _CLEAN_UP;
 
 void create() { seteuid(getuid()); }
 

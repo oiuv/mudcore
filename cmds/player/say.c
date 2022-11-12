@@ -1,5 +1,5 @@
-inherit CORE_CLEAN_UP;
 #include <ansi.h>
+
 int main(object me, string arg)
 {
     arg = arg || "...";

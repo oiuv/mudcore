@@ -1,5 +1,5 @@
 // 打印游戏所有有心跳的对象
-inherit CORE_CLEAN_UP;
+inherit _CLEAN_UP;
 
 int main(object me, string arg)
 {

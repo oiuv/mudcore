@@ -13,8 +13,6 @@
 */
 #include <ansi.h>
 
-inherit CORE_CLEAN_UP;
-
 private void create() { seteuid(getuid()); }
 
 int main(object me, string arg)

@@ -14,7 +14,7 @@ int get_icon_weight(object ob)
     if (wizardp(ob))
         return 1024;
     else if (userp(ob))
-        return ob->query("gender") == "女性" ? 520 : 512;
+        return ob->query("gender") == FEMALE ? 520 : 512;
     else if (living(ob))
         return 64;
     else if (objectp(ob))

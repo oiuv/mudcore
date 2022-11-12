@@ -50,7 +50,7 @@ varargs string files(string *files, string prefix)
 private void create_inherit_include()
 {
 #ifdef INHERIT_DIR
-    string file = terminal_colour(header, (["FILENAME":"inherit.h"]));
+    string file = terminal_colour(header, (["FILENAME":"_inherit.h"]));
     string *files = deep_path_list(INHERIT_DIR);
 
     file += files(files, "");
@@ -62,7 +62,7 @@ private void create_inherit_include()
 private void create_daemon_include()
 {
 #ifdef DAEMON_DIR
-    string file = terminal_colour(header, (["FILENAME":"daemon.h"]));
+    string file = terminal_colour(header, (["FILENAME":"_daemon.h"]));
     string *files = deep_path_list(DAEMON_DIR);
 
     file += files(files);
@@ -74,7 +74,7 @@ private void create_daemon_include()
 private void create_std_include()
 {
 #ifdef STD_DIR
-    string file = terminal_colour(header, (["FILENAME":"std.h"]));
+    string file = terminal_colour(header, (["FILENAME":"_std.h"]));
     string *files = deep_path_list(STD_DIR);
 
     file += files(files, "STD");
@@ -85,13 +85,13 @@ private void create_std_include()
 
 void create_all_include()
 {
-    // inherit.h
+    // _inherit.h
     create_inherit_include();
 
-    // daemon.h
+    // _daemon.h
     create_daemon_include();
 
-    // std.h
+    // _std.h
     create_std_include();
 }
 

@@ -23,9 +23,9 @@ Date: 2019-03-12
  * 本接口需要继承CORE_DBASE接口才能正常使用数据存取
  * 本接口需要继承CORE_NAME接口才能使用short()、long()方法，或者自己实现相关方法
  */
-// inherit CORE_CLEAN_UP;
-// inherit CORE_DBASE;
-// inherit CORE_NAME;
+inherit _CLEAN_UP;
+inherit _DBASE;
+inherit _NAME;
 
 nosave mapping doors;
 

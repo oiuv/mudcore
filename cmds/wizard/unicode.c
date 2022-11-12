@@ -1,5 +1,5 @@
 // unicode字符
-inherit CORE_CLEAN_UP;
+inherit _CLEAN_UP;
 
 int main(object me, string arg)
 {

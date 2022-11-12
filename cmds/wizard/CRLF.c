@@ -1,6 +1,6 @@
 // CRLF.c
 #include <ansi.h>
-inherit CORE_CLEAN_UP;
+inherit _CLEAN_UP;
 
 #define CRLF sprintf("%c%c", 13, 10)
 #define LF sprintf("%c", 10)

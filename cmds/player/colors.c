@@ -1,5 +1,4 @@
 #include <ansi.h>
-inherit CORE_CLEAN_UP;
 
 int main(object me, string arg)
 {
