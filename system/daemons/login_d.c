@@ -469,5 +469,5 @@ protected void get_gender(string gender, object ob)
 // 初始化新玩家必要属性
 protected void init_new_player(object user, object ob)
 {
-    CHAR_D->init_player(user);
+    CHAR_D->init_player(user, ob);
 }
