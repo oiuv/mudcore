@@ -13,6 +13,7 @@
 本次更新为不兼容调整，升级需注意修改代码，主要是继承CORE_ROOM不需要再单独继承_CLEAN_UP、_DBASE和_NAME，继承CORE_AREA也不需要单独继承_NAME。
 
 * 优化代码结构，为所有CORE_INHERIT增加_INHERIT，让功能的继承和覆盖更灵活
+* 优化预加载PRELOAD，如果预加载内容为目录会自动加载目录下所有文件
 
 ### 2022年8月
 
