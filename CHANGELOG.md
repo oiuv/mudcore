@@ -10,6 +10,8 @@
 
 ### 2022年11月
 
+本次更新为不兼容调整，升级需注意修改代码，主要是继承CORE_ROOM不需要再单独继承_CLEAN_UP、_DBASE和_NAME，继承CORE_AREA也不需要单独继承_NAME。
+
 * 优化代码结构，为所有CORE_INHERIT增加_INHERIT，让功能的继承和覆盖更灵活
 
 ### 2022年8月
@@ -19,10 +21,10 @@
 
 ### 2022年7月
 
-本次更新为不兼容调整，升级需注意修改代码
+本次更新为不兼容调整，升级需注意修改代码，如果你使用了debug这个sefun，请改名为cecho。
 
 * 调整debug sefun输出到驱动界面
-* 增加cecho sefun代替debug功能
+* 增加cecho sefun代替debug功能输出到玩家界面
 * 调整CORE_TIME_D的set_scale()方法为可选参数，且意义发生变现，具体见源码介绍
 
 ### 2022年5月

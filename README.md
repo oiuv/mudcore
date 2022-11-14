@@ -119,8 +119,6 @@ inherit CORE_MASTER_OB;
 inherit CORE_SIMUL_EFUN_OB;
 ```
 
-注意：项目开发不要继承 **CORE_LOGIN_OB** 和 **CORE_USER_OB**，这二个为示例文件，仅供演示和参考，请务必自己实现登录对象和玩家对象。
-
 > 提示：请务必不要直接修改 `mudcore` 的任何代码，如果需要增加功能，请通过继承和覆盖的方式实现。
 
 使用泥芯框架从零开始开发新游戏详细示例教程：https://bbs.mud.ren/threads/66
@@ -151,9 +149,11 @@ system/object|系统核心对象，包括登录对象、基本玩家对象和 VO
 -|-|-
 CORE_MASTER_OB|/system/kernel/master|主控对象，负责接收玩家连接请求、安全验证、日志记录等核心功能
 CORE_SIMUL_EFUN_OB|/system/kernel/simul_efun|模拟外部函数对象，负责实现模拟外部函数功能
-CORE_LOGIN_OB|/system/object/login|示例登陆对象，仅供参考，正式开发千万不要继承使用
-CORE_USER_OB|/system/object/user|示例玩家对象，仅供参考，正式开发千万不要继承使用
+CORE_LOGIN_OB|/system/object/login|示例登陆对象，仅供参考，正式开发可继承使用
+CORE_USER_OB|/system/object/user|示例玩家对象，仅供参考，正式开发可继承使用
 CORE_VOID_OB|/system/object/void|临时环境，示例登录房间
+
+所有核心对象有去掉`CORE_`前缀的同名宏定义，方便覆盖和继承，如`LOGIN_OB`。
 
 ### 系统头文件(Include Headers)
 
@@ -207,6 +207,8 @@ CORE_USER|/inherit/user.c|玩家对象功能接口
 CORE_VERB|/inherit/verb.c|自然语法分析指令功能接口
 CORE_VRM|/inherit/vrm.c|随机迷宫功能接口，实现随机迷宫功能
 
+所有特征模块有去掉`CORE`前缀的同名宏定义，方便覆盖和继承，如`_CLEAN_UP`。
+
 ### 守护进程(Daemons)
 
 守护进程是独立出来的系统服务，每个进程有自己的API可以调用，具体参考 `/docs/dameons/` 目录。
@@ -231,6 +233,8 @@ CORE_QUEST_D|/system/daemons/quest_d.c|游戏任务守护进程
 CORE_TIME_D|/system/daemons/time_d.c|负责控制游戏系统时间和计划任务
 CORE_VERB_D|/system/daemons/verb_d.c|自然语法谓词指令守护进程
 CORE_VIRTUAL_D|/system/daemons/virtual_d.c|负责虚拟对象处理
+
+所有守护进程有去掉`CORE_`前缀的同名宏定义，方便覆盖和继承，如`LOGIN_D`。
 
 另外，在MUDCORE的`/system/daemons/http/`下面提供了http服务示例：
 
