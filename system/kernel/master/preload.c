@@ -29,9 +29,6 @@ void preload(string file)
 {
     string err;
 
-    if (file_size(file + ".c") == -1)
-        return;
-
     err = catch (load_object(file));
     if (err != 0)
     {
