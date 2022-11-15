@@ -1,4 +1,4 @@
-inherit CORE_VERB;
+inherit _VERB;
 
 #include <ansi.h>
 

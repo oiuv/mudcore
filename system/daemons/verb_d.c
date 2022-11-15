@@ -77,8 +77,13 @@ varargs void eventReloadVerbs(mixed val)
             dir = VERB_DIR + dir;
             if (file_size(dir) == -2)
                 verbs += map(get_dir(dir + "/*.c"), (: $(dir) + "/" + $1 :));
+            else if (file_size(dir) > 0 && test_load(dir))
+            {
+                verbs += ({dir});
+            }
         }
     }
+
     cache = ({});
     foreach (verb in verbs)
     {
@@ -90,7 +95,6 @@ varargs void eventReloadVerbs(mixed val)
             cache = ({});
         }
     }
-    return;
 }
 
 string short()

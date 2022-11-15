@@ -7,7 +7,7 @@ Version: v1.0
 *****************************************************************************/
 #include <ansi.h>
 #include <type.h>
-inherit CORE_VERB;
+inherit _VERB;
 
 int do_area_move(object me, object env, string dir);
 int do_room_move(object me, object env, string dir);
