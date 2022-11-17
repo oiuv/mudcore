@@ -20,6 +20,7 @@
 #endif
 /** 其它可自定义游戏文件目录
 * AREA_PATTERN_DIR 游戏区域模式样式目录，可自己配置模版
+* CAMP_DIR         游戏阵营目录，定义后可使用阵营接口
 * DAEMON_DIR       游戏守护进程目录，定义后可自动生成守护进程头文件
 * INCLUDE_DIR      游戏头文件目录，定义后会保存自动生成的头文件在此目录
 * INHERIT_DIR      游戏接口目录，定义后可自动生成接口头文件
@@ -40,6 +41,7 @@
 
 /* 守护进程 */
 #define CORE_AREA_PATTERN_D CORE_DIR "system/daemons/area_pattern_d"
+#define CORE_CAMP_D         CORE_DIR "system/daemons/camp_d"
 #define CORE_CHANNEL_D      CORE_DIR "system/daemons/channel_d"
 #define CORE_CHAR_D         CORE_DIR "system/daemons/char_d"
 #define CORE_CHINESE_D      CORE_DIR "system/daemons/chinese_d"
@@ -63,6 +65,7 @@
 #define CORE_ACTION         CORE_DIR "inherit/action"
 #define CORE_AREA           CORE_DIR "inherit/area/area"
 #define CORE_ATTACK         CORE_DIR "inherit/attack"
+#define CORE_CAMP           CORE_DIR "inherit/camp"
 #define CORE_CLEAN_UP       CORE_DIR "inherit/clean_up"
 #define CORE_CMD            CORE_DIR "inherit/CMD"
 #define CORE_COMMAND        CORE_DIR "inherit/command"
@@ -124,6 +127,9 @@
 #endif
 #ifndef _ATTACK
 #define _ATTACK         CORE_ATTACK
+#endif
+#ifndef _CAMP
+#define _CAMP           CORE_CAMP
 #endif
 #ifndef _CLEAN_UP
 #define _CLEAN_UP       CORE_CLEAN_UP
@@ -201,6 +207,10 @@
 /* 守护进程 (覆盖用)*/
 #ifndef AREA_PATTERN_D
 #define AREA_PATTERN_D   CORE_AREA_PATTERN_D
+#endif
+
+#ifndef CAMP_D
+#define CAMP_D      CORE_CAMP_D
 #endif
 
 #ifndef CHANNEL_D

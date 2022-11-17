@@ -13,6 +13,7 @@ mudcore 框架提供的功能模块，游戏LIB可选择性的继承使用。
 CORE_ACTION|/inherit/action.c|角色行动接口，实现限制行为功能
 CORE_AREA|/inherit/area/area.c|游戏区域环境标准接口，实现区域模式环境功能
 CORE_ATTACK|/inherit/attack.c|角色攻击接口，实现战斗行为功能，需自己实现具体战斗方式
+CORE_CAMP|/inherit/camp.c|游戏阵营接口，实现阵营声望相关功能
 CORE_CLEAN_UP|/inherit/clean_up.c|自动清理接口，实现 clean_up() 方法的垃圾回收功能
 CORE_COMMAND|/inherit/command.c|角色指令系统接口，实现生物对象特征功能
 CORE_CONDITION_MOD|/inherit/condition_mod.c|角色增益功能接口，提供增益相关方法
@@ -20,6 +21,7 @@ CORE_CONDITION|/inherit/condition.c|角色增益状态控制接口，实现游�
 CORE_DB|/inherit/DB.c|MySQL数据库接口，可以优雅的操作数据库的增删改查
 CORE_DBASE|/inherit/dbase.c|数据存取功能接口，实现对象参数的增删改查功能
 CORE_DBSAVE|/inherit/dbsave.c|系统数据存取接口，配合 DBASE_D 使用
+CORE_HTTP|/inherit/Http.c|HTTP客户端，方便发起http请求
 CORE_LIVING|/inherit/living.c|生物对象功能接口，所有生物对接可直接继承使用
 CORE_MESSAGE|/inherit/message.c|玩家信息处理功能接口，实现分页显示
 CORE_MOVE|/inherit/move.c|对象移动接口，由角色、物品对象继承，方便移动

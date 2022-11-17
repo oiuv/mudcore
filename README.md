@@ -190,6 +190,7 @@ type.h|驱动提供，配合 typeof() 使用
 CORE_ACTION|/inherit/action.c|角色行动接口，实现限制行为功能
 CORE_AREA|/inherit/area/area.c|游戏区域环境标准接口，实现区域模式环境功能
 CORE_ATTACK|/inherit/attack.c|角色攻击接口，实现战斗行为功能，需自己实现具体战斗方式
+CORE_CAMP|/inherit/camp.c|游戏阵营接口，实现阵营声望相关功能
 CORE_CLEAN_UP|/inherit/clean_up.c|自动清理接口，实现 clean_up() 方法的垃圾回收功能
 CORE_COMMAND|/inherit/command.c|角色指令系统接口，实现生物对象特征功能
 CORE_CONDITION_MOD|/inherit/condition_mod.c|角色增益功能接口，提供增益相关方法
@@ -223,6 +224,7 @@ CORE_VRM|/inherit/vrm.c|随机迷宫功能接口，实现随机迷宫功能
 名称|文件路径|核心功能
 -|-|-
 CORE_AREA_PATTERN_D|/system/daemons/area_pattern_d.c|区域模式环境样式模型管理
+CORE_CAMP_D|/system/daemons/camp_d.c|游戏阵营守护进程
 CORE_CHANNEL_D|/system/daemons/channel_d.c|负责处理玩家聊天功能和频道管理
 CORE_CHAR_D|/system/daemons/char_d.c|负责处理角色数据，需开发者实现具体功能
 CORE_CHINESE_D|/system/daemons/chinese_d.c|负责处理中、英文对照，以及一些与中文相关的功能，字典存档`/data/e2c_dict.o`
