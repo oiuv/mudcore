@@ -18,7 +18,7 @@ nosave object Receiver;
 protected void response(mixed result)
 {
     // debug_message("response: " + result);
-    if (result)
+    if (result && sizeof(result))
     {
         result = json_decode(result);
         // debug_message(sprintf("%O", result));
@@ -31,6 +31,11 @@ protected void response(mixed result)
             tell_object(Receiver, BRED + result["Message"] + NOR "\n");
         }
     }
+    else
+    {
+        tell_object(Receiver, BRED "短信服务失效，消息发送失败。\n" NOR);
+    }
+
 }
 
 // 发送短信
@@ -40,9 +45,14 @@ void sms(object me, mixed code, mixed mobile)
 
     Receiver = me;
 
+    if (!Curl)
+    {
+        error("请启用exteral_cmd并在.env中配置CMD_CURL！");
+    }
+
     if (!AppCode)
     {
-        error("请先配置AppCode！");
+        error("请先在.env中配置AppCode！");
     }
     if (intp(code))
     {
