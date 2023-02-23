@@ -2,8 +2,6 @@
 
 int main(object me, string arg)
 {
-    int *rgb = ({0x00, 0x33, 0x66, 0x99, 0xcc, 0xff});
-
     if (!arg || arg == "ansi")
     {
         printf("ANSI颜色测试：\n");
@@ -22,7 +20,7 @@ int main(object me, string arg)
         write("\n");
     }
 
-    if (!arg || arg == "256")
+    if (arg == "256")
     {
         printf("256颜色测试：\n");
         for (int i = 0; i < 256; i++)
@@ -39,8 +37,9 @@ int main(object me, string arg)
         }
     }
 
-    if (!arg || arg == "rgb")
+    if (arg == "rgb")
     {
+        int *rgb = ({0x00, 0x33, 0x66, 0x99, 0xcc, 0xff});
         printf("RGB颜色测试：\n");
         for (int r = 0; r < sizeof(rgb); r++)
         {
