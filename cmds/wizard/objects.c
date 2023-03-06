@@ -3,6 +3,9 @@ inherit _CLEAN_UP;
 
 int main(object me, string arg)
 {
+    if (!wizardp(me))
+        return 0;
+
     if (arg == "-c")
         print_r(objects( (:clonep:) ));
     else if (arg == "-o")

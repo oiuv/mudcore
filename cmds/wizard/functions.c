@@ -3,6 +3,9 @@ inherit _CLEAN_UP;
 
 int main(object me, string arg)
 {
+    if (!wizardp(me))
+        return 0;
+
     printf("%O\n", functions(me, to_int(arg)));
 
     return 1;

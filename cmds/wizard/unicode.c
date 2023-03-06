@@ -5,6 +5,9 @@ int main(object me, string arg)
 {
     int x;
 
+    if (!wizardp(me))
+        return 0;
+
     if (arg && arg[0..1] == "0x")
     {
         sscanf(arg, "%x", x);

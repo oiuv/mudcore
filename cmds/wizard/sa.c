@@ -96,6 +96,9 @@ int main(object me, string arg)
     string type, control, file;
     mapping info;
 
+    if (!wizardp(me))
+        return 0;
+
     if (!environment(me))
         return 0;
 

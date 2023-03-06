@@ -3,6 +3,9 @@ inherit _CLEAN_UP;
 
 int main(object me, string arg)
 {
+    if (!wizardp(me))
+        return 0;
+
     print_r(livings());
 
     return 1;

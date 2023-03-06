@@ -6,6 +6,9 @@ int main(object me, string arg)
 {
     object ob;
 
+    if (!wizardp(me))
+        return 0;
+
     if (!arg)
     {
         printf("%O\n", all_inventory(me));

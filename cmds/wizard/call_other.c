@@ -10,6 +10,9 @@ int main(object me, string arg)
     string arg1, arg2, err;
     mixed res;
 
+    if (!wizardp(me))
+        return 0;
+
     if (!arg || sscanf(arg,"%s %s",arg1, arg2) != 2)
     {
         return help(me);

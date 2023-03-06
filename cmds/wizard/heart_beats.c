@@ -3,6 +3,9 @@ inherit _CLEAN_UP;
 
 int main(object me, string arg)
 {
+    if (!wizardp(me))
+        return 0;
+
     printf("%O\n", heart_beats());
 
     return 1;

@@ -10,6 +10,9 @@ int convert_file(object me, string file);
 
 int main(object me, string arg)
 {
+    if (!wizardp(me))
+        return 0;
+
     seteuid(geteuid(me));
 
     if (!arg)
