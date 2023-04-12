@@ -31,7 +31,7 @@ protected void on_close(int fd)
 }
 
 // int external_start(int, string | string *, string | function, string | function, string | function | void);
-object exec(int cmd, mixed arg)
+object external_cmd(int cmd, mixed arg)
 {
 #if efun_defined(external_start)
     int fd;
