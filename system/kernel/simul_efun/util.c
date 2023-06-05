@@ -188,7 +188,7 @@ varargs string sort_string(string input, int width, int prefix)
     return result;
 }
 
-// 游戏配置内容的读取或设置
+// 游戏配置内容.env的读取或设置
 varargs mixed env(string key, mixed value)
 {
     if (nullp(key))
@@ -205,19 +205,17 @@ varargs mixed env(string key, mixed value)
         return CORE_ENV_D->set(key, value);
     }
 }
-varargs mixed config(string key, mixed value)
+// 系统配置信息，缓存到全局变量
+nosave mapping Config;
+mixed config(string key)
 {
-    if (nullp(key))
+    Config = Config || json_decode(read_file("config.json"));
+    if (mapp(Config) && key)
     {
-        return CORE_ENV_D->query_entire_dbase();
-    }
-
-    if (nullp(value))
-    {
-        return CORE_ENV_D->query(key);
+        return Config[key];
     }
     else
     {
-        return CORE_ENV_D->set(key, value);
+        return Config;
     }
 }

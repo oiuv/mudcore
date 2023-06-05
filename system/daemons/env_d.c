@@ -9,11 +9,11 @@ Date: 2021-04-01
 *****************************************************************************/
 inherit CORE_DBASE;
 
-#define CONFIG_FILE DATA_DIR ".env"
+#define ENV_FILE DATA_DIR ".env"
 
 void create()
 {
-    string *cfg = read_lines(CONFIG_FILE);
+    string *cfg = read_lines(ENV_FILE);
     string key;
     mixed value;
 

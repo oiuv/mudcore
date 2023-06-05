@@ -15,7 +15,7 @@ int main(object me, string arg)
     if (__ARCH__ == "Microsoft Windows")
         CURL_CMD = 2;
 
-    exec(CURL_CMD, arg || "-h");
+    CMD::external_cmd(CURL_CMD, arg || "-h");
 
     return 1;
 }

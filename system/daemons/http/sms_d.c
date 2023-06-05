@@ -63,7 +63,7 @@ void sms(object me, mixed code, mixed mobile)
         tpl = code;
     }
 
-    CMD::exec(Curl, ({"-s", "--header", "Content-Type: application/json;charset=UTF-8", "--header", "X-Bce-Signature: AppCode/" + AppCode, Url + "?content=" + tpl + "&mobile=" + mobile}));
+    CMD::external_cmd(Curl, ({"-s", "--header", "Content-Type: application/json;charset=UTF-8", "--header", "X-Bce-Signature: AppCode/" + AppCode, Url + "?content=" + tpl + "&mobile=" + mobile}));
 
     // 记录日志
     log_file("mobile", "[" + ctime() + "]" + mobile + "\t" + me->short() + "\t" + query_ip_number(me) + "\n");
