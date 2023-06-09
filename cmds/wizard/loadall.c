@@ -30,7 +30,7 @@ int loadall(string dir)
 
     dirs = get_dir(dir);
     if (dir == "/")
-        dirs = dirs - ({".git", ".vscode", "bin",
+        dirs = dirs - ({".git", ".vscode", "fluffos",
                         "data", "docs", "help",
                         "log", "temp", "www"});
 
