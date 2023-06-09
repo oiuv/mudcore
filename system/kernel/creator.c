@@ -7,8 +7,9 @@ string header = @LEAD
 /** This program is a part of mudcore
  *-----------------------------------------
  * File   : %^FILENAME%^
- * Author : 由 creator 自动生成
- * Note   : Include File
+ * Author : MUDCORE
+ * Note   : Include File，由 creator 自动生成
+ * Update : %^CTIME%^
  *-----------------------------------------
  */
 LEAD;
@@ -50,36 +51,39 @@ varargs string files(string *files, string prefix)
 private void create_inherit_include()
 {
 #ifdef INHERIT_DIR
-    string file = terminal_colour(header, (["FILENAME":"_inherit.h"]));
+    string file = terminal_colour(header, (["FILENAME":"_inherit.h", "CTIME":ctime()]));
     string *files = deep_path_list(INHERIT_DIR);
 
     file += files(files, "");
 
     write_file(INCLUDE_DIR "_inherit.h", file, 1);
+    write(INCLUDE_DIR "_inherit.h 已生成 🧡\n");
 #endif
 }
 
 private void create_daemon_include()
 {
 #ifdef DAEMON_DIR
-    string file = terminal_colour(header, (["FILENAME":"_daemon.h"]));
+    string file = terminal_colour(header, (["FILENAME":"_daemon.h", "CTIME":ctime()]));
     string *files = deep_path_list(DAEMON_DIR);
 
     file += files(files);
 
     write_file(INCLUDE_DIR "_daemon.h", file, 1);
+    write(INCLUDE_DIR "_daemon.h 已生成 💛\n");
 #endif
 }
 
 private void create_std_include()
 {
 #ifdef STD_DIR
-    string file = terminal_colour(header, (["FILENAME":"_std.h"]));
+    string file = terminal_colour(header, (["FILENAME":"_std.h", "CTIME":ctime()]));
     string *files = deep_path_list(STD_DIR);
 
     file += files(files, "STD");
 
     write_file(INCLUDE_DIR "_std.h", file, 1);
+    write(INCLUDE_DIR "_std.h 已生成 💚\n");
 #endif
 }
 
@@ -97,7 +101,7 @@ void create_all_include()
 
 void create()
 {
-    create_all_include();
+    // create_all_include();
 }
 
 string short()
