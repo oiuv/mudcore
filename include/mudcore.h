@@ -50,6 +50,8 @@
 #define CORE_DBASE_D        CORE_DIR "system/daemons/dbase_d"
 #define CORE_EMOTE_D        CORE_DIR "system/daemons/emote_d"
 #define CORE_ENV_D          CORE_DIR "system/daemons/env_d"
+#define CORE_EVER_QUEST_D   CORE_DIR "system/daemons/ever_quest_d"
+#define CORE_HEADER_D       CORE_DIR "system/daemons/header_d"
 #define CORE_LOGIN_D        CORE_DIR "system/daemons/login_d"
 #define CORE_NAME_D         CORE_DIR "system/daemons/name_d"
 #define CORE_NATURE_D       CORE_DIR "system/daemons/nature_d"
@@ -243,6 +245,14 @@
 
 #ifndef ENV_D
 #define ENV_D       CORE_ENV_D
+#endif
+
+#ifndef EVER_QUEST_D
+#define EVER_QUEST_D    CORE_EVER_QUEST_D
+#endif
+
+#ifndef HEADER_D
+#define HEADER_D    CORE_HEADER_D
 #endif
 
 #ifndef LOGIN_D

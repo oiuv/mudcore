@@ -14,6 +14,7 @@
 
 - config()函数和env()函数功能分开，`env()`函数读取`/data/.env`的环境配置，而`config()`改为读取根目录下`config.json`文件配置。
 - 修改CORE_CMD模块的调用函数从`exec()`改为`external_cmd()`，避免和系统efun `exec()`产生歧义。
+- 增加HEADER_D，可以自动生成指定目录的头文件列表
 
 ### 2022年11月
 

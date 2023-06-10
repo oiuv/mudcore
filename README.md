@@ -77,7 +77,7 @@ include directories : /include:/mudcore/include
 # 自动载入指定目录中的守护进程（不包括子目录）
 /system/daemons/
 # 自动更新系统头文件
-/mudcore/system/kernel/creator.c
+/mudcore/system/daemons/header_d.c
 ```
 
 如果使用系统自带注册登录系统，但想使用个人的欢迎界面，请定义 `MOTD` 并指定位置，如果需要更多的玩家信息初始化，可以定义 `CHAR_D` 并从 `setup()` 方法中初始化。
@@ -234,6 +234,7 @@ CORE_DBASE_D|/system/daemons/dbase_d.c|负责系统数据存档处理，默认�
 CORE_EMOTE_D|/system/daemons/emote_d.c|负责管理游戏表情动作和相应功能，默认存储位置`/data/emote_d.o`
 CORE_ENV_D|/system/daemons/env_d.c|游戏环境变量配置守护进程，默认配置文件为`/data/.env`
 CORE_EVER_QUEST_D|/system/daemons/ever_quest_d.c|随机任务守护进程
+CORE_HEADER_D|/system/daemons/header_d.c|头文件自动生成系统守护进程
 CORE_INTERMUD_D|/system/daemons/intermud/i2d.c|MUD网际互联守护进程
 CORE_LOGIN_D|/system/daemons/login_d.c|框架示例登录管理功能，可做开发参考
 CORE_NAME_D|/system/daemons/name_d.c|负责角色姓名记录与检测，默认存储位置`/data/name_d.o`
@@ -280,11 +281,11 @@ chinese_number|返回中文数字
 chinese|返回指定字符串的中文名称
 color_cat|彩色输出内容到屏幕
 color_len|统计字符串中颜色占用的长度
-config|读取或设置游戏自定义配置的值
+config|读取或设置游戏自定义配置的值(`/config.json`)
 debug|随机颜色输出内容至驱动控制台
 deep_path_list|获取指定目录及子目录下的文件列表
 element_of_weighted|根据权重随机返回元素，权重高机率大
-env|读取或设置游戏自定义配置的值(config的别名)
+env|读取或设置游戏自定义配置的值(`/data/.env`)
 expand_keys|把键为数组的映射展示
 file_exists|判断文件是否存在
 getcid|返回复制对象的ID

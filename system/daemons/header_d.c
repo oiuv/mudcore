@@ -14,7 +14,7 @@ string header = @LEAD
  */
 LEAD;
 
-private int valid_file_name(string file)
+int valid_file_name(string file)
 {
     foreach (int a in file)
     {
@@ -48,42 +48,36 @@ varargs string files(string *files, string prefix)
     return file;
 }
 
-private void create_inherit_include()
+varargs void create_include(string base_name, string dir, string prefix)
+{
+    string filename = "_" + base_name + ".h";
+    string file = terminal_colour(header, (["FILENAME":filename, "CTIME":ctime()]));
+    string *files = deep_path_list(dir);
+
+    file += files(files, prefix);
+
+    write_file(INCLUDE_DIR + filename, file, 1);
+    write(INCLUDE_DIR + filename + " 已生成 💚\n");
+}
+
+void create_inherit_include()
 {
 #ifdef INHERIT_DIR
-    string file = terminal_colour(header, (["FILENAME":"_inherit.h", "CTIME":ctime()]));
-    string *files = deep_path_list(INHERIT_DIR);
-
-    file += files(files, "");
-
-    write_file(INCLUDE_DIR "_inherit.h", file, 1);
-    write(INCLUDE_DIR "_inherit.h 已生成 🧡\n");
+    create_include("inherit", INHERIT_DIR, "");
 #endif
 }
 
-private void create_daemon_include()
+void create_daemon_include()
 {
 #ifdef DAEMON_DIR
-    string file = terminal_colour(header, (["FILENAME":"_daemon.h", "CTIME":ctime()]));
-    string *files = deep_path_list(DAEMON_DIR);
-
-    file += files(files);
-
-    write_file(INCLUDE_DIR "_daemon.h", file, 1);
-    write(INCLUDE_DIR "_daemon.h 已生成 💛\n");
+    create_include("daemon", DAEMON_DIR);
 #endif
 }
 
-private void create_std_include()
+void create_std_include()
 {
 #ifdef STD_DIR
-    string file = terminal_colour(header, (["FILENAME":"_std.h", "CTIME":ctime()]));
-    string *files = deep_path_list(STD_DIR);
-
-    file += files(files, "STD");
-
-    write_file(INCLUDE_DIR "_std.h", file, 1);
-    write(INCLUDE_DIR "_std.h 已生成 💚\n");
+    create_include("std", STD_DIR, "STD");
 #endif
 }
 
@@ -101,10 +95,10 @@ void create_all_include()
 
 void create()
 {
-    // create_all_include();
+    create_all_include();
 }
 
 string short()
 {
-    return "头文件自动化系统(CREATOR)";
+    return "头文件自动化系统(HEADER_D)";
 }
