@@ -626,7 +626,7 @@ void set_inherit_room(mixed rooms)
     if (stringp(rooms))
     {
         // 此档案是否存在
-        if (file_size(sprintf("%s.c", rooms)) > 0)
+        if (file_size(lpc_file(rooms)) > 0)
             inherit_rooms = ({rooms});
         return;
     }
