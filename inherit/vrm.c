@@ -626,24 +626,14 @@ void set_inherit_room(mixed rooms)
     if (stringp(rooms))
     {
         // 此档案是否存在
-        if (file_size(lpc_file(rooms)) > 0)
+        if (lpc_file(rooms))
             inherit_rooms = ({rooms});
-        return;
     }
     else if (arrayp(rooms))
     {
-        foreach (string f in rooms)
-        {
-            if (!stringp(f) || f == "")
-                return;
-            if (file_size(sprintf("%s.c", f)) <= 0)
-                return;
-        }
-        inherit_rooms = rooms;
-        return;
+        // 使用filter函数筛选出存在的档案
+        inherit_rooms = filter(rooms, (: lpc_file($1) :));
     }
-
-    return;
 }
 
 // 入口方向(出口在对面)
