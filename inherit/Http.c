@@ -1,6 +1,6 @@
 /*
  * @Author: 雪风@mud.ren
- * @Date: 2022-05-11 11:42:27
+ * @Date: 2025-07-1 11:42:27
  * @LastEditTime: 2022-05-18 13:55:32
  * @LastEditors: 雪风
  * @Description: HTTP客户端
@@ -10,10 +10,10 @@
 #include <socket.h>
 #include <socket_err.h>
 
-#define STATE_CONNECTING 0
-#define STATE_OPEN 1
-#define STATE_CONNECTED 2
-#define STATE_CLOSED 3
+#define STATE_RESOLVING 0
+#define STATE_CONNECTING 1
+#define STATE_CLOSED 2
+#define STATE_CONNECTED 3
 
 nosave mapping Host = ([]);
 nosave mapping Host_fd = ([]);
@@ -73,7 +73,7 @@ protected void connect(string host, string addr)
         return;
     }
 
-    Status[fd]["status"] = STATE_OPEN;
+    Status[fd]["status"] = STATE_CONNECTING;
     Debug && debug_message(sprintf("socket_status : %O", socket_status(fd)));
 }
 
@@ -91,22 +91,41 @@ protected void on_resolve(string host, string addr, int key)
 
 nomask protected object request(string method, string url, mixed data, mapping header)
 {
-    int fd;
+    int fd, is_tls = 0;
     string host, path;
     int port;
     mixed key, value;
     string params, headers, body = "";
 
-    if (!(sscanf(url, "http://%s:%d%s", host, port, path) == 3 ||
-          sscanf(url, "http://%s/%s", host, path) == 2 ||
-          sscanf(url, "http://%s", host)))
+    if (strsrch(url, "https://") == 0)
+    {
+        is_tls = 1;
+        if (!(sscanf(url, "https://%s:%d%s", host, port, path) == 3 ||
+              sscanf(url, "https://%s/%s", host, path) == 2 ||
+              sscanf(url, "https://%s", host)))
+        {
+            error("https url格式不正确");
+            return 0;
+        }
+    }
+    else if (strsrch(url, "http://") == 0)
+    {
+        if (!(sscanf(url, "http://%s:%d%s", host, port, path) == 3 ||
+              sscanf(url, "http://%s/%s", host, path) == 2 ||
+              sscanf(url, "http://%s", host)))
+        {
+            error("http url格式不正确");
+            return 0;
+        }
+    }
+    else
     {
         error("url格式或协议不正确");
         return 0;
     }
 
     if (!port)
-        port = 80;
+        port = is_tls ? 443 : 80;
     if (!path)
         path = "/";
     else if (path[0] != '/')
@@ -151,14 +170,19 @@ nomask protected object request(string method, string url, mixed data, mapping h
         headers += "\r\nContent-Length: " + sizeof(string_encode(body, "utf-8"));
     }
 
-    fd = socket_create(STREAM, "receive_callback", "socket_shutdown");
+    fd = socket_create(is_tls ? STREAM_TLS : STREAM, "receive_callback", "socket_shutdown");
+    if (is_tls)
+    {
+        socket_set_option(fd, SO_TLS_VERIFY_PEER, 0);
+        socket_set_option(fd, SO_TLS_SNI_HOSTNAME, host);
+    }
     Host_fd[host] = fd;
     Status[fd] = ([]);
-    Status[fd]["status"] = STATE_CONNECTING;
+    Status[fd]["status"] = STATE_RESOLVING;
     Status[fd]["host"] = host;
     Status[fd]["port"] = port;
     Status[fd]["path"] = path;
-    Status[fd]["http"] = method + " " + path + " HTTP/1.1\r\nHost: " + host + (port == 80 ? "" : ":" + port) + headers + "\r\n\r\n" + body;
+    Status[fd]["http"] = method + " " + path + " HTTP/1.1\r\nHost: " + host + (port == 80 || port == 443 ? "" : ":" + port) + headers + "\r\n\r\n" + body;
     Status[fd]["header"] = header || ([]);
 
     Debug && debug_message(sprintf("Status : %O", Status));
@@ -217,6 +241,7 @@ varargs object ws(string url, mapping query, mapping header)
     }
     else
     {
+        url = replace_string(url, "wss://", "https://");
         url = replace_string(url, "ws://", "http://");
     }
 
