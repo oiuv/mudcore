@@ -84,6 +84,7 @@
 #define CORE_DBSAVE         CORE_DIR "inherit/dbsave"
 #define CORE_ROOM           CORE_DIR "inherit/room"
 #define CORE_SAVE           CORE_DIR "inherit/save"
+#define CORE_SOCKET         CORE_DIR "inherit/Socket"
 #define CORE_TEAM           CORE_DIR "inherit/team"
 #define CORE_UNIQUE         CORE_DIR "inherit/unique"
 #define CORE_VERB           CORE_DIR "inherit/verb"
