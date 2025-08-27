@@ -62,7 +62,7 @@ void set_debug(int flag) {
 }
 
 // 创建基础socket
-protected int create_socket(int type, string callback_read, string callback_close) {
+protected varargs int create_socket(int type, string callback_read, string callback_close) {
     int fd;
 
     switch(type) {
@@ -76,19 +76,19 @@ protected int create_socket(int type, string callback_read, string callback_clos
             fd = socket_create(STREAM_TLS, callback_read, callback_close);
             break;
         default:
-            return EESOCKET;
+            return EEMODENOTSUPP;
     }
 
     if (fd < 0) {
         trace("创建socket失败", socket_error(fd));
-        return EESOCKET;
+        return fd;
     }
 
     return fd;
 }
 
 // 创建TCP客户端连接
-public int tcp_connect(string host, int port, object callback_obj, string callback_connect, string callback_data, string callback_close, string callback_error) {
+public int tcp_client(string host, int port, object callback_obj, string callback_connect, string callback_data, string callback_close, string callback_error) {
     int fd = create_socket(PROTOCOL_TCP, "handle_receive_callback", "handle_close_callback");
     class socket_connection conn;
 
@@ -139,9 +139,9 @@ public int tcp_connect(string host, int port, object callback_obj, string callba
     return fd;
 }
 
-// 创建UDP连接
-public int udp_connect(string host, int port, object callback_obj, string callback_data, string callback_error) {
-    int fd = create_socket(PROTOCOL_UDP, "handle_receive_callback", 0);
+// 创建UDP客户端连接
+public int udp_client(string host, int port, object callback_obj, string callback_data, string callback_error) {
+    int fd = create_socket(PROTOCOL_UDP, "handle_receive_callback");
     class socket_connection conn;
 
     if (fd < 0) {
@@ -178,11 +178,15 @@ public int udp_connect(string host, int port, object callback_obj, string callba
         resolve(host, "handle_dns_resolve");
     }
 
+    // 绑定端口确保可以接收响应
+    socket_bind(fd, 0);
+    trace("udp:绑定成功", (["fd": fd]));
+
     return fd;
 }
 
 // 创建TCP服务器
-public int tcp_listen(int port, object callback_obj, string callback_accept, string callback_error) {
+public int tcp_server(int port, object callback_obj, string callback_accept, string callback_error) {
     int fd = create_socket(PROTOCOL_TCP, "handle_receive_callback", "handle_close_callback");
     int result;
     class socket_connection conn;
@@ -197,7 +201,7 @@ public int tcp_listen(int port, object callback_obj, string callback_accept, str
         trace("绑定端口失败", socket_error(result));
         socket_close(fd);
         if (callback_error) call_other(callback_obj, callback_error, result, socket_error(result));
-        return EEBIND;
+        return result;
     }
 
     result = socket_listen(fd, "handle_accept_callback");
@@ -205,7 +209,7 @@ public int tcp_listen(int port, object callback_obj, string callback_accept, str
         trace("监听失败", socket_error(result));
         socket_close(fd);
         if (callback_error) call_other(callback_obj, callback_error, result, socket_error(result));
-        return EEBIND;
+        return result;
     }
 
     conn = new(class socket_connection);
@@ -227,8 +231,8 @@ public int tcp_listen(int port, object callback_obj, string callback_accept, str
 }
 
 // 创建UDP服务器
-public int udp_listen(int port, object callback_obj, string callback_data, string callback_error) {
-    int fd = create_socket(PROTOCOL_UDP, "handle_receive_callback", 0);
+public int udp_server(int port, object callback_obj, string callback_data, string callback_error) {
+    int fd = create_socket(PROTOCOL_UDP, "handle_receive_callback");
     int result;
     class socket_connection conn;
 
@@ -242,7 +246,7 @@ public int udp_listen(int port, object callback_obj, string callback_data, strin
         trace("udp_listen:绑定端口失败", (["error": socket_error(result)]));
         socket_close(fd);
         if (callback_error) call_other(callback_obj, callback_error, result, socket_error(result));
-        return EEBIND;
+        return result;
     }
 
     conn = new(class socket_connection);
@@ -271,12 +275,12 @@ public varargs int send(int fd, mixed data, string target_addr, int target_port)
     conn = connections[fd];
     if (!conn) {
         trace("send:无效连接", (["fd": fd]));
-        return EESEND;
+        return EEBADF;
     }
 
     if (conn->state != SOCKET_STATE_CONNECTED && conn->state != SOCKET_STATE_LISTENING) {
         trace("send:状态异常", (["fd": fd, "state": conn->state]));
-        return EESEND;
+        return EENOTCONN;
     }
 
     trace("send:开始", (["fd": fd, "size": sizeof(data), "proto": conn->protocol]));
@@ -296,7 +300,7 @@ public varargs int send(int fd, mixed data, string target_addr, int target_port)
     trace("send:结果", (["fd": fd, "result": result]));
     if (result != EESUCCESS) {
         trace("send:发送失败", (["error": socket_error(result)]));
-        return EESEND;
+        return result;
     }
 
     conn->last_active = time();
@@ -321,23 +325,85 @@ public int get_state(int fd) {
 
 // 获取连接信息
 public mapping get_info(int fd) {
+    mapping info;
     class socket_connection conn = connections[fd];
     if (!conn) return ([]);
 
-    return ([
-        "fd": conn->fd,
-        "protocol": conn->protocol,
-        "state": conn->state,
-        "host": conn->host,
-        "port": conn->port,
-        "remote_addr": conn->remote_addr,
-        "last_active": conn->last_active
-    ]);
+    info = (["fd": conn->fd]);
+    info["protocol"] = conn->protocol;
+    info["state"] = conn->state;
+    info["host"] = conn->host;
+    info["port"] = conn->port;
+    info["last_active"] = conn->last_active;
+
+    // TCP模式才显示远程地址
+    if (conn->protocol != PROTOCOL_UDP) {
+        info["remote_addr"] = conn->remote_addr;
+    }
+
+    return info;
 }
 
 // 设置socket选项
 public int set_option(int fd, int option, mixed value) {
     return socket_set_option(fd, option, value);
+}
+
+// 极简UDP接口 - 无状态单次发送
+public int udp_send(string host, int port, mixed data, object callback_obj, string callback_data) {
+    int fd = create_socket(PROTOCOL_UDP, "handle_udp_response");
+    int result;
+
+    if (fd < 0) {
+        if (callback_data && callback_obj) {
+            call_other(callback_obj, callback_data, fd, "创建UDP socket失败", "");
+        }
+        return fd;
+    }
+
+    result = socket_bind(fd, 0);
+    if (result != EESUCCESS) {
+        socket_close(fd);
+        if (callback_data && callback_obj) {
+            call_other(callback_obj, callback_data, fd, "UDP绑定失败", "");
+        }
+        return result;
+    }
+
+    result = socket_write(fd, data, host + " " + port);
+    if (result != EESUCCESS) {
+        socket_close(fd);
+        if (callback_data && callback_obj) {
+            call_other(callback_obj, callback_data, fd, "UDP发送失败", "");
+        }
+        return result;
+    }
+
+    // 存储临时回调信息
+    connections[fd] = new(class socket_connection,
+        fd: fd,
+        protocol: PROTOCOL_UDP,
+        state: SOCKET_STATE_CONNECTED,
+        host: host,
+        port: port,
+        callbacks: (["data": callback_data, "object": callback_obj]),
+        last_active: time()
+    );
+
+    return fd;
+}
+
+// 极简UDP响应处理
+protected void handle_udp_response(int fd, mixed data, string addr) {
+    class socket_connection conn = connections[fd];
+    if (!conn) return;
+
+    if (conn->callbacks["data"] && conn->callbacks["object"]) {
+        call_other(conn->callbacks["object"], conn->callbacks["data"], fd, data, addr);
+    }
+
+    // 用完即弃，自动清理
+    close(fd);
 }
 
 // 获取所有连接
@@ -400,7 +466,7 @@ protected void handle_dns_resolve(string host, string addr, int key) {
 }
 
 // 接收数据回调
-protected void handle_receive_callback(int fd, mixed data) {
+protected void handle_receive_callback(int fd, mixed data, string addr) {
     class socket_connection conn = connections[fd];
     if (!conn) {
         trace("recv:连接不存在", (["fd": fd]));
@@ -408,7 +474,7 @@ protected void handle_receive_callback(int fd, mixed data) {
     }
 
     conn->last_active = time();
-    trace("recv:data", (["fd": fd, "size": sizeof(data), "state": conn->state]));
+    trace("recv:data", (["fd": fd, "size": sizeof(data), "state": conn->state, "addr": addr]));
 
     if (conn->state == SOCKET_STATE_CONNECTING) {
         conn->state = SOCKET_STATE_CONNECTED;
@@ -421,7 +487,13 @@ protected void handle_receive_callback(int fd, mixed data) {
 
     if (conn->callbacks["data"] && conn->callbacks["object"]) {
         trace("callback:data", (["fd": fd, "callback": conn->callbacks["data"], "size": sizeof(data)]));
-        call_other(conn->callbacks["object"], conn->callbacks["data"], fd, data);
+
+        // UDP模式需要传递addr，TCP模式不需要
+        if (conn->protocol == PROTOCOL_UDP) {
+            call_other(conn->callbacks["object"], conn->callbacks["data"], fd, data, addr);
+        } else {
+            call_other(conn->callbacks["object"], conn->callbacks["data"], fd, data);
+        }
     }
 }
 
