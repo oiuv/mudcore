@@ -42,13 +42,13 @@ class socket_connection {
 }
 
 // 存储连接信息
-nosave mapping connections = ([]);
-nosave mapping dns_cache = ([]);
-nosave int debug_enabled = 0;
+nosave mapping SocketConnections = ([]);
+nosave mapping SocketDnsCache = ([]);
+nosave int SocketDebugEnabled = 0;
 
 // 调试输出：追踪完整的调用链
 protected void trace(string step, mixed extra) {
-    if (debug_enabled) {
+    if (SocketDebugEnabled) {
         string trace_msg = sprintf("[SocketLib] %s", step);
         if (extra) trace_msg += sprintf(" - %O", extra);
         trace_msg += sprintf(" (%s)", ctime(time()));
@@ -58,7 +58,7 @@ protected void trace(string step, mixed extra) {
 
 // 启用/禁用调试
 void set_debug(int flag) {
-    debug_enabled = flag;
+    SocketDebugEnabled = flag;
 }
 
 // 创建基础socket
@@ -112,15 +112,14 @@ public int tcp_client(string host, int port, object callback_obj, string callbac
     ]);
     conn->last_active = time();
 
-    connections[fd] = conn;
+    SocketConnections[fd] = conn;
 
-
-    if (dns_cache[host]) {
+    if (SocketDnsCache[host]) {
         int result;
-        conn->remote_addr = dns_cache[host];
+        conn->remote_addr = SocketDnsCache[host];
         conn->state = SOCKET_STATE_CONNECTING;
-        trace("dns:缓存命中", (["host": host, "addr": dns_cache[host]]));
-        result = socket_connect(fd, dns_cache[host] + " " + conn->port, "handle_receive_callback", "handle_write_callback");
+        trace("dns:缓存命中", (["host": host, "addr": SocketDnsCache[host]]));
+        result = socket_connect(fd, SocketDnsCache[host] + " " + conn->port, "handle_receive_callback", "handle_write_callback");
         trace("tcp:结果", (["fd": fd, "result": result]));
         if (result != EESUCCESS) {
             conn->state = SOCKET_STATE_ERROR;
@@ -162,13 +161,13 @@ public int udp_client(string host, int port, object callback_obj, string callbac
     ]);
     conn->last_active = time();
 
-    connections[fd] = conn;
+    SocketConnections[fd] = conn;
     trace("udp:连接", (["fd": fd, "host": host, "port": port]));
 
-    if (dns_cache[host]) {
-        conn->remote_addr = dns_cache[host];
+    if (SocketDnsCache[host]) {
+        conn->remote_addr = SocketDnsCache[host];
         conn->state = SOCKET_STATE_CONNECTED;
-        trace("dns:缓存命中", (["host": host, "addr": dns_cache[host]]));
+        trace("dns:缓存命中", (["host": host, "addr": SocketDnsCache[host]]));
         if (conn->callbacks["data"] && conn->callbacks["object"]) {
             call_other(conn->callbacks["object"], conn->callbacks["data"], fd, "UDP已就绪");
         }
@@ -224,7 +223,7 @@ public int tcp_server(int port, object callback_obj, string callback_accept, str
     ]);
     conn->last_active = time();
 
-    connections[fd] = conn;
+    SocketConnections[fd] = conn;
 
     trace("TCP服务器监听", (["addr": "0.0.0.0", "port": port]));
     return fd;
@@ -261,7 +260,7 @@ public int udp_server(int port, object callback_obj, string callback_data, strin
     ]);
     conn->last_active = time();
 
-    connections[fd] = conn;
+    SocketConnections[fd] = conn;
 
     trace("udp_listen:服务器监听", (["addr": "0.0.0.0", "port": port]));
     return fd;
@@ -272,7 +271,7 @@ public varargs int send(int fd, mixed data, string target_addr, int target_port)
     class socket_connection conn;
     int result;
 
-    conn = connections[fd];
+    conn = SocketConnections[fd];
     if (!conn) {
         trace("send:无效连接", (["fd": fd]));
         return EEBADF;
@@ -310,23 +309,23 @@ public varargs int send(int fd, mixed data, string target_addr, int target_port)
 
 // 关闭连接
 public void close(int fd) {
-    if (connections[fd]) {
+    if (SocketConnections[fd]) {
         socket_close(fd);
-        map_delete(connections, fd);
+        map_delete(SocketConnections, fd);
         trace("close:连接已关闭", (["fd": fd]));
     }
 }
 
 // 获取连接状态
 public int get_state(int fd) {
-    class socket_connection conn = connections[fd];
+    class socket_connection conn = SocketConnections[fd];
     return conn ? conn->state : SOCKET_STATE_CLOSED;
 }
 
 // 获取连接信息
 public mapping get_info(int fd) {
     mapping info;
-    class socket_connection conn = connections[fd];
+    class socket_connection conn = SocketConnections[fd];
     if (!conn) return ([]);
 
     info = (["fd": conn->fd]);
@@ -380,7 +379,7 @@ public int udp_send(string host, int port, mixed data, object callback_obj, stri
     }
 
     // 存储临时回调信息
-    connections[fd] = new(class socket_connection,
+    SocketConnections[fd] = new(class socket_connection,
         fd: fd,
         protocol: PROTOCOL_UDP,
         state: SOCKET_STATE_CONNECTED,
@@ -395,7 +394,7 @@ public int udp_send(string host, int port, mixed data, object callback_obj, stri
 
 // 极简UDP响应处理
 protected void handle_udp_response(int fd, mixed data, string addr) {
-    class socket_connection conn = connections[fd];
+    class socket_connection conn = SocketConnections[fd];
     if (!conn) return;
 
     if (conn->callbacks["data"] && conn->callbacks["object"]) {
@@ -409,7 +408,7 @@ protected void handle_udp_response(int fd, mixed data, string addr) {
 // 获取所有连接
 public mapping get_connections() {
     mapping result = ([]);
-    foreach (int fd, class socket_connection conn in connections) {
+    foreach (int fd, class socket_connection conn in SocketConnections) {
         result[fd] = get_info(fd);
     }
     return result;
@@ -420,10 +419,10 @@ protected void handle_dns_resolve(string host, string addr, int key) {
     trace("dns:完成", (["host": host, "addr": addr]));
 
     if (addr) {
-        dns_cache[host] = addr;
+        SocketDnsCache[host] = addr;
         trace("dns:缓存更新", (["host": host, "addr": addr]));
 
-        foreach (int fd, class socket_connection conn in connections) {
+        foreach (int fd, class socket_connection conn in SocketConnections) {
             int result;
             if (conn->host == host && conn->state == SOCKET_STATE_RESOLVING) {
                 conn->remote_addr = addr;
@@ -453,7 +452,7 @@ protected void handle_dns_resolve(string host, string addr, int key) {
         }
     } else {
         trace("dns:失败", (["host": host]));
-        foreach (int fd, class socket_connection conn in connections) {
+        foreach (int fd, class socket_connection conn in SocketConnections) {
             if (conn->host == host && conn->state == SOCKET_STATE_RESOLVING) {
                 trace("dns:失败", (["fd": fd]));
                 if (conn->callbacks["error"] && conn->callbacks["object"]) {
@@ -467,7 +466,7 @@ protected void handle_dns_resolve(string host, string addr, int key) {
 
 // 接收数据回调
 protected void handle_receive_callback(int fd, mixed data, string addr) {
-    class socket_connection conn = connections[fd];
+    class socket_connection conn = SocketConnections[fd];
     if (!conn) {
         trace("recv:连接不存在", (["fd": fd]));
         return;
@@ -499,7 +498,7 @@ protected void handle_receive_callback(int fd, mixed data, string addr) {
 
 // 可写回调
 protected void handle_write_callback(int fd) {
-    class socket_connection conn = connections[fd];
+    class socket_connection conn = SocketConnections[fd];
     if (!conn) {
         trace("write:连接不存在", (["fd": fd]));
         return;
@@ -518,41 +517,40 @@ protected void handle_write_callback(int fd) {
 
 // 接受连接回调
 protected void handle_accept_callback(int fd) {
-    class socket_connection server_conn;
-    int new_fd;
-    class socket_connection new_conn;
+    class socket_connection serverConn;
+    int newFd;
+    class socket_connection newConn;
 
-    server_conn = connections[fd];
-    if (!server_conn) {
+    serverConn = SocketConnections[fd];
+    if (!serverConn) {
         trace("accept:服务器连接不存在", (["fd": fd]));
         return;
     }
 
-    new_fd = socket_accept(fd, "handle_receive_callback", "handle_write_callback");
-    if (new_fd < 0) {
-        trace("accept:连接失败", (["server_fd": fd, "error": socket_error(new_fd)]));
+    newFd = socket_accept(fd, "handle_receive_callback", "handle_write_callback");
+    if (newFd < 0) {
+        trace("accept:连接失败", (["serverFd": fd, "error": socket_error(newFd)]));
         return;
     }
 
-    new_conn = new(class socket_connection);
-    new_conn->fd = new_fd;
-    new_conn->protocol = server_conn->protocol;
-    new_conn->state = SOCKET_STATE_CONNECTED;
-    new_conn->last_active = time();
+    newConn = new(class socket_connection);
+    newConn->fd = newFd;
+    newConn->protocol = serverConn->protocol;
+    newConn->state = SOCKET_STATE_CONNECTED;
+    newConn->last_active = time();
 
-    connections[new_fd] = new_conn;
-    trace("accept:新连接", (["fd": new_fd, "server_fd": fd]));
+    SocketConnections[newFd] = newConn;
+    trace("accept:新连接", (["fd": newFd, "serverFd": fd]));
 
-    if (server_conn->callbacks["accept"] && server_conn->callbacks["object"]) {
-        trace("accept:回调", (["fd": new_fd, "callback": server_conn->callbacks["accept"]]));
-        call_other(server_conn->callbacks["object"], server_conn->callbacks["accept"], new_fd);
+    if (serverConn->callbacks["accept"] && serverConn->callbacks["object"]) {
+        trace("accept:回调", (["fd": newFd, "callback": serverConn->callbacks["accept"]]));
+        call_other(serverConn->callbacks["object"], serverConn->callbacks["accept"], newFd);
     }
-
 }
 
 // 关闭回调
 protected void handle_close_callback(int fd) {
-    class socket_connection conn = connections[fd];
+    class socket_connection conn = SocketConnections[fd];
     if (!conn) {
         trace("close:连接不存在", (["fd": fd]));
         return;
