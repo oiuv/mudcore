@@ -246,11 +246,6 @@ CORE_VIRTUAL_D|/system/daemons/virtual_d.c|负责虚拟对象处理
 
 所有守护进程有去掉`CORE_`前缀的同名宏定义，方便覆盖和继承，如`LOGIN_D`。
 
-另外，在MUDCORE的`/system/daemons/http/`下面提供了http服务示例：
-
-* iqa_d.c : 智能答问守护进程
-* qq_d.c : QQ群聊天互通守护进程
-* sms_d.c : 手机验证码短信守护进程
 
 ### 系统函数(Simul-Efuns)
 
