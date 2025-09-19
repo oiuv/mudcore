@@ -139,22 +139,12 @@ int area_move(object area, object who, int x, int y)
     return 0;
 }
 
-// 覆寫mudos present函式
+// 重写驱动 present函数
 object present(mixed arg, object ob)
 {
-    if (!ob)
+    if (!objectp(ob))
     {
-        if (stringp(arg))
-        {
-            // 返回名为arg的对象
-            return efun::present(arg, previous_object()) || efun::present(arg, environment(previous_object()));
-        }
-        if (objectp(arg))
-        {
-            // 返回对象arg的环境
-            return efun::present(arg, previous_object()) && previous_object() || efun::present(arg, environment(previous_object())) && environment(previous_object());
-        }
-        error("参数 arg 必须是 object 或 string 类型");
+        return efun::present(arg);
     }
 
     if (ob->is_area())

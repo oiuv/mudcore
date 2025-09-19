@@ -17,3 +17,5 @@ int notify_fail(string msg)
     } else
         return 0;
 }
+
+// 注意：area.c中有重写驱动 present函数
