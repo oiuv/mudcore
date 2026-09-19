@@ -61,8 +61,14 @@ History:
 /**
  * 自定义消息(目标广播)
  */
-varargs void boardcast(string type, string msg, object me, object you, object *others, object *exclude)
-{
+varargs void boardcast(
+    string type,
+    string msg,
+    object me,
+    object you,
+    object *others,
+    object *exclude
+) {
     string my_msg, my_name, your_name, your_msg, other_msg;
 
     if (!msg || !objectp(me))
@@ -74,8 +80,7 @@ varargs void boardcast(string type, string msg, object me, object you, object *o
     // 对其他人显示的消息
     other_msg = replace_string(msg, "$ME", my_name);
     // 对 you 的消息处理
-    if (objectp(you) && living(you))
-    {
+    if (objectp(you) && living(you)) {
         your_name = you->name() || "无名氏";
         // 对 me 显示的消息
         my_msg = replace_string(my_msg, "$YOU", your_name, 1);
@@ -98,7 +103,7 @@ varargs void boardcast(string type, string msg, object me, object you, object *o
 
     if (!arrayp(others))
         others = users();
-    exclude = (exclude || ({})) + ({me, you});
+    exclude = (exclude || ({})) + ({ me, you });
     // 对其他人送出信息
     message(type, other_msg, others, exclude);
 }
@@ -106,14 +111,15 @@ varargs void boardcast(string type, string msg, object me, object you, object *o
 /**
  * 自定义消息(区域消息)
  */
-varargs void msg(string type, string msg, object me, object you, object *exclude)
-{
+varargs void msg(string type, string msg, object me, object you, object *exclude) {
     object env = environment(me);
-    if (env)
-    {
+    if (env) {
         object *others;
         if (env->is_area())
-            others = env->query_inventory(me->query("area_info/x_axis"), me->query("area_info/y_axis"));
+            others = env->query_inventory(
+                me->query("area_info/x_axis"),
+                me->query("area_info/y_axis")
+            );
         else
             others = all_inventory(env);
 

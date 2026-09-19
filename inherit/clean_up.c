@@ -18,8 +18,7 @@ Date: 2021-09-30
  *  again on that object.  If it returns 1, it will be  called  again  when
  *  the object remains inactive for the specified clean_up() delay.
 */
-int clean_up(int inherited)
-{
+int clean_up(int inherited) {
     object *inv;
 
     // 被其它对象继承时不清除
@@ -27,7 +26,10 @@ int clean_up(int inherited)
     //     return AGAIN;
     // 记录因某些原因未能回到出生环境的对象
     if (this_object()->query("no_clean_up") > 1)
-        write_file(LOG_DIR + "no_clean_up", sprintf("%O\tno_clean_up = %d\n", this_object(), this_object()->query("no_clean_up")));
+        write_file(
+            LOG_DIR + "no_clean_up",
+            sprintf("%O\tno_clean_up = %d\n", this_object(), this_object()->query("no_clean_up"))
+        );
     // no_clean_up 为 1 的非复制对象不清除
     if (!clonep() && this_object()->query("no_clean_up") == 1)
         return AGAIN;

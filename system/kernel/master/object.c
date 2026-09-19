@@ -8,8 +8,7 @@
  * @param str
  * @return mixed
  */
-mixed compile_object(string str)
-{
+mixed compile_object(string str) {
     // debug_message("[CORE_MASTER_OB]->compile_object():" + str);
     return call_other(VIRTUAL_D, "compile_object", str);
 }
@@ -20,8 +19,7 @@ mixed compile_object(string str)
  * @param ob
  * @return string
  */
-string object_name(object ob)
-{
+string object_name(object ob) {
     // debug_message("[CORE_MASTER_OB]->object_name():" + file_name(ob));
     if (ob && function_exists("query", ob, 1))
         return ob->short();

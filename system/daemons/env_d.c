@@ -11,29 +11,21 @@ inherit CORE_DBASE;
 
 #define ENV_FILE DATA_DIR ".env"
 
-void create()
-{
+void create() {
     string *cfg = read_lines(ENV_FILE);
     string key;
     mixed value;
 
-    foreach (string line in cfg)
-    {
-        if (sscanf(line, "%s:%s", key, value) == 2)
-        {
+    foreach (string line in cfg) {
+        if (sscanf(line, "%s:%s", key, value) == 2) {
             key = trim(key);
             value = trim(value);
 
-            if (value == "true")
-            {
+            if (value == "true") {
                 value = 1;
-            }
-            else if (value == "false")
-            {
+            } else if (value == "false") {
                 value = 0;
-            }
-            else if (is_numeric(value))
-            {
+            } else if (is_numeric(value)) {
                 value = to_int(value);
             }
 

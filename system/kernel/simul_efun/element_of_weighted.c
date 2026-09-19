@@ -8,26 +8,23 @@
  * DEPENDENCIES: sum
  */
 
-mixed element_of_weighted(mapping data)
-{
+mixed element_of_weighted(mapping data) {
     int roll_result, next_position, weight, max_weight;
-    mixed *elems = ({ }), elem;
-    int *weights = ({ }), *indices = ({ }), index = 0;
+    mixed *elems = ({}), elem;
+    int *weights = ({}), *indices = ({}), index = 0;
 
-    foreach(elem, weight in data)
-    {
-        elems   = ({ elems..., elem });
+    foreach (elem, weight in data) {
+        elems = ({ elems..., elem });
         weights = ({ weights..., weight });
         indices = ({ indices..., index++ });
     }
 
-    indices       = shuffle(indices);
+    indices = shuffle(indices);
     next_position = 0;
-    max_weight    = CORE_SIMUL_EFUN_OB->sum(weights...);
-    roll_result   = random(max_weight);
+    max_weight = CORE_SIMUL_EFUN_OB->sum(weights...);
+    roll_result = random(max_weight);
 
-    foreach(index in indices)
-    {
+    foreach (index in indices) {
         //get that element's weight
         weight = weights[index];
 
@@ -37,6 +34,6 @@ mixed element_of_weighted(mapping data)
 
         //if our random number (roll_result) falls before our next_position
         //then that's our guy.
-        if(roll_result < next_position) return elems[index];
+        if (roll_result < next_position) return elems[index];
     }
 }

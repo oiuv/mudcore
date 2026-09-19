@@ -11,14 +11,12 @@
 #include <dbase.h>
 
 // 询问状态
-nomask int in_condition(string condition_file)
-{
+nomask int in_condition(string condition_file) {
     return mapp(query("condition/" + replace_string(condition_file, "/", "#")));
 }
 
 // 启动状态，1 秒为单位
-varargs nomask void start_condition(string condition_file, int time, int heart_beat)
-{
+varargs nomask void start_condition(string condition_file, int time, int heart_beat) {
     mapping condition_setup = allocate_mapping(0);
 
     // 如果已经在相同的状态内先停止先前的状态
@@ -44,8 +42,7 @@ varargs nomask void start_condition(string condition_file, int time, int heart_b
 }
 
 // 移除状态
-nomask void stop_condition(string condition_file)
-{
+nomask void stop_condition(string condition_file) {
     delete("condition/" + replace_string(condition_file, "/", "#"));
 
     // 执行状态结束时的效果
@@ -53,8 +50,7 @@ nomask void stop_condition(string condition_file)
 }
 
 // 改变状态时间
-nomask void change_condition_time(string condition_file, int time)
-{
+nomask void change_condition_time(string condition_file, int time) {
     if (!in_condition(condition_file))
         return;
 
@@ -62,8 +58,7 @@ nomask void change_condition_time(string condition_file, int time)
 }
 
 // 返回状态资料
-varargs nomask mapping query_condition(string condition_file)
-{
+varargs nomask mapping query_condition(string condition_file) {
     if (undefinedp(condition_file))
         return query("condition");
 
@@ -71,13 +66,10 @@ varargs nomask mapping query_condition(string condition_file)
 }
 
 // 清除所有状态
-nomask void clean_condition()
-{
+nomask void clean_condition() {
     mapping condition;
-    if (mapp(condition = query("condition")))
-    {
-        foreach (string key, mapping value in condition)
-        {
+    if (mapp(condition = query("condition"))) {
+        foreach (string key, mapping value in condition) {
             set("condition/" + key + "/time", 0);
         }
     }

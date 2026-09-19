@@ -22,16 +22,14 @@ string *LOLO = ({});
 // 傳回有載入对象的座標集
 string *query_LOLO() { return LOLO; }
 // 加入一個座標元素在LOLO集中
-void add_LOLO(string location)
-{
+void add_LOLO(string location) {
     if (member_array(location, LOLO) == -1)
-        LOLO += ({location});
+        LOLO += ({ location });
 }
 // 刪除一個座標元素在LOLO集中
-void del_LOLO(string location)
-{
+void del_LOLO(string location) {
     if (member_array(location, LOLO) != -1)
-        LOLO -= ({location});
+        LOLO -= ({ location });
 }
 
 // 儲存區域資料的路徑位置
@@ -44,8 +42,7 @@ int receive_object(object ob, int from_inventory) { return 1; }
 int is_area() { return 1; }
 
 // 設定某座標要載入的对象檔
-int set_loads(int x, int y, string filename, int amount)
-{
+int set_loads(int x, int y, string filename, int amount) {
     if (!check_scope(x, y))
         return 0;
     if (amount <= 0)
@@ -60,8 +57,7 @@ int set_loads(int x, int y, string filename, int amount)
 }
 
 // 將某座標要載入的对象檔移除
-int del_loads(int x, int y)
-{
+int del_loads(int x, int y) {
     if (!check_scope(x, y))
         return 0;
     if (undefinedp(area[y][x]["loads"]))
@@ -74,8 +70,7 @@ int del_loads(int x, int y)
 }
 
 // 將某座標的已載入对象移除
-int del_loaded(int x, int y)
-{
+int del_loaded(int x, int y) {
     if (!check_scope(x, y))
         return 0;
     if (undefinedp(area[y][x]["loaded"]))
@@ -87,13 +82,12 @@ int del_loaded(int x, int y)
 ////////////////////////////////////////////////////////////
 // 區域裡的对象載入、清除
 ////////////////////////////////////////////////////////////
-object make_inventory(string file, int x, int y)
-{
+object make_inventory(string file, int x, int y) {
     string *exits;
     object ob;
 
     file = file_path(file);
-    ob = new (file);
+    ob = new(file);
 
     // Support for uniqueness
     if (ob->violate_unique())
@@ -107,24 +101,20 @@ object make_inventory(string file, int x, int y)
     ob->set("area_info/y_axis_old", y);
 
     // 將对象移到區域裡，並檢查是否有guard某方向
-    if (move_in(x, y, ob))
-    {
-        if ((exits = ob->query("guard_exit")))
-        {
+    if (move_in(x, y, ob)) {
+        if ((exits = ob->query("guard_exit"))) {
             int i = sizeof(exits);
             while (i--)
                 this_object()->set_area_guard(x, y, exits[i], ob);
         }
         ob->move(this_object());
-    }
-    else
+    } else
         destruct(ob);
 
     return ob;
 }
 
-void reset_callout(int temp)
-{
+void reset_callout(int temp) {
     int i, j, x, y, amount, t = 0;
     mapping ob;
     string file;
@@ -132,8 +122,7 @@ void reset_callout(int temp)
     if (!sizeof(LOLO) || temp >= sizeof(LOLO))
         return;
 
-    for (i = temp; i < sizeof(LOLO); i++)
-    {
+    for (i = temp; i < sizeof(LOLO); i++) {
         if (sscanf(LOLO[i], "%d,%d", y, x) != 2)
             continue;
         if (!check_scope(x, y))
@@ -142,10 +131,8 @@ void reset_callout(int temp)
             continue;
         if (!mapp(ob = area[y][x]["loaded"]))
             ob = ([]);
-        foreach (file, amount in area[y][x]["loads"])
-        {
-            for (j = amount; j > 0; j--)
-            {
+        foreach (file, amount in area[y][x]["loads"]) {
+            for (j = amount; j > 0; j--) {
                 if (objectp(ob[file + " " + j]))
                     continue;
                 ob[file + " " + j] = make_inventory(file, x, y);
@@ -153,8 +140,7 @@ void reset_callout(int temp)
             area[y][x]["loaded"] = ob;
         }
         t++;
-        if (t >= 3)
-        {
+        if (t >= 3) {
             call_out("reset_callout", 1, i + 1);
             return;
         }
@@ -162,8 +148,7 @@ void reset_callout(int temp)
     return;
 }
 
-void reset()
-{
+void reset() {
     // 清空LOO座標集
     LOO = ({});
 
@@ -172,8 +157,7 @@ void reset()
     return;
 }
 
-int clean_up(int inherit_flag)
-{
+int clean_up(int inherit_flag) {
     int i, y, x;
     mapping items;
     string file;
@@ -181,8 +165,7 @@ int clean_up(int inherit_flag)
 
     i = sizeof(LOLO);
     while (i--)
-        if (sscanf(LOLO[i], "%d,%d", y, x) == 2)
-        {
+        if (sscanf(LOLO[i], "%d,%d", y, x) == 2) {
             if (!mapp(items = query_loaded(x, y)))
                 continue;
             foreach (file, ob in items)
@@ -194,8 +177,7 @@ int clean_up(int inherit_flag)
 }
 
 // 區域消滅時呼叫此函式
-void remove()
-{
+void remove() {
     int i, y, x, cnt;
     mapping items;
     string file;
@@ -203,14 +185,11 @@ void remove()
 
     i = sizeof(LOLO);
     while (i--)
-        if (sscanf(LOLO[i], "%d,%d", y, x) == 2)
-        {
+        if (sscanf(LOLO[i], "%d,%d", y, x) == 2) {
             if (!mapp(items = query_loaded(x, y)))
                 continue;
-            foreach (file, ob in items)
-            {
-                if (objectp(ob))
-                {
+            foreach (file, ob in items) {
+                if (objectp(ob)) {
                     message("vision", ob->name() + "化成輕飄飄的白煙消散了。", environment(ob));
                     destruct(ob);
                     cnt++;
@@ -227,8 +206,7 @@ void remove()
         write("警告：" + cnt + " 個NPC由此區域創造並被強制刪除。\n");
 }
 
-int save()
-{
+int save() {
     int i, j, x_size, y_size;
     mapping LOADED_BAK, OBJECTS_BAK;
     mixed *AREA_BAK;
@@ -243,30 +221,25 @@ int save()
     y_size = this_object()->query("y_axis_size");
 
     // 每格座標中的暫時變數也要清空, 並暫存起來
-    for (i = 0; i < y_size; i++)
-    {
+    for (i = 0; i < y_size; i++) {
         if (undefinedp(LOADED_BAK[i]))
             LOADED_BAK[i] = ([]);
         if (undefinedp(OBJECTS_BAK[i]))
             OBJECTS_BAK[i] = ([]);
-        for (j = 0; j < x_size; j++)
-        {
+        for (j = 0; j < x_size; j++) {
             LOADED_BAK[i][j] = area[i][j]["loaded"];
             OBJECTS_BAK[i][j] = area[i][j]["objects"];
             map_delete(area[i][j], "loaded");  // loaded -> mapping
-            map_delete(area[i][j], "objects"); // objects -> array
+            map_delete(area[i][j], "objects");  // objects -> array
         }
     }
 
-    if (::save())
-    {
+    if (::save()) {
         // 儲存完便還原
         area = AREA_BAK;
 
-        for (i = 0; i < y_size; i++)
-        {
-            for (j = 0; j < x_size; j++)
-            {
+        for (i = 0; i < y_size; i++) {
+            for (j = 0; j < x_size; j++) {
                 area[i][j]["loaded"] = LOADED_BAK[i][j];
                 area[i][j]["objects"] = OBJECTS_BAK[i][j];
             }
@@ -277,16 +250,14 @@ int save()
     return 0;
 }
 
-void setup()
-{
+void setup() {
     int i;
     string file;
 
     seteuid(getuid());
 
     // 沒有儲存檔
-    if (!restore())
-    {
+    if (!restore()) {
         int j, y_size, x_size;
 
         // 將區域資料變數 area 作初始化
@@ -299,8 +270,7 @@ void setup()
 
         // 要求記憶體
         area = allocate(y_size);
-        for (i = 0; i < sizeof(area); i++)
-        {
+        for (i = 0; i < sizeof(area); i++) {
             area[i] = allocate(x_size);
             for (j = 0; j < sizeof(area[i]); j++)
                 area[i][j] = ([]);

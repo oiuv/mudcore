@@ -20,14 +20,12 @@
 inherit CORE_CLEAN_UP;
 inherit CORE_DBASE;
 
-private void create()
-{
+private void create() {
     seteuid(getuid());
     set("channel_id", "網路精靈");
 }
 
-void receive_answer(mapping info)
-{
+void receive_answer(mapping info) {
     // SECURED_INTERMUD_EVENT;
 
     info["CONTACTED"] = ctime(time());
@@ -41,8 +39,7 @@ void receive_answer(mapping info)
 #endif
 }
 
-void receive_request(mapping info)
-{
+void receive_request(mapping info) {
     int port;
     mapping from;
 
@@ -57,32 +54,31 @@ void receive_request(mapping info)
 
     sscanf(info["PORTUDP"], "%d", port);
     INTERMUD_D->send_event(info["HOSTADDRESS"], port, "ping_a", ([
-        "NAME"      :   MUD_NAME_INTERMUD,
-        "ALIAS"     :   MUD_NAME_ABBR,
-        "HOST"      :   MUD_HOSTNAME,
-        "MUDLIB"    :   MUDLIB_NAME,
-        "VERSION"   :   MUDLIB_VERSION,
-        "ENCODING"  :   MUDLIB_LOCALE,
-        "PORTUDP"   :   "" + INTERMUD_D->query_udp_port(),
+        "NAME": MUD_NAME_INTERMUD,
+        "ALIAS": MUD_NAME_ABBR,
+        "HOST": MUD_HOSTNAME,
+        "MUDLIB": MUDLIB_NAME,
+        "VERSION": MUDLIB_VERSION,
+        "ENCODING": MUDLIB_LOCALE,
+        "PORTUDP": "" + INTERMUD_D->query_udp_port(),
     ]));
 
 #ifdef VERBOSE
     CHANNEL_D->do_channel(this_object(), "sys",
-                "收到 PING 要求，送出回應到 " + info["HOSTADDRESS"] + "(" + info["NAME"] + ")" + " UDP 埠 " + info["PORTUDP"] + "。");
+        "收到 PING 要求，送出回應到 " + info["HOSTADDRESS"] + "(" + info["NAME"] + ")" + " UDP 埠 " + info["PORTUDP"] + "。");
 #endif
 }
 
-void send_request(string dest, int port)
-{
+void send_request(string dest, int port) {
     // SECURED_INTERMUD_API;
 
     INTERMUD_D->send_event(dest, port, "ping_q", ([
-        "NAME"      :   MUD_NAME_INTERMUD,
-        "PORTUDP"   :   "" + INTERMUD_D->query_udp_port(),
+        "NAME": MUD_NAME_INTERMUD,
+        "PORTUDP": "" + INTERMUD_D->query_udp_port(),
     ]));
 
 #ifdef VERBOSE
     CHANNEL_D->do_channel(this_object(), "sys",
-                "送出 PING 要求到 " + dest + " UDP 埠 " + port + "。");
+        "送出 PING 要求到 " + dest + " UDP 埠 " + port + "。");
 #endif
 }

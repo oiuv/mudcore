@@ -6,20 +6,17 @@
 
 #include <type.h>
 
-mixed sum(mixed *numbers...)
-{
+mixed sum(mixed *numbers...) {
     mixed number, result = 0;
 
-    foreach(number in numbers)
-    {
-        switch(typeof(number))
-        {
-            case T_INT :
-                result += number ;
-                break ;
-            case T_FLOAT :
-                result = to_float(result) + number ;
-                break ;
+    foreach (number in numbers) {
+        switch (typeof(number)) {
+            case T_INT:
+                result += number;
+                break;
+            case T_FLOAT:
+                result = to_float(result) + number;
+                break;
             default:
                 error("Argument must be an array of int or float.\n");
         }
@@ -35,7 +32,6 @@ mixed sum(mixed *numbers...)
  * DESCRIPTION: Returns the sum of all values in the passed array.
  */
 
-mixed array_sum(mixed *numbers)
-{
-    return sum(numbers...) ;
+mixed array_sum(mixed *numbers) {
+    return sum(numbers...);
 }

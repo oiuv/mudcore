@@ -7,15 +7,13 @@ int isAreaPattern() { return 1; }
 
 string getName() { return "草地[9格], 樣式隨機 "; }
 
-private string getSample()
-{
-    string *sample = ({ "  ", GRN"〃"NOR, "  ", YEL"〃"NOR, "  ", HIG"〃"NOR });
+private string getSample() {
+    string *sample = ({ "  ", GRN "〃" NOR, "  ", YEL "〃" NOR, "  ", HIG "〃" NOR });
     return sample[random(sizeof(sample))];
 }
 
 // icon樣子
-private mapping getIcon()
-{
+private mapping getIcon() {
     mapping icon = ([
         0: ({ getSample(), getSample(), getSample() }),
         1: ({ getSample(), getSample(), getSample() }),
@@ -25,8 +23,7 @@ private mapping getIcon()
     return icon;
 }
 
-mapping getMapStyle()
-{
+mapping getMapStyle() {
     mapping style = ([
         "icon": getIcon(),
     ]);

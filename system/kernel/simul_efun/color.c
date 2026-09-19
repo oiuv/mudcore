@@ -9,8 +9,7 @@ History:
 *****************************************************************************/
 #include <ansi.h>
 // 清理ansi色彩
-string remove_ansi(string arg)
-{
+string remove_ansi(string arg) {
     arg = replace_string(arg, BLK, "");
     arg = replace_string(arg, RED, "");
     arg = replace_string(arg, GRN, "");
@@ -48,8 +47,7 @@ string remove_ansi(string arg)
 }
 
 // 增加色彩输出
-string ansi(string content)
-{
+string ansi(string content) {
     if (!content)
         return "";
 
@@ -97,21 +95,17 @@ string ansi(string content)
     return content;
 }
 
-void color_cat(string file)
-{
+void color_cat(string file) {
     write(ansi(read_file(file)));
 }
 
 // calculate the color char in a string
-int color_len(string str)
-{
+int color_len(string str) {
     int i, extra;
 
     extra = 0;
-    for (i = 0; i < strlen(str); i++)
-    {
-        if (str[i] == ESC[0])
-        {
+    for (i = 0; i < strlen(str); i++) {
+        if (str[i] == ESC[0]) {
             while ((extra++, str[i] != 'm') && i < strlen(str))
                 i++;
         }
@@ -119,8 +113,7 @@ int color_len(string str)
     return extra;
 }
 
-string color_to_html(string msg)
-{
+string color_to_html(string msg) {
     if (!msg)
         return 0;
     msg = replace_string(msg, BLK, "<span style=\"color: #000000\">");

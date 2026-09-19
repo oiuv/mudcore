@@ -1,12 +1,10 @@
 inherit _CMD;
 
-protected void response(string result)
-{
+protected void response(string result) {
     shout(result);
 }
 
-int main(object me, string arg)
-{
+int main(object me, string arg) {
     int CURL_CMD = 1;
 
     if (!wizardp(me))
@@ -20,8 +18,7 @@ int main(object me, string arg)
     return 1;
 }
 
-int help(object me)
-{
+int help(object me) {
     if (!wizardp(me))
         return 0;
 

@@ -1,64 +1,49 @@
 // unicode字符
 inherit _CLEAN_UP;
 
-int main(object me, string arg)
-{
+int main(object me, string arg) {
     int x;
 
     if (!wizardp(me))
         return 0;
 
-    if (arg && arg[0..1] == "0x")
-    {
+    if (arg && arg[0..1] == "0x") {
         sscanf(arg, "%x", x);
-    }
-    else if (arg == "emoji")
-    {
+    } else if (arg == "emoji") {
         int i;
         x = 0x1f300;
 
-        for (i = 0; i < 16; i++)
-        {
+        for (i = 0; i < 16; i++) {
             printf("\t %X", i);
         }
-        for (i = 0; i < 976; i++)
-        {
-            if (i % 16 == 0)
-            {
+        for (i = 0; i < 976; i++) {
+            if (i % 16 == 0) {
                 printf("\n%X\t", x);
             }
             printf("%c\t", x);
             x++;
         }
         write("\n");
-        for (i = 0; i < 16; i++)
-        {
+        for (i = 0; i < 16; i++) {
             printf("\t %X", i);
         }
         write("\n");
-    }
-    else
-    {
+    } else {
         x = to_int(arg);
     }
 
-    if (x < 1 || x > 1114109)
-    {
-        for (int i = 32; i < 127; i++)
-        {
+    if (x < 1 || x > 1114109) {
+        for (int i = 32; i < 127; i++) {
             printf("%d(%X) = %c\n", i, i, i);
         }
-    }
-    else
-    {
+    } else {
         catch(printf("%d(%X) = %c\n", x, x, x));
     }
 
     return 1;
 }
 
-int help(object me)
-{
+int help(object me) {
     if (!wizardp(me))
         return 0;
 

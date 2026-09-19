@@ -8,8 +8,7 @@ Date: 2019-03-12
 *****************************************************************************/
 nosave mixed busy, interrupt;
 
-varargs void start_busy(mixed new_busy, mixed new_interrupt)
-{
+varargs void start_busy(mixed new_busy, mixed new_interrupt) {
     object me;
 
     if (!new_busy)
@@ -34,31 +33,23 @@ nomask mixed query_busy() { return busy; }
 nomask int is_busy() { return busy != 0; }
 
 // 如果在 busy 状态，调用本方法
-void continue_action()
-{
-    if (intp(busy) && (busy > 0))
-    {
+void continue_action() {
+    if (intp(busy) && (busy > 0)) {
         busy--;
         // debug_message("[BUSY]:" + busy);
         return;
-    }
-    else if (functionp(busy))
-    {
-        if (!evaluate(busy, this_object()))
-        {
+    } else if (functionp(busy)) {
+        if (!evaluate(busy, this_object())) {
             busy = 0;
             interrupt = 0;
         }
-    }
-    else
-    {
+    } else {
         busy = 0;
         interrupt = 0;
     }
 }
 
-varargs void interrupt_me(object who, string how)
-{
+varargs void interrupt_me(object who, string how) {
     mixed bak;
 
     bak = busy;
@@ -67,21 +58,15 @@ varargs void interrupt_me(object who, string how)
     if (!bak)
         return;
 
-    if (intp(bak) && intp(interrupt))
-    {
+    if (intp(bak) && intp(interrupt)) {
         if (bak < interrupt || who != this_object())
             return;
-    }
-    else if (functionp(interrupt))
-    {
-        if (evaluate(interrupt, this_object(), who, how))
-        {
+    } else if (functionp(interrupt)) {
+        if (evaluate(interrupt, this_object(), who, how)) {
             bak = 0;
             interrupt = 0;
         }
-    }
-    else
-    {
+    } else {
         bak = 0;
         interrupt = 0;
     }

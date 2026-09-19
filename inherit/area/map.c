@@ -16,10 +16,10 @@ mixed *area;
 nosave string *LOO = ({});
 
 // 不能用一般設定方法的項目 (區域形式的出口，要用特別的方式設定)
-nosave string *set_data_resist = ({"objects", "loaded", "loads", "area_exit"});
+nosave string *set_data_resist = ({ "objects", "loaded", "loads", "area_exit" });
 
 // 不能用一般刪除方法的項目 (可能是區域管理用的項目或其它特別的項目)
-nosave string *delete_data_resist = ({"objects", "loaded", "loads"});
+nosave string *delete_data_resist = ({ "objects", "loaded", "loads" });
 
 varargs int do_look(object me, string arg);
 
@@ -29,52 +29,45 @@ varargs int do_look(object me, string arg);
 // 傳回有对象存在的座標集
 string *query_LOO() { return LOO; }
 // 加入一個座標元素在LOO集中
-void add_LOO(string location)
-{
+void add_LOO(string location) {
     if (member_array(location, LOO) == -1)
-        LOO += ({location});
+        LOO += ({ location });
 }
 // 刪除一個座標元素在LOO集中
-void del_LOO(string location)
-{
+void del_LOO(string location) {
     if (member_array(location, LOO) != -1)
-        LOO -= ({location});
+        LOO -= ({ location });
 }
 
 // 使用__DIR__之相對路徑
-string file_path(string dir)
-{
+string file_path(string dir) {
     dir = replace_string(dir, "__DIR__", query("file_path"));
     return dir;
 }
 
 // 座標範圍檢查
-int check_scope(int x, int y)
-{
+int check_scope(int x, int y) {
     if (y < 0 || x < 0 || y >= sizeof(area) || x >= sizeof(area[y]))
         return 0;
     return 1;
 }
 
 // 查詢某座標的資訊
-mapping *query_info(int x, int y)
-{
+mapping *query_info(int x, int y) {
     if (!check_scope(x, y))
         return 0;
     return area[y][x];
 }
 
 // 查詢某座標載入的对象
-mapping query_loaded(int x, int y)
-{
+mapping query_loaded(int x, int y) {
     if (!check_scope(x, y))
         return ([]);
     return area[y][x]["loaded"];
 }
 
 // 查詢區域中某座標的对象集
-object *query_inventory(int x, int y)
-{
+object *query_inventory(int x, int y) {
     if (!check_scope(x, y))
         return ({});
     if (undefinedp(area[y][x]["objects"]))
@@ -83,8 +76,7 @@ object *query_inventory(int x, int y)
 }
 
 // 設定區域型出口
-int set_area_exit(int x, int y, string filename, int exit_x, int exit_y)
-{
+int set_area_exit(int x, int y, string filename, int exit_x, int exit_y) {
     if (!check_scope(x, y))
         return 0;
     area[y][x]["area_exit"] = ([]);
@@ -95,8 +87,7 @@ int set_area_exit(int x, int y, string filename, int exit_x, int exit_y)
 }
 
 // 設定區域細節描述
-int set_area_detail(int x, int y, string title, string detail)
-{
+int set_area_detail(int x, int y, string title, string detail) {
     if (!check_scope(x, y))
         return 0;
     if (undefinedp(area[y][x]["detail"]))
@@ -106,8 +97,7 @@ int set_area_detail(int x, int y, string title, string detail)
 }
 
 // 刪除區域細節描述
-int del_area_detail(int x, int y, string title)
-{
+int del_area_detail(int x, int y, string title) {
     if (!check_scope(x, y))
         return 0;
     if (undefinedp(area[y][x]["detail"]))
@@ -121,8 +111,7 @@ int del_area_detail(int x, int y, string title)
 }
 
 // 取得區域細節資料
-mapping query_area_detail(int x, int y)
-{
+mapping query_area_detail(int x, int y) {
     if (!check_scope(x, y))
         return 0;
     if (undefinedp(area[y][x]["detail"]))
@@ -131,8 +120,7 @@ mapping query_area_detail(int x, int y)
 }
 
 // 取得某detail的描述
-string query_area_detail_arug(int x, int y, string title)
-{
+string query_area_detail_arug(int x, int y, string title) {
     if (!check_scope(x, y))
         return 0;
     if (undefinedp(area[y][x]["detail"]))
@@ -143,8 +131,7 @@ string query_area_detail_arug(int x, int y, string title)
 }
 
 // 設定某方向的guard
-int set_area_guard(int x, int y, string exit, object ob)
-{
+int set_area_guard(int x, int y, string exit, object ob) {
     if (!check_scope(x, y))
         return 0;
     if (!objectp(ob))
@@ -153,13 +140,12 @@ int set_area_guard(int x, int y, string exit, object ob)
         area[y][x]["guard"] = ([]);
     if (undefinedp(area[y][x]["guard"][exit]))
         area[y][x]["guard"][exit] = ({});
-    area[y][x]["guard"][exit] += ({ob});
+    area[y][x]["guard"][exit] += ({ ob });
     return 1;
 }
 
 // 查詢某方向是否被guard
-int query_area_guard(int x, int y, string exit)
-{
+int query_area_guard(int x, int y, string exit) {
     int index;
     object guard;
     if (!check_scope(x, y))
@@ -170,8 +156,7 @@ int query_area_guard(int x, int y, string exit)
         return 0;
     if (!(index = sizeof(area[y][x]["guard"][exit])))
         return 0;
-    while (index--)
-    {
+    while (index--) {
         if (objectp(guard = area[y][x]["guard"][exit][index]))
             if (guard->query("area_info/x_axis") == x && guard->query("area_info/y_axis") == y)
                 if (guard->do_guard_exit(x, y, exit))
@@ -181,8 +166,7 @@ int query_area_guard(int x, int y, string exit)
 }
 
 // 設定一般資料
-int set_data(int x, int y, string type, mixed value)
-{
+int set_data(int x, int y, string type, mixed value) {
     if (member_array(type, set_data_resist) != -1)
         return 0;
     if (!check_scope(x, y))
@@ -192,8 +176,7 @@ int set_data(int x, int y, string type, mixed value)
 }
 
 // 刪除一般資料
-int delete_data(int x, int y, string type)
-{
+int delete_data(int x, int y, string type) {
     if (member_array(type, delete_data_resist) != -1)
         return 0;
     if (!check_scope(x, y))
@@ -205,8 +188,7 @@ int delete_data(int x, int y, string type)
 }
 
 // 取得一般資料
-mixed query_data(int x, int y, string type)
-{
+mixed query_data(int x, int y, string type) {
     if (member_array(type, delete_data_resist) != -1)
         return 0;
     if (!check_scope(x, y))
@@ -221,8 +203,7 @@ mixed query_data(int x, int y, string type)
 ////////////////////////////////////////////////////////////
 
 // 檢查某座標是否有障礙物，是否可穿透
-int is_move(int x, int y)
-{
+int is_move(int x, int y) {
     // 如果巫師設定為穿牆模式
     if (wizardp(this_player()) && this_player()->query("option/map_through"))
         return 1;
@@ -236,8 +217,7 @@ int is_move(int x, int y)
 }
 
 // 对象移入某座標處理
-int move_in(int x, int y, object ob)
-{
+int move_in(int x, int y, object ob) {
     // 超出區域大小範圍
     if (!check_scope(x, y))
         return 0;
@@ -259,7 +239,7 @@ int move_in(int x, int y, object ob)
         return 1;
 
     // 对象加入对象集中
-    area[y][x]["objects"] += ({ob});
+    area[y][x]["objects"] += ({ ob });
 
     // 改變即時的圖示
     set_icon_weight(x, y, get_icon_weight(ob));
@@ -271,8 +251,7 @@ int move_in(int x, int y, object ob)
 }
 
 // 对象移出某座標處理
-int move_out(int x, int y, object ob)
-{
+int move_out(int x, int y, object ob) {
     // 超出區域大小範圍
     if (!check_scope(x, y))
         return 0;
@@ -289,11 +268,10 @@ int move_out(int x, int y, object ob)
         return 1;
 
     // 对象移出对象集
-    area[y][x]["objects"] -= ({ob});
+    area[y][x]["objects"] -= ({ ob });
 
     // 座標完全沒对象時，刪除对象集
-    if (sizeof(area[y][x]["objects"]) < 1)
-    {
+    if (sizeof(area[y][x]["objects"]) < 1) {
         map_delete(area[y][x], "objects");
         // 刪除LOO搜尋集
         del_LOO((string)y + "," + (string)x);
@@ -303,55 +281,52 @@ int move_out(int x, int y, object ob)
 }
 
 // 移动指定对象到当前区域指定方向
-int moveObject(object ob, string dir)
-{
+int moveObject(object ob, string dir) {
     int x, y, x_past, y_past;
     x_past = ob->query("area_info/x_axis");
     y_past = ob->query("area_info/y_axis");
 
     // 座標轉換
-    switch (dir)
-    {
-    case "north":
-        y = y_past - 1;
-        x = x_past;
-        break;
-    case "east":
-        y = y_past;
-        x = x_past + 1;
-        break;
-    case "south":
-        y = y_past + 1;
-        x = x_past;
-        break;
-    case "west":
-        y = y_past;
-        x = x_past - 1;
-        break;
-    case "northeast":
-        y = y_past - 1;
-        x = x_past + 1;
-        break;
-    case "southeast":
-        y = y_past + 1;
-        x = x_past + 1;
-        break;
-    case "southwest":
-        y = y_past + 1;
-        x = x_past - 1;
-        break;
-    case "northwest":
-        y = y_past - 1;
-        x = x_past - 1;
-        break;
-    default:
-        return 0;
-        break;
+    switch (dir) {
+        case "north":
+            y = y_past - 1;
+            x = x_past;
+            break;
+        case "east":
+            y = y_past;
+            x = x_past + 1;
+            break;
+        case "south":
+            y = y_past + 1;
+            x = x_past;
+            break;
+        case "west":
+            y = y_past;
+            x = x_past - 1;
+            break;
+        case "northeast":
+            y = y_past - 1;
+            x = x_past + 1;
+            break;
+        case "southeast":
+            y = y_past + 1;
+            x = x_past + 1;
+            break;
+        case "southwest":
+            y = y_past + 1;
+            x = x_past - 1;
+            break;
+        case "northwest":
+            y = y_past - 1;
+            x = x_past - 1;
+            break;
+        default:
+            return 0;
+            break;
     }
 
     // 無法移動至該座標(有障礙物)
-    if (!check_scope(x, y) || !is_move(x, y))
-    {
+    if (!check_scope(x, y) || !is_move(x, y)) {
         write("這個方向沒有出路");
         return 0;
     }
@@ -363,26 +338,20 @@ int moveObject(object ob, string dir)
     //////////////////////////////
     // 移往別的房間
     //////////////////////////////
-    if (!undefinedp(area[y][x]["room_exit"]))
-    {
+    if (!undefinedp(area[y][x]["room_exit"])) {
         object room;
-        if (!objectp(room = load_object(file_path(area[y][x]["room_exit"]))))
-        {
+        if (!objectp(room = load_object(file_path(area[y][x]["room_exit"])))) {
             write("這個方向的出口有問題，請通知管理者來處理。\n");
             return 0;
         }
-        if (room->is_area())
-        {
+        if (room->is_area()) {
             write("這個方向的出口有問題，請通知管理者來處理。\n");
             return 0;
-        }
-        else
-        {
+        } else {
             // 如果成功移到房間, move 會自動在先前的area裡做move_out動作
             if (ob->move(room))
                 return 1;
-            else
-            {
+            else {
                 write("這個方向的出口有問題，請通知管理者來處理。\n");
                 return 0;
             }
@@ -393,22 +362,23 @@ int moveObject(object ob, string dir)
     //////////////////////////////
     // 移往別的區域
     //////////////////////////////
-    if (!undefinedp(area[y][x]["area_exit"]))
-    {
+    if (!undefinedp(area[y][x]["area_exit"])) {
         object room;
-        if (!objectp(room = load_object(file_path(area[y][x]["area_exit"]["filename"]))))
-        {
+        if (!objectp(room = load_object(file_path(area[y][x]["area_exit"]["filename"])))) {
             write("這個方向的出口有問題，請通知管理者來處理。\n");
             return 0;
         }
-        if (!room->is_area())
-        {
+        if (!room->is_area()) {
             write("這個方向的出口有問題，請通知管理者來處理。\n");
             return 0;
         }
 
-        if (!area_move(room, ob, area[y][x]["area_exit"]["x_axis"], area[y][x]["area_exit"]["y_axis"]))
-        {
+        if (!area_move(
+            room,
+            ob,
+            area[y][x]["area_exit"]["x_axis"],
+            area[y][x]["area_exit"]["y_axis"]
+        )) {
             write("這個方向的出口有問題，請通知管理者來處理。\n");
             return 0;
         }
@@ -451,33 +421,27 @@ int moveObject(object ob, string dir)
     // 在區域中移動
     //////////////////////////////
     // 对象移出舊座標
-    if (move_out(x_past, y_past, ob))
-    {
+    if (move_out(x_past, y_past, ob)) {
         // 对象移入新座標
-        if (move_in(x, y, ob))
-        {
+        if (move_in(x, y, ob)) {
             ob->set("area_info/x_axis", x);
             ob->set("area_info/y_axis", y);
             ob->set("area_info/x_axis_old", x);
             ob->set("area_info/y_axis_old", y);
-        }
-        else
-        {
+        } else {
             // 对象移入失敗，退回原座標
             move_in(x_past, y_past, ob);
             return 0;
         }
         if (userp(ob))
             do_look(ob, 0);
-    }
-    else
+    } else
         return 0;
 
     return 1;
 }
 // 移动对象（兼容性别名，不推荐使用）
-int valid_leave(object ob, string dir)
-{
+int valid_leave(object ob, string dir) {
     debug_message("[警告]请使用 moveObject 方法代替 valid_leave");
     return moveObject(ob, dir);
 }
@@ -487,80 +451,71 @@ int valid_leave(object ob, string dir)
 ////////////////////////////////////////////////////////////
 
 // 查詢某坐標的出口
-string *query_exits(int x, int y, int option)
-{
+string *query_exits(int x, int y, int option) {
     string *exits = ({});
 
-    if (!option)
-    {
+    if (!option) {
         // 往北可能有路
-        if (y - 1 >= 0)
-        {
+        if (y - 1 >= 0) {
             if (x - 1 >= 0 && is_move(x - 1, y - 1))
-                exits += ({"northwest"});
+                exits += ({ "northwest" });
             if (x >= 0 && is_move(x, y - 1))
-                exits += ({"north"});
+                exits += ({ "north" });
             if (x + 1 < sizeof(area[0]) && is_move(x + 1, y - 1))
-                exits += ({"northeast"});
+                exits += ({ "northeast" });
         }
 
         // 往南可能有路
-        if (y + 1 < sizeof(area))
-        {
+        if (y + 1 < sizeof(area)) {
             if (x - 1 >= 0 && is_move(x - 1, y + 1))
-                exits += ({"southwest"});
+                exits += ({ "southwest" });
             if (x >= 0 && is_move(x, y + 1))
-                exits += ({"south"});
+                exits += ({ "south" });
             if (x + 1 < sizeof(area[0]) && is_move(x + 1, y + 1))
-                exits += ({"southeast"});
+                exits += ({ "southeast" });
         }
 
         // 往東可能有路
         if (x + 1 < sizeof(area[0]) && is_move(x + 1, y))
-            exits += ({"east"});
+            exits += ({ "east" });
 
         // 往西可能有路
         if (x - 1 >= 0 && is_move(x - 1, y))
-            exits += ({"west"});
-    }
-    else
-    {
+            exits += ({ "west" });
+    } else {
         // 往北可能有路
-        if (y - 1 >= 0)
-        {
+        if (y - 1 >= 0) {
             if (x - 1 >= 0 && is_move(x - 1, y - 1))
-                exits += ({"西北(" HIK "nw" NOR ")"});
+                exits += ({ "西北(" HIK "nw" NOR ")" });
             if (x >= 0 && is_move(x, y - 1))
-                exits += ({"北(" HIK "n" NOR ")"});
+                exits += ({ "北(" HIK "n" NOR ")" });
             if (x + 1 < sizeof(area[0]) && is_move(x + 1, y - 1))
-                exits += ({"東北(" HIK "ne" NOR ")"});
+                exits += ({ "東北(" HIK "ne" NOR ")" });
         }
 
         // 往南可能有路
-        if (y + 1 < sizeof(area))
-        {
+        if (y + 1 < sizeof(area)) {
             if (x - 1 >= 0 && is_move(x - 1, y + 1))
-                exits += ({"西南(" HIK "sw" NOR ")"});
+                exits += ({ "西南(" HIK "sw" NOR ")" });
             if (x >= 0 && is_move(x, y + 1))
-                exits += ({"南(" HIK "s" NOR ")"});
+                exits += ({ "南(" HIK "s" NOR ")" });
             if (x + 1 < sizeof(area[0]) && is_move(x + 1, y + 1))
-                exits += ({"東南(" HIK "se" NOR ")"});
+                exits += ({ "東南(" HIK "se" NOR ")" });
         }
 
         // 往東可能有路
         if (x + 1 < sizeof(area[0]) && is_move(x + 1, y))
-            exits += ({"東(" HIK "e" NOR ")"});
+            exits += ({ "東(" HIK "e" NOR ")" });
 
         // 往西可能有路
         if (x - 1 >= 0 && is_move(x - 1, y))
-            exits += ({"西(" HIK "w" NOR ")"});
+            exits += ({ "西(" HIK "w" NOR ")" });
     }
     return exits;
 }
 
 // 地圖顯示
-varargs string show_area(int x, int y, int type)
-{
+varargs string show_area(int x, int y, int type) {
     int i, j, x_start, y_start, x_size, y_size;
     string msg;
     // 非utf-8编码下只显示block
@@ -571,51 +526,43 @@ varargs string show_area(int x, int y, int type)
 
     if (y <= 5 || y_size <= 11)
         y_start = 0;            // 上
-    else if (y >= y_size - 6)
-        y_start = y_size - 11;  // 中
-    else
-        y_start = y - 5;        // 下
+        else if (y >= y_size - 6)
+            y_start = y_size - 11;  // 中
+            else
+                y_start = y - 5;        // 下
 
-    if (x <= 19 || x_size <= 38)
-        x_start = 0;            // 左
-    else if (x >= x_size - 19)
-        x_start = x_size - 38;  // 中
-    else
-        x_start = x - 19;       // 右
+                if (x <= 19 || x_size <= 38)
+                    x_start = 0;            // 左
+                    else if (x >= x_size - 19)
+                        x_start = x_size - 38;  // 中
+                        else
+                            x_start = x - 19;       // 右
 
-    // 建立即時地圖
-    msg = sprintf(BBLU "╲" U " %-59s %s (%3d,%3d) " NOR + BBLU "╱\n" NOR,
-                  query("name") + (area[y][x]["short"] ? " - " + area[y][x]["short"] : ""),
-                  (area[y][x]["no_fight"] ? "安全区" : "戰鬥區"), x, y, );
+                            // 建立即時地圖
+                            msg = sprintf(BBLU "╲" U " %-59s %s (%3d,%3d) " NOR + BBLU "╱\n" NOR,
+                                query("name") + (area[y][x]["short"] ? " - " + area[y][x]["short"] : ""),
+                                (area[y][x]["no_fight"] ? "安全区" : "戰鬥區"), x, y,);
 
-    for (i = y_start; i < y_size && i < y_start + 11; i++)
-    {
+    for (i = y_start; i < y_size && i < y_start + 11; i++) {
         msg += BBLU " |" NOR;
-        for (j = x_start; j < x_size && j < x_start + 38; j++)
-        {
+        for (j = x_start; j < x_size && j < x_start + 38; j++) {
             if (y == i && x == j)
                 msg += (type != 4) ? "😃" : HIY "你" NOR;
             else if (undefinedp(area[i][j]["icon"]) &&
-                     (!undefinedp(area[i][j]["room_exit"]) || !undefinedp(area[i][j]["area_exit"])))
+                (!undefinedp(area[i][j]["room_exit"]) || !undefinedp(area[i][j]["area_exit"])))
                 msg += (type != 4) ? "🌀" : HIW "◎" NOR;
-            else
-            {
+            else {
                 int check = 1;
-                if (check && (type & 2) == 2)
-                {
+                if (check && (type & 2) == 2) {
                     // 座標有設不即時變更圖示
-                    if (!area[i][j]["nonprompt_icon"] && check_icon(j, i))
-                    {
+                    if (!area[i][j]["nonprompt_icon"] && check_icon(j, i)) {
                         msg += get_icon(j, i);
                         check = 0;
                     }
                 }
-                if (check)
-                {
-                    if ((type & 8) == 8)
-                    {
-                        if (area[i][j]["_BUILDING_"])
-                        {
+                if (check) {
+                    if ((type & 8) == 8) {
+                        if (area[i][j]["_BUILDING_"]) {
                             if (!area[i][j]["_BUILDING_FILE_"])
                                 msg += "十";
                             else
@@ -623,15 +570,11 @@ varargs string show_area(int x, int y, int type)
                             check = 0;
                         }
                     }
-                    if (check && (type & 4) == 4)
-                    {
-                        if (area[i][j]["block"])
-                        {
+                    if (check && (type & 4) == 4) {
+                        if (area[i][j]["block"]) {
                             msg += "口";
                             check = 0;
-                        }
-                        else
-                        {
+                        } else {
                             msg += "  ";
                             check = 0;
                         }
@@ -651,11 +594,10 @@ varargs string show_area(int x, int y, int type)
     if ((type & 1) == 1)
         return msg;
     else
-        return SAVEC + CUP(1,1) + msg + RESTC;
+        return SAVEC + CUP(1, 1) + msg + RESTC;
 }
 
-varargs string show_objects(int x, int y, int type)
-{
+varargs string show_objects(int x, int y, int type) {
     string str = "";
     object ob;
 
@@ -665,14 +607,12 @@ varargs string show_objects(int x, int y, int type)
     if (sizeof(area[y][x]["objects"]) >= 30)
         return "这里的東西太多，一時看不清楚...\n";
     // todo 增加排序
-    foreach (ob in area[y][x]["objects"])
-    {
+    foreach (ob in area[y][x]["objects"]) {
         if (ob == this_player())
             continue;
         if (!objectp(ob) || environment(ob) != this_object() ||
-            ob->query("area_info/y_axis") != y || ob->query("area_info/x_axis") != x)
-        {
-            area[y][x]["objects"] -= ({ob});
+            ob->query("area_info/y_axis") != y || ob->query("area_info/x_axis") != x) {
+            area[y][x]["objects"] -= ({ ob });
             continue;
         }
         if (!userp(ob) && QUEST_D->hasQuest(this_player(), ob))
@@ -684,8 +624,7 @@ varargs string show_objects(int x, int y, int type)
     return str;
 }
 
-varargs int do_look(object me, string arg)
-{
+varargs int do_look(object me, string arg) {
     int i = 0, op = 0;
     string str = "", *exits;
     mapping info, option;
@@ -703,8 +642,7 @@ varargs int do_look(object me, string arg)
     if (!check_scope(info["x_axis"], info["y_axis"]))
         return 0;
 
-    if (arg)
-    {
+    if (arg) {
         if ((str = query_area_detail_arug(info["x_axis"], info["y_axis"], arg)))
             message("vision", ansi(str), me);
         else
@@ -729,26 +667,21 @@ varargs int do_look(object me, string arg)
         op = op | 8;
 
     // 长描述
-    if (!option["map_long_hidden"])
-    {
+    if (!option["map_long_hidden"]) {
         string map_long = query_data(info["x_axis"], info["y_axis"], "long");
-        if (map_long)
-        {
+        if (map_long) {
             message("long", ansi(map_long), me);
         }
     }
 
     // 出口提示
-    if (!option["map_exits_hidden"])
-    {
+    if (!option["map_exits_hidden"]) {
         exits = query_exits(info["x_axis"], info["y_axis"], 1);
-        if ((i = sizeof(exits)))
-        {
+        if ((i = sizeof(exits))) {
             str += "这里的出口有 " NOR;
             while (i--)
                 str += exits[i] + (i ? "、" : "。\n");
-        }
-        else
+        } else
             str += "这里沒有任何出口。\n";
     }
     // 顯示对象
@@ -757,15 +690,13 @@ varargs int do_look(object me, string arg)
 
     message("vision", str, me);
     // 顯示地圖
-    if (!option["map_hidden"])
-    {
+    if (!option["map_hidden"]) {
         message("MAP", show_area(info["x_axis"], info["y_axis"], op), me);
     }
     return 1;
 }
 
-int map_ansi_save()
-{
+int map_ansi_save() {
     int i, j, x, y;
     string file, msg = "", msg2 = "";
 
@@ -774,19 +705,14 @@ int map_ansi_save()
 
     file = base_name(this_object());
 
-    for (i = 0; i < y; i++)
-    {
-        for (j = 0; j < x; j++)
-        {
-            if (j <= 49)
-            {
+    for (i = 0; i < y; i++) {
+        for (j = 0; j < x; j++) {
+            if (j <= 49) {
                 if (undefinedp(area[i][j]["icon"]))
                     msg += "  ";
                 else
                     msg += area[i][j]["icon"];
-            }
-            else
-            {
+            } else {
                 if (undefinedp(area[i][j]["icon"]))
                     msg2 += "  ";
                 else
@@ -798,15 +724,12 @@ int map_ansi_save()
             msg2 += "\n";
     }
 
-    if (x <= 49)
-    {
+    if (x <= 49) {
         if (!write_file(file + ".ansi", msg, 1))
             write("儲存ANSI檔失敗。\n");
         else
             write("儲存ANSI檔成功(" + file + ".ansi)。\n");
-    }
-    else
-    {
+    } else {
         write("因為此area寬度超過五十個字大小，故分成左右二個圖檔儲存。\n");
         if (!write_file(file + "_left.ansi", msg, 1))
             write("儲存左半邊ANSI檔失敗。\n");
@@ -821,8 +744,7 @@ int map_ansi_save()
     return 1;
 }
 
-int map_html_save()
-{
+int map_html_save() {
     int i, j, x, y;
     string file, msg = "", tmp;
 
@@ -836,14 +758,11 @@ int map_html_save()
     msg += "<title>" + this_object()->query("name") + "</title>\n";
     msg += "</head>\n";
     msg += "<body style=\"background-color: #000\">\n";
-    for (i = 0; i < y; i++)
-    {
-        for (j = 0; j < x; j++)
-        {
+    for (i = 0; i < y; i++) {
+        for (j = 0; j < x; j++) {
             if (undefinedp(area[i][j]["icon"]))
                 msg += "　";
-            else
-            {
+            else {
                 tmp = replace_string(area[i][j]["icon"], "  ", "　");
                 msg += color_to_html(tmp);
             }
@@ -852,8 +771,7 @@ int map_html_save()
     }
     msg += "\n</body>\n</html>";
 
-    if (!write_file(file + ".html", msg, 1))
-    {
+    if (!write_file(file + ".html", msg, 1)) {
         return notify_fail("儲存HTML檔失敗。\n");
     }
 

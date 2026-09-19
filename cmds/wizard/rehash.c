@@ -1,8 +1,7 @@
 // dump.c 导出游戏对象
 inherit _CLEAN_UP;
 
-int main(object me, string arg)
-{
+int main(object me, string arg) {
     if (!wizardp(me))
         return 0;
 
@@ -12,8 +11,7 @@ int main(object me, string arg)
     return 1;
 }
 
-int help(object me)
-{
+int help(object me) {
     if (!wizardp(me))
         return 0;
 

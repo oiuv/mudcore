@@ -20,20 +20,17 @@ nosave mapping Host_fd = ([]);
 nosave mapping Status = ([]);
 nosave int Debug;
 
-protected void receive_callback(mixed *data...)
-{
+protected void receive_callback(mixed *data...) {
     Debug && debug_message(sprintf("receive_callback: %O", data));
 }
 
-protected void socket_shutdown(int fd)
-{
+protected void socket_shutdown(int fd) {
     Status[fd]["status"] = STATE_CLOSED;
     socket_close(fd);
 }
 
 // 客户端响应，请重写此接口处理响应
-protected void response(mixed result)
-{
+protected void response(mixed result) {
     // mixed *status = allocate(3);
 
     // sscanf(result, "%s %d %s\r\n", status[0], status[1], status[2]);
@@ -41,33 +38,28 @@ protected void response(mixed result)
     debug_message(result);
 }
 
-protected void receive_data(int fd, mixed result)
-{
+protected void receive_data(int fd, mixed result) {
     response(result);
 
-    if (!stringp(Status[fd]["header"]["Connection"]) || lower_case(Status[fd]["header"]["Connection"]) == "close")
-    {
+    if (!stringp(Status[fd]["header"]["Connection"]) || lower_case(Status[fd]["header"]["Connection"]) == "close") {
         // 释放连接
         socket_shutdown(fd);
     }
 }
 
-protected void write_data(int fd)
-{
+protected void write_data(int fd) {
     Status[fd]["status"] = STATE_CONNECTED;
     Debug && debug_message("write_data: " + Status[fd]["http"]);
     socket_write(fd, Status[fd]["http"]);
 }
 
-protected void connect(string host, string addr)
-{
+protected void connect(string host, string addr) {
     int fd;
     int ret;
 
     fd = Host_fd[host];
     ret = socket_connect(fd, addr + " " + Status[fd]["port"], "receive_data", "write_data");
-    if (ret != EESUCCESS)
-    {
+    if (ret != EESUCCESS) {
         Debug && debug_message("socket_error : " + socket_error(ret));
         socket_shutdown(fd);
         return;
@@ -77,49 +69,39 @@ protected void connect(string host, string addr)
     Debug && debug_message(sprintf("socket_status : %O", socket_status(fd)));
 }
 
-protected void on_resolve(string host, string addr, int key)
-{
+protected void on_resolve(string host, string addr, int key) {
 
     Debug && debug_message(sprintf("%s: %s %d", host, addr, key));
 
-    if (addr)
-    {
+    if (addr) {
         Host[host] = addr;
         connect(host, addr);
     }
 }
 
-nomask protected object request(string method, string url, mixed data, mapping header)
-{
+nomask protected object request(string method, string url, mixed data, mapping header) {
     int fd, is_tls = 0;
     string host, path;
     int port;
     mixed key, value;
     string params, headers, body = "";
 
-    if (strsrch(url, "https://") == 0)
-    {
+    if (strsrch(url, "https://") == 0) {
         is_tls = 1;
         if (!(sscanf(url, "https://%s:%d%s", host, port, path) == 3 ||
-              sscanf(url, "https://%s/%s", host, path) == 2 ||
-              sscanf(url, "https://%s", host)))
-        {
+            sscanf(url, "https://%s/%s", host, path) == 2 ||
+            sscanf(url, "https://%s", host))) {
             error("https url格式不正确");
             return 0;
         }
-    }
-    else if (strsrch(url, "http://") == 0)
-    {
+    } else if (strsrch(url, "http://") == 0) {
         if (!(sscanf(url, "http://%s:%d%s", host, port, path) == 3 ||
-              sscanf(url, "http://%s/%s", host, path) == 2 ||
-              sscanf(url, "http://%s", host)))
-        {
+            sscanf(url, "http://%s/%s", host, path) == 2 ||
+            sscanf(url, "http://%s", host))) {
             error("http url格式不正确");
             return 0;
         }
-    }
-    else
-    {
+    } else {
         error("url格式或协议不正确");
         return 0;
     }
@@ -131,39 +113,28 @@ nomask protected object request(string method, string url, mixed data, mapping h
     else if (path[0] != '/')
         path = "/" + path;
 
-    if (mapp(header))
-    {
-        foreach (key, value in header)
-        {
+    if (mapp(header)) {
+        foreach (key, value in header) {
             headers = (headers ? headers + "\r\n" : "\r\n") + key + ": " + value;
         }
-    }
-    else
-    {
+    } else {
         headers = "";
     }
 
-    if (method == "GET" && mapp(data))
-    {
-        foreach (key, value in data)
-        {
+    if (method == "GET" && mapp(data)) {
+        foreach (key, value in data) {
             params = (params ? params + "&" : "") + key + "=" + value;
         }
         path += "?" + params;
     }
 
-    if (method == "POST")
-    {
-        if (mapp(data) && sizeof(data))
-        {
-            foreach (key, value in data)
-            {
+    if (method == "POST") {
+        if (mapp(data) && sizeof(data)) {
+            foreach (key, value in data) {
                 params = (params ? params + "," : "") + key + ":" + value;
             }
             body = "{" + params + "}";
-        }
-        else if (stringp(data))
-        {
+        } else if (stringp(data)) {
             body = data;
         }
 
@@ -171,8 +142,7 @@ nomask protected object request(string method, string url, mixed data, mapping h
     }
 
     fd = socket_create(is_tls ? STREAM_TLS : STREAM, "receive_callback", "socket_shutdown");
-    if (is_tls)
-    {
+    if (is_tls) {
         socket_set_option(fd, SO_TLS_VERIFY_PEER, 0);
         socket_set_option(fd, SO_TLS_SNI_HOSTNAME, host);
     }
@@ -187,22 +157,17 @@ nomask protected object request(string method, string url, mixed data, mapping h
 
     Debug && debug_message(sprintf("Status : %O", Status));
 
-    if (Host[host])
-    {
+    if (Host[host]) {
         connect(host, Host[host]);
-    }
-    else
-    {
+    } else {
         resolve(host, "on_resolve");
     }
 
     return this_object();
 }
 
-varargs object get(string url, mapping query, mapping header)
-{
-    if (!url)
-    {
+varargs object get(string url, mapping query, mapping header) {
+    if (!url) {
         error("Miss 'url' argument to 'get'.");
         return 0;
     }
@@ -210,10 +175,8 @@ varargs object get(string url, mapping query, mapping header)
     return request("GET", url, query, header);
 }
 
-varargs object post(string url, mixed body, mapping header)
-{
-    if (!url)
-    {
+varargs object post(string url, mixed body, mapping header) {
+    if (!url) {
         error("Miss 'url' argument to 'post'.");
         return 0;
     }
@@ -221,10 +184,8 @@ varargs object post(string url, mixed body, mapping header)
     return request("POST", url, body, header);
 }
 
-varargs object head(string url, mapping query, mapping header)
-{
-    if (!url)
-    {
+varargs object head(string url, mapping query, mapping header) {
+    if (!url) {
         error("Miss 'url' argument to 'head'.");
         return 0;
     }
@@ -232,18 +193,19 @@ varargs object head(string url, mapping query, mapping header)
     return request("HEAD", url, query, header);
 }
 
-varargs object ws(string url, mapping query, mapping header)
-{
-    if (!url)
-    {
+varargs object ws(string url, mapping query, mapping header) {
+    if (!url) {
         error("Miss 'url' argument to 'ws'.");
         return 0;
-    }
-    else
-    {
+    } else {
         url = replace_string(url, "wss://", "https://");
         url = replace_string(url, "ws://", "http://");
     }
 
-    return request("GET", url, query, (["Upgrade":"websocket", "Connection":"Upgrade"]) + (header || ([])));
+    return request(
+        "GET",
+        url,
+        query,
+        ([ "Upgrade": "websocket", "Connection": "Upgrade" ]) + (header || ([]))
+    );
 }

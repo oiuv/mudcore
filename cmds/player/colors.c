@@ -1,53 +1,43 @@
 #include <ansi.h>
 
-int main(object me, string arg)
-{
-    if (!arg || arg == "ansi")
-    {
+int main(object me, string arg) {
+    if (!arg || arg == "ansi") {
         printf("ANSI颜色测试：\n");
-        for (int i = 30; i < 50; i++)
-        {
+        for (int i = 30; i < 50; i++) {
             printf(SGR(i) "%d. 你好ABC" NOR, i);
-            if (i % 5)
-            {
+            if (i % 5) {
                 write("\t");
-            }
-            else
-            {
+            } else {
                 write("\n");
             }
         }
         write("\n");
     }
 
-    if (arg == "256")
-    {
+    if (arg == "256") {
         printf("256颜色测试：\n");
-        for (int i = 0; i < 256; i++)
-        {
+        for (int i = 0; i < 256; i++) {
             printf(FCC(i) "%3d. 你好ABC" NOR, i);
-            if (i % 5)
-            {
+            if (i % 5) {
                 write("\t");
-            }
-            else
-            {
+            } else {
                 write("\n");
             }
         }
     }
 
-    if (arg == "rgb")
-    {
-        int *rgb = ({0x00, 0x33, 0x66, 0x99, 0xcc, 0xff});
+    if (arg == "rgb") {
+        int *rgb = ({ 0x00, 0x33, 0x66, 0x99, 0xcc, 0xff });
         printf("RGB颜色测试：\n");
-        for (int r = 0; r < sizeof(rgb); r++)
-        {
-            for (int g = 0; g < sizeof(rgb); g++)
-            {
-                for (int b = 0; b < sizeof(rgb); b++)
-                {
-                    printf(RGB(rgb[r], rgb[g], rgb[b]) "%'0'2x%'0'2x%'0'2x\t" NOR, rgb[r], rgb[g], rgb[b]);
+        for (int r = 0; r < sizeof(rgb); r++) {
+            for (int g = 0; g < sizeof(rgb); g++) {
+                for (int b = 0; b < sizeof(rgb); b++) {
+                    printf(
+                        RGB(rgb[r], rgb[g], rgb[b]) "%'0'2x%'0'2x%'0'2x\t" NOR,
+                        rgb[r],
+                        rgb[g],
+                        rgb[b]
+                    );
                 }
                 write("\n");
             }
@@ -58,8 +48,7 @@ int main(object me, string arg)
     return 1;
 }
 
-int help(object me)
-{
+int help(object me) {
     write(@HELP
 指令格式 : colors [ansi|256|rgb]
 

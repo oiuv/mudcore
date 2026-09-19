@@ -14,10 +14,8 @@ string header = @LEAD
  */
 LEAD;
 
-int valid_file_name(string file)
-{
-    foreach (int a in file)
-    {
+int valid_file_name(string file) {
+    foreach (int a in file) {
         if (!(a >= '0' && a <= '9') && !(a >= 'A' && a <= 'Z') && !(a >= 'a' && a <= 'z') && a != '_')
             return 0;
     }
@@ -25,21 +23,18 @@ int valid_file_name(string file)
     return 1;
 }
 
-varargs string files(string *files, string prefix)
-{
+varargs string files(string *files, string prefix) {
     string sf, file = "", pre = "";
 
-    if (stringp(prefix))
-    {
+    if (stringp(prefix)) {
         pre = prefix + "_";
     }
 
-    foreach (string f in files)
-    {
-        if (f[ < 2.. < 1] != ".c")
+    foreach (string f in files) {
+        if (f[<2..<1] != ".c")
             continue;
 
-        sf = f[strsrch(f, "/", -1) + 1.. < 3];
+        sf = f[strsrch(f, "/", -1) + 1..<3];
 
         if (valid_file_name(sf))
             file += sprintf("%s%-40s%s", "#define ", pre + upper_case(sf), " \"" + f + "\"\n");
@@ -48,10 +43,9 @@ varargs string files(string *files, string prefix)
     return file;
 }
 
-varargs void create_include(string base_name, string dir, string prefix)
-{
+varargs void create_include(string base_name, string dir, string prefix) {
     string filename = "_" + base_name + ".h";
-    string file = terminal_colour(header, (["FILENAME":filename, "CTIME":ctime()]));
+    string file = terminal_colour(header, ([ "FILENAME": filename, "CTIME": ctime() ]));
     string *files = deep_path_list(dir);
 
     file += files(files, prefix);
@@ -60,29 +54,25 @@ varargs void create_include(string base_name, string dir, string prefix)
     write(INCLUDE_DIR + filename + " 已生成 💚\n");
 }
 
-void create_inherit_include()
-{
+void create_inherit_include() {
 #ifdef INHERIT_DIR
     create_include("inherit", INHERIT_DIR, "");
 #endif
 }
 
-void create_daemon_include()
-{
+void create_daemon_include() {
 #ifdef DAEMON_DIR
     create_include("daemon", DAEMON_DIR);
 #endif
 }
 
-void create_std_include()
-{
+void create_std_include() {
 #ifdef STD_DIR
     create_include("std", STD_DIR, "STD");
 #endif
 }
 
-void create_all_include()
-{
+void create_all_include() {
     // _inherit.h
     create_inherit_include();
 
@@ -93,12 +83,10 @@ void create_all_include()
     create_std_include();
 }
 
-void create()
-{
+void create() {
     // create_all_include();
 }
 
-string short()
-{
+string short() {
     return "头文件自动化系统(HEADER_D)";
 }

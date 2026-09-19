@@ -4,13 +4,11 @@
 #define CAMP_DIR CORE_DIR "/world/camp/"
 #endif
 
-void create()
-{
+void create() {
     seteuid(getuid());
 }
 
-string getCampFile(string camp)
-{
+string getCampFile(string camp) {
     string camp_file;
     camp_file = CAMP_DIR + camp + ".c";
     if (file_size(camp_file) == -1 || file_size(camp_file) == -2)
@@ -20,8 +18,7 @@ string getCampFile(string camp)
     return camp_file;
 }
 
-string getCampName(string camp)
-{
+string getCampName(string camp) {
     string camp_file;
     camp_file = getCampFile(camp);
     if (!stringp(camp_file))
@@ -29,8 +26,7 @@ string getCampName(string camp)
     return camp_file->getName();
 }
 
-string *getFriendly(string camp)
-{
+string *getFriendly(string camp) {
     string camp_file;
     camp_file = getCampFile(camp);
     if (!stringp(camp_file))
@@ -39,8 +35,7 @@ string *getFriendly(string camp)
     return camp_file->getFriendly();
 }
 
-string *getAdversely(string camp)
-{
+string *getAdversely(string camp) {
     string camp_file;
     camp_file = getCampFile(camp);
     if (!stringp(camp_file))
@@ -49,8 +44,7 @@ string *getAdversely(string camp)
     return camp_file->getAdversely();
 }
 
-int getHate(string camp)
-{
+int getHate(string camp) {
     string camp_file;
     camp_file = getCampFile(camp);
     if (!stringp(camp_file))
@@ -58,8 +52,7 @@ int getHate(string camp)
     return camp_file->getHat();
 }
 
-string getHateMsg(string camp)
-{
+string getHateMsg(string camp) {
     string camp_file;
     camp_file = getCampFile(camp);
     if (!stringp(camp_file))
@@ -68,8 +61,7 @@ string getHateMsg(string camp)
     return camp_file->getHateMsg();
 }
 
-int getAdvHate(string camp)
-{
+int getAdvHate(string camp) {
     string camp_file;
     camp_file = getCampFile(camp);
     if (!stringp(camp_file))
@@ -78,8 +70,7 @@ int getAdvHate(string camp)
     return camp_file->getAdvHate();
 }
 
-string getAdvHateMsg(string camp)
-{
+string getAdvHateMsg(string camp) {
     string camp_file;
     camp_file = getCampFile(camp);
     if (!stringp(camp_file))

@@ -48,32 +48,27 @@ private nosave mixed *real_crontab = ({
 });
 
 // 设置游戏时间计划任务
-void set_game_crontab(mixed *crontab)
-{
+void set_game_crontab(mixed *crontab) {
     game_crontab = crontab;
 }
 
 // 设置现实时间计划任务
-void set_real_crontab(mixed *crontab)
-{
+void set_real_crontab(mixed *crontab) {
     real_crontab = crontab;
 }
 
 // 返回游戏时间戳（秒）
-int query_gametime()
-{
+int query_gametime() {
     return gametime;
 }
 
 // 返回现实时间戳：time()
-int query_realtime()
-{
+int query_realtime() {
     return time();
 }
 
 // 设置游戏时钟转换比率
-varargs void set_scale(int t, int y, int s)
-{
+varargs void set_scale(int t, int y, int s) {
     if (t)
         tick = t;
     if (s)
@@ -83,16 +78,13 @@ varargs void set_scale(int t, int y, int s)
 }
 
 // 返回游戏时钟转换比
-int *query_scale()
-{
-    return ({tick, scale, year});
+int *query_scale() {
+    return ({ tick, scale, year });
 }
 
 // 返回游戏localtime()，不指定参数为当前游戏时间
-varargs int *query_game_time(int timestamp)
-{
-    if (!nullp(timestamp))
-    {
+varargs int *query_game_time(int timestamp) {
+    if (!nullp(timestamp)) {
         return game_localtime(timestamp);
     }
 
@@ -100,26 +92,20 @@ varargs int *query_game_time(int timestamp)
 }
 
 // 返回现实localtime()
-int *query_real_time()
-{
+int *query_real_time() {
     return real_time;
 }
 
 //格式化的ctime() 06/13/2019 15:20:00
-varargs string replace_ctime(int t)
-{
+varargs string replace_ctime(int t) {
     string month, ctime;
-    if (t)
-    {
+    if (t) {
         ctime = ctime(t);
-    }
-    else
-    {
+    } else {
         ctime = ctime();
     }
 
-    switch (ctime[4..6])
-    {
+    switch (ctime[4..6]) {
         case "Jan":
             month = "01";
             break;
@@ -158,14 +144,18 @@ varargs string replace_ctime(int t)
             break;
     }
 
-    return sprintf("%s-%s-%s %s", ctime[ < 4.. < 1], month, (ctime[8] == ' ' ? "0" + ctime[9..9] : ctime[8..9]), ctime[11..18]);
+    return sprintf(
+        "%s-%s-%s %s",
+        ctime[<4..<1],
+        month,
+        (ctime[8] == ' ' ? "0" + ctime[9..9] : ctime[8..9]),
+        ctime[11..18]
+    );
 }
 
 // 季节，case 用法涨姿势了
-string season_period(int m)
-{
-    switch (m)
-    {
+string season_period(int m) {
+    switch (m) {
         case 2..4:
             return "春";
         case 5..7:
@@ -182,28 +172,24 @@ string season_period(int m)
 }
 
 // 返回星期
-string week_period(int week, int style)
-{
+string week_period(int week, int style) {
     mixed w = ({
-        ({"星期日", "星期一", "星期二", "星期三", "星期四", "星期五", "星期六"}),
-        ({"礼拜日", "礼拜一", "星期二", "礼拜三", "礼拜四", "礼拜五", "礼拜六"}),
-        ({"日曜日", "月曜日", "火曜日", "水曜日", "木曜日", "金曜日", "土曜日"}),
-        ({"太阳日", "太阴日", "荧惑日", "辰星日", "岁星日", "太白日", "镇星日"}),
-        ({"日神日", "月神日", "火神日", "水神日", "木神日", "金神日", "土神日"}),
+        ({ "星期日", "星期一", "星期二", "星期三", "星期四", "星期五", "星期六" }),
+        ({ "礼拜日", "礼拜一", "星期二", "礼拜三", "礼拜四", "礼拜五", "礼拜六" }),
+        ({ "日曜日", "月曜日", "火曜日", "水曜日", "木曜日", "金曜日", "土曜日" }),
+        ({ "太阳日", "太阴日", "荧惑日", "辰星日", "岁星日", "太白日", "镇星日" }),
+        ({ "日神日", "月神日", "火神日", "水神日", "木神日", "金神日", "土神日" }),
     });
 
-    if (week < 0 || week > 6 || style < 0 || style > 4)
-    {
+    if (week < 0 || week > 6 || style < 0 || style > 4) {
         return "🆖";
     }
 
     return w[style][week];
 }
 
-string hour_period(int h)
-{
-    switch (h)
-    {
+string hour_period(int h) {
+    switch (h) {
         case 0..5:
             return "凌晨";
         case 6..11:
@@ -220,8 +206,7 @@ string hour_period(int h)
 }
 
 /* 传回游戏时钟：下午 3:39 */
-string gametime_digital_clock()
-{
+string gametime_digital_clock() {
     int h = game_time[LT_HOUR];
     int m = game_time[LT_MIN];
 
@@ -229,8 +214,7 @@ string gametime_digital_clock()
 }
 
 // 返回现实时钟⏰
-string realtime_digital_clock()
-{
+string realtime_digital_clock() {
     int h = real_time[LT_HOUR];
     int m = real_time[LT_MIN];
 
@@ -238,21 +222,28 @@ string realtime_digital_clock()
 }
 
 // 返回localtime时间描述字符串
-string time_description(string title, int *t, int style)
-{
-    return sprintf(title + "%s年，%s，%s月%s日，%s，%s%s时%s分", t[LT_YEAR] == 1 ? "元" : chinese_number(t[LT_YEAR]), season_period(t[LT_MON]), !t[LT_MON] ? "元" : chinese_number(t[LT_MON] + 1), chinese_number(t[LT_MDAY]), week_period(t[LT_WDAY], style), hour_period(t[LT_HOUR]), chinese_number(t[LT_HOUR] > 12 ? t[LT_HOUR] % 12 : t[LT_HOUR]), chinese_number(t[LT_MIN]));
+string time_description(string title, int *t, int style) {
+    return sprintf(
+        title + "%s年，%s，%s月%s日，%s，%s%s时%s分",
+        t[LT_YEAR] == 1 ? "元" : chinese_number(t[LT_YEAR]),
+        season_period(t[LT_MON]),
+        !t[LT_MON] ? "元" : chinese_number(t[LT_MON] + 1),
+        chinese_number(t[LT_MDAY]),
+        week_period(t[LT_WDAY], style),
+        hour_period(t[LT_HOUR]),
+        chinese_number(t[LT_HOUR] > 12 ? t[LT_HOUR] % 12 : t[LT_HOUR]),
+        chinese_number(t[LT_MIN])
+    );
 }
 
-varargs string game_time_description(string arg, int style)
-{
+varargs string game_time_description(string arg, int style) {
     if (!arg)
         arg = "混沌";
 
     return time_description(arg, game_time, style);
 }
 
-varargs string real_time_description(string arg, int style)
-{
+varargs string real_time_description(string arg, int style) {
     if (!arg)
         arg = "公元";
 
@@ -260,8 +251,7 @@ varargs string real_time_description(string arg, int style)
 }
 
 // 转换时间戳为localtime
-int *analyse_time(int t)
-{
+int *analyse_time(int t) {
     int *ret = allocate(9);
     string ctime;
 
@@ -269,8 +259,7 @@ int *analyse_time(int t)
 
     sscanf(ctime, "%*s %*s %d %d:%d:%*d %d", ret[LT_MDAY], ret[LT_HOUR], ret[LT_MIN], ret[LT_YEAR]);
 
-    switch (ctime[0..2])
-    {
+    switch (ctime[0..2]) {
         case "Sun":
             ret[LT_WDAY] = 0;
             break;
@@ -296,8 +285,7 @@ int *analyse_time(int t)
             return 0;
     }
 
-    switch (ctime[4..6])
-    {
+    switch (ctime[4..6]) {
         case "Jan":
             ret[LT_MON] = 0;
             break;
@@ -341,34 +329,29 @@ int *analyse_time(int t)
     return ret;
 }
 
-int *game_localtime(int timestamp)
-{
+int *game_localtime(int timestamp) {
     int *localtime;
     // 设置游戏localtime
     localtime = analyse_time(timestamp);
-    localtime[LT_YEAR] -= 1969; // 游戏元年
-    if (year > 0)
-    {
+    localtime[LT_YEAR] -= 1969;  // 游戏元年
+    if (year > 0) {
         localtime[LT_YEAR] += year - 1;
     }
-    if (year < 0)
-    {
+    if (year < 0) {
         localtime[LT_YEAR] = -year;
     }
     return localtime;
 }
 
 // 执行计划任务
-void process_crontab(mixed *crontab, int *timearray)
-{
+void process_crontab(mixed *crontab, int *timearray) {
     int divider, start, end, fit, timecost, crontabsize;
     string script, note, *timescript;
     function fp;
 
     crontabsize = sizeof(crontab);
 
-    for (int row = 0; row < crontabsize; row += 3)
-    {
+    for (int row = 0; row < crontabsize; row += 3) {
         reset_eval_cost();
         script = crontab[row];      // 计划时间
         fp = crontab[row + 1];      // 计划任务
@@ -377,40 +360,33 @@ void process_crontab(mixed *crontab, int *timearray)
         timescript = allocate(9);
 
         if (sscanf(trim(script), "%s%*(( |\t)+)%s%*(( |\t)+)%s%*(( |\t)+)%s%*(( |\t)+)%s%*(( |\t)+)%s",
-                   timescript[LT_MIN],
-                   timescript[LT_HOUR],
-                   timescript[LT_MDAY],
-                   timescript[LT_MON],
-                   timescript[LT_WDAY],
-                   timescript[LT_YEAR]) != 11)
+            timescript[LT_MIN],
+            timescript[LT_HOUR],
+            timescript[LT_MDAY],
+            timescript[LT_MON],
+            timescript[LT_WDAY],
+            timescript[LT_YEAR]) != 11)
             continue;
 
-        for (int i = 1; i <= 6; i++)
-        {
+        for (int i = 1; i <= 6; i++) {
             fit = 0;
 
-            if (sscanf(timescript[i], "%d-%d/%d", start, end, divider) == 3)
-            {
+            if (sscanf(timescript[i], "%d-%d/%d", start, end, divider) == 3) {
                 fit = (start <= end) ? timearray[i] >= start && timearray[i] <= end && !(timearray[i] % divider) : (timearray[i] >= start || timearray[i] <= end) && !(timearray[i] % divider);
-            }
-            else if (sscanf(timescript[i], "%d-%d", start, end) == 2)
-            {
+            } else if (sscanf(timescript[i], "%d-%d", start, end) == 2) {
                 fit = (start <= end) ? timearray[i] >= start && timearray[i] <= end : timearray[i] >= start || timearray[i] <= end;
-            }
-            else if (timescript[i] == "*" || (sscanf(timescript[i], "*/%d", divider) && !(timearray[i] % divider)))
-            {
+            } else if (timescript[i] == "*" || (sscanf(
+                timescript[i],
+                "*/%d",
+                divider
+            ) && !(timearray[i] % divider))) {
                 fit = 1;
-            }
-            else
-            {
-                foreach (string s in explode(timescript[i], ","))
-                {
+            } else {
+                foreach (string s in explode(timescript[i], ",")) {
                     int j = to_int(s);
 
-                    if (!undefinedp(j))
-                    {
-                        if (j == timearray[i])
-                        {
+                    if (!undefinedp(j)) {
+                        if (j == timearray[i]) {
                             fit = 1;
                             break;
                         }
@@ -426,25 +402,22 @@ void process_crontab(mixed *crontab, int *timearray)
             continue;
 
         reset_eval_cost();
-        timecost = time_expression
-        {
-            catch (evaluate(fp));
+        timecost = time_expression {
+            catch(evaluate(fp));
         };
         // debug_message("任务耗时：" + timecost);
     }
 }
 
 // 设置或重置游戏时间
-int reset_gametime(int time)
-{
+int reset_gametime(int time) {
     gametime = time;
     // 存档游戏时间
     return save();
 }
 
 // 现实时间每tick秒（游戏时间每scale秒）执行一次
-varargs void process_gametime(int timestamp)
-{
+varargs void process_gametime(int timestamp) {
     // 设置游戏localtime
     game_time = game_localtime(timestamp);
 
@@ -453,14 +426,12 @@ varargs void process_gametime(int timestamp)
 }
 
 // 继承覆盖用，每心跳调用1次
-void process_per_second()
-{
+void process_per_second() {
     // 可在此扩展自己的功能
 }
 
 // 真实时间每秒执行⏰
-void process_realtime()
-{
+void process_realtime() {
     // 设置真实localtime
     mixed *localtime = localtime(time());
 
@@ -479,13 +450,11 @@ void process_realtime()
         process_crontab(real_crontab, real_time);
 }
 
-void heart_beat()
-{
+void heart_beat() {
     process_realtime();
 
     // 每 tick 秒执行１次
-    if (!(time() % tick))
-    {
+    if (!(time() % tick)) {
         gametime += scale;
         process_gametime(gametime);
     }
@@ -497,38 +466,31 @@ void heart_beat()
 // 现实５分钟 = 游戏１小时
 // 现实２小时 = 游戏１天
 // 现实１个月 = 游戏１年
-protected void create()
-{
+protected void create() {
     // 设置5秒为游戏世界1分钟
     tick = 5;
     scale = 60;
     // 取得游戏时间
     restore();
     // 仅LIB继承对象启用心跳💗
-    if (inherits(CORE_TIME_D, this_object()))
-    {
+    if (inherits(CORE_TIME_D, this_object())) {
         set_heart_beat(1);
     }
 }
 
-mixed save_dbase_data()
-{
-    mapping data = (["gametime":gametime]);
+mixed save_dbase_data() {
+    mapping data = ([ "gametime": gametime ]);
     return data;
 }
 
-int receive_dbase_data(mixed data)
-{
-    if (mapp(data))
-    {
+int receive_dbase_data(mixed data) {
+    if (mapp(data)) {
         gametime = data["gametime"];
-    }
-    else
+    } else
         reset_gametime(0);
     return 1;
 }
 
-string short()
-{
+string short() {
     return "时间精灵(TIME_D)";
 }

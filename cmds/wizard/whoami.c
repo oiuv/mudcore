@@ -1,7 +1,6 @@
 inherit _CLEAN_UP;
 
-int main(object me, string arg)
-{
+int main(object me, string arg) {
     if (!wizardp(me))
         return 0;
 
@@ -11,8 +10,7 @@ int main(object me, string arg)
     return 1;
 }
 
-int help(object me)
-{
+int help(object me) {
     if (!wizardp(me))
         return 0;
 
@@ -20,6 +18,6 @@ int help(object me)
 指令格式: whoami
 指令说明:
     这个指令可以查看自己的 ID 信息。
-HELP );
+HELP);
     return 1;
 }

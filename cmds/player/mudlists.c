@@ -1,8 +1,7 @@
 // mudlist.c
 #include <ansi.h>
 
-int main(object me, string arg)
-{
+int main(object me, string arg) {
     mapping mud_list;
     mixed *muds;
     string output;
@@ -21,14 +20,12 @@ int main(object me, string arg)
     muds = sort_array(keys(mud_list), 1);
     // debug_message(sprintf("%O", muds));
     output = WHT BBLU " MUDLIB                   MUD名称                  国际网路位址        端口\n" NOR
-                      "---------------------------------------------------------------------------\n";
+        "---------------------------------------------------------------------------\n";
 
     // Loop through mud list and store one by one
-    for (loop = 0, size = sizeof(muds); loop < size; loop++)
-    {
+    for (loop = 0, size = sizeof(muds); loop < size; loop++) {
         mudn = muds[loop];
-        if (undefinedp(mud_list[mudn]["USERS"]))
-        {
+        if (undefinedp(mud_list[mudn]["USERS"])) {
             // continue;
             mud_list[mudn]["USERS"] = "未知";
         }
@@ -41,9 +38,9 @@ int main(object me, string arg)
             name += "(" + mud_list[mudn]["ZONE"] + ")";
 
         output += sprintf(" %-25s%-25s%-20s%-5s" NOR + "\n",
-                          vis_mudn, name,
-                          mud_list[mudn]["HOSTADDRESS"],
-                          mud_list[mudn]["PORT"]);
+            vis_mudn, name,
+            mud_list[mudn]["HOSTADDRESS"],
+            mud_list[mudn]["PORT"]);
     }
     output += "---------------------------------------------------------------------------\n";
 
@@ -55,12 +52,11 @@ int main(object me, string arg)
     return 1;
 }
 
-int help()
-{
+int help() {
     write(@HELP
 指令格式 : mudlists
 
 这个指令让你列出目前跟这个 Mud 取得联系中的其他 Mud。
-HELP );
+HELP);
     return 1;
 }

@@ -1,16 +1,14 @@
 // reclaim.c
 inherit _CLEAN_UP;
 
-int main(object me, string arg)
-{
+int main(object me, string arg) {
     if (!wizardp(me))
         return 0;
     write(sprintf("Total %d objects has been cleaned.\n", reclaim_objects()));
     return 1;
 }
 
-int help(object me)
-{
+int help(object me) {
     if (!wizardp(me))
         return 0;
 

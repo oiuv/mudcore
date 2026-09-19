@@ -9,8 +9,7 @@ nosave mapping icon = ([]);
 mapping query_icon() { return icon; }
 
 // 取得某对象權重
-int get_icon_weight(object ob)
-{
+int get_icon_weight(object ob) {
     if (wizardp(ob))
         return 1024;
     else if (userp(ob))
@@ -24,8 +23,7 @@ int get_icon_weight(object ob)
 }
 
 // 設定某座標權重
-int set_icon_weight(int x, int y, int value)
-{
+int set_icon_weight(int x, int y, int value) {
     string coord;
 
     if (!this_object())
@@ -43,16 +41,14 @@ int set_icon_weight(int x, int y, int value)
     return 1;
 }
 
-int check_icon(int x, int y)
-{
+int check_icon(int x, int y) {
     if (undefinedp(icon[(string)x + "," + (string)y]))
         return 0;
     else
         return 1;
 }
 
-string get_icon(int x, int y)
-{
+string get_icon(int x, int y) {
     string coord;
     coord = (string)x + "," + (string)y;
     if (icon[coord] >= 1024)
@@ -70,8 +66,7 @@ string get_icon(int x, int y)
 }
 
 // 移除某座標圖樣
-int remove_icon(int x, int y)
-{
+int remove_icon(int x, int y) {
     if (!undefinedp(icon[(string)x + "," + (string)y]))
         return 1;
     else if (map_delete(icon, (string)x + "," + (string)y))
@@ -80,8 +75,7 @@ int remove_icon(int x, int y)
 }
 
 // 刪除所有圖示集
-int delete_icon()
-{
+int delete_icon() {
     icon = ([]);
     return 1;
 }

@@ -7,13 +7,11 @@ Version: v1.0
 Date: 2019-03-12
 History:
 *****************************************************************************/
-string pronoun(int pronoun_number, mixed arg)
-{
-    if( objectp(arg) )
+string pronoun(int pronoun_number, mixed arg) {
+    if (objectp(arg))
         arg = arg->query("gender");
 
-    switch(pronoun_number)
-    {
+    switch (pronoun_number) {
         case 1:
             return "我";
 
@@ -21,8 +19,7 @@ string pronoun(int pronoun_number, mixed arg)
             return "你";
 
         case 3:
-            switch( arg )
-            {
+            switch (arg) {
                 case MALE: return "他";
                 case FEMALE: return "她";
                 default:

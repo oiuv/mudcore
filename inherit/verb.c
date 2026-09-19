@@ -1,8 +1,7 @@
 private nosave string Verb, ErrorMessage;
 private nosave string *Synonyms, *Rules;
 
-protected void create()
-{
+protected void create() {
     parse_init();
     Verb = 0;
     ErrorMessage = 0;
@@ -14,19 +13,16 @@ protected string setErrorMessage(string str) { return (ErrorMessage = str); }
 
 string getErrorMessage() { return ErrorMessage; }
 
-varargs protected string *setRules(mixed *args...)
-{
+varargs protected string *setRules(mixed *args...) {
     if (sizeof(Rules))
         error("Cannot reset rules list.");
-    foreach (mixed arg in args)
-    {
+    foreach (mixed arg in args) {
         if (stringp(arg))
-            Rules += ({arg});
+            Rules += ({ arg });
         else
             Rules += arg;
     }
-    if (Verb)
-    {
+    if (Verb) {
         foreach (string rule in Rules)
             parse_add_rule(Verb, rule);
         if (sizeof(Synonyms))
@@ -38,14 +34,12 @@ varargs protected string *setRules(mixed *args...)
 
 string *getRules() { return copy(Rules); }
 
-varargs protected string *setSynonyms(mixed *args...)
-{
+varargs protected string *setSynonyms(mixed *args...) {
     if (sizeof(Synonyms))
         error("Cannot reset synonym list.\n");
-    foreach (mixed arg in args)
-    {
+    foreach (mixed arg in args) {
         if (stringp(arg))
-            Synonyms += ({arg});
+            Synonyms += ({ arg });
         else
             Synonyms += arg;
     }
@@ -57,8 +51,7 @@ varargs protected string *setSynonyms(mixed *args...)
 
 string *getSynonyms() { return copy(Synonyms); }
 
-protected string setVerb(string str)
-{
+protected string setVerb(string str) {
     if (!stringp(str))
         error("Bad argument 1 to setVerb().\n");
     Verb = str;
@@ -73,4 +66,4 @@ protected string setVerb(string str)
 
 string getVerb() { return Verb; }
 
-string *getVerbs() { return ({Verb}); }
+string *getVerbs() { return ({ Verb }); }

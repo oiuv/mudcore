@@ -8,31 +8,28 @@ int isAreaPattern() { return 1; }
 string getName() { return "房子[9格], 出口[南], 藍底亮紅框 "; }
 
 // icon樣子
-private mapping getIcon()
-{
+private mapping getIcon() {
     mapping icon = ([
-        0: ({ BBLU+HIR"╔="NOR, BBLU+HIR"=="NOR, BBLU+HIR"=╗"NOR }),
-        1: ({ BBLU+HIR"║ "NOR, BBLU+HIR"  "NOR, BBLU+HIR" ║"NOR }),
-        2: ({ BBLU+HIR"╚="NOR, BBLU+HIR"门"NOR, BBLU+HIR"=╝"NOR }),
+        0: ({ BBLU + HIR "╔=" NOR, BBLU + HIR "==" NOR, BBLU + HIR "=╗" NOR }),
+        1: ({ BBLU + HIR "║ " NOR, BBLU + HIR "  " NOR, BBLU + HIR " ║" NOR }),
+        2: ({ BBLU + HIR "╚=" NOR, BBLU + HIR "门" NOR, BBLU + HIR "=╝" NOR }),
     ]);
 
     return icon;
 }
 
 // block設定
-private mapping getBlock()
-{
+private mapping getBlock() {
     mapping block = ([
-        0: ({1, 1, 1}),
-        1: ({1, 0, 1}),
-        2: ({1, 0, 1}),
+        0: ({ 1, 1, 1 }),
+        1: ({ 1, 0, 1 }),
+        2: ({ 1, 0, 1 }),
     ]);
 
     return block;
 }
 
-mapping getMapStyle()
-{
+mapping getMapStyle() {
     mapping style = ([
         "icon": getIcon(),
         "block": getBlock(),

@@ -3,13 +3,11 @@ inherit _CLEAN_UP;
 
 int help(object me);
 
-int main(object me, string arg)
-{
+int main(object me, string arg) {
     if (!wizardp(me))
         return 0;
 
-    if (!arg)
-    {
+    if (!arg) {
         return help(me);
     }
 
@@ -18,8 +16,7 @@ int main(object me, string arg)
     return 1;
 }
 
-int help(object me)
-{
+int help(object me) {
     if (!wizardp(me))
         return 0;
 

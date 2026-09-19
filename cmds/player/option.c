@@ -15,13 +15,11 @@
 
 private void create() { seteuid(getuid()); }
 
-int main(object me, string arg)
-{
+int main(object me, string arg) {
     string term;
     mixed v;
 
-    if (!arg)
-    {
+    if (!arg) {
         mapping opt = me->query("option");
         string str = "你目前设定的使用者选项；\n";
 
@@ -34,22 +32,19 @@ int main(object me, string arg)
         return 1;
     }
 
-    if (sscanf(arg, "%s %d", term, v) == 2 || sscanf(arg, "%s %s", term, v) == 2)
-    {
+    if (sscanf(arg, "%s %d", term, v) == 2 || sscanf(arg, "%s %s", term, v) == 2) {
         if (!v)
-            me->delete ("option/" + term);
+            me->delete("option/" + term);
         else
             me->set("option/" + term, v);
-    }
-    else
+    } else
         return notify_fail("指令格式：option <选项> <设定值>\n");
 
     write("Ok.\n");
     return 1;
 }
 
-int help()
-{
+int help() {
     write(@TEXT
 指令格式：option <选项> <设定值>
 

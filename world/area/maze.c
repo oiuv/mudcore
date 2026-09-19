@@ -6,10 +6,9 @@
  */
 inherit CORE_VRM;
 
-void create()
-{
+void create() {
     //迷宫房间所继承的对象的档案名称
-    set_inherit_room( CORE_ROOM );
+    set_inherit_room(CORE_ROOM);
 
     //迷宫房间里的怪物
     // set_maze_npcs(({}));
@@ -30,7 +29,7 @@ void create()
     set_link_exit_dir("enter");
 
     //出口与区域的连接档案名
-    set_link_exit_room(__DIR__"tower");
+    set_link_exit_room(__DIR__ "tower");
 
     //入口房间短描述
     set_entry_short(HIC "魔宫南门" NOR);
@@ -67,7 +66,7 @@ LONG);
 
     // 迷宫的额外参数
     set_extra_info(([
-        "area" : "maze",
-        "zone/z" : 0,
+        "area": "maze",
+        "zone/z": 0,
     ]));
 }

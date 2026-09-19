@@ -8,45 +8,36 @@
 
 #include <type.h>
 
-varargs string number_string(mixed number, int add_commas)
-{
+varargs string number_string(mixed number, int add_commas) {
     string int_part = "", decimal_part = "";
     string work;
 
-    if (nullp(number) || (typeof(number) != T_INT && typeof(number) != T_FLOAT))
-    {
+    if (nullp(number) || (typeof(number) != T_INT && typeof(number) != T_FLOAT)) {
         error("You must specify a number of type int or float.\n");
     }
 
     work = number + "";
 
-    if (!nullp(add_commas) || add_commas == 1)
-    {
+    if (!nullp(add_commas) || add_commas == 1) {
         int decimal_index = strsrch(work, ".");
 
-        if (decimal_index > -1)
-        {
+        if (decimal_index > -1) {
             int_part = work[0..decimal_index - 1];
             decimal_part = work[decimal_index..];
-        }
-        else
-        {
+        } else {
             int_part = work;
         }
 
         // empty work
         work = "";
 
-        while (strlen(int_part) > 3)
-        {
+        while (strlen(int_part) > 3) {
             work = "," + int_part[<3..] + work;
             int_part = int_part[0..<4];
         }
 
         int_part = int_part + work;
-    }
-    else
-    {
+    } else {
         int_part = work;
     }
 

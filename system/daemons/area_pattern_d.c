@@ -9,15 +9,13 @@
 #endif
 string *patterns = ({});
 
-void scanPattern(string dir)
-{
+void scanPattern(string dir) {
     string file;
     mixed *files, *dirent;
 
     files = get_dir(dir, -1);
 
-    if (!sizeof(files))
-    {
+    if (!sizeof(files)) {
         if (file_size(dir) == -2)
             write("ERROR: Area_Pattern目錄是空的。 (" + dir + ")\n");
         else
@@ -27,19 +25,17 @@ void scanPattern(string dir)
 
     // write("掃瞄 Area_Pattern 中 " + dir + " ...\n\n");
 
-    foreach (dirent in files)
-    {
+    foreach (dirent in files) {
         file = dir + dirent[0];
         // write( sprintf("%-60s", file) );
 
-        if (!file->isAreaPattern())
-        {
+        if (!file->isAreaPattern()) {
             // write( " -> 非 Area_Pattern 檔.\n");
             continue;
         }
 
         // write(" -> OK.\n");
-        patterns += ({file});
+        patterns += ({ file });
     }
 
     // write("\n掃瞄完成。\n\n");
@@ -47,14 +43,12 @@ void scanPattern(string dir)
 
 string *getPatterns() { return patterns; }
 
-void create()
-{
+void create() {
     seteuid(getuid());
     scanPattern(AREA_PATTERN_DIR);
 }
 
-void listPatterns()
-{
+void listPatterns() {
     int i, size = sizeof(patterns);
 
     write("編號  名稱\n");
@@ -64,8 +58,7 @@ void listPatterns()
     write("======================================================================\n");
 }
 
-void patternInfo(int index)
-{
+void patternInfo(int index) {
     mapping info, style_value;
     string *style_key;
     int i, j, k, style_size;
@@ -81,14 +74,11 @@ void patternInfo(int index)
     write("======================================================================\n");
     write(sprintf("%|4d  %s %s\n", index, patterns[index]->getName(), BLU + patterns[index] + NOR));
     write("======================================================================\n\n");
-    for (i = 0; i < style_size; i++)
-    {
+    for (i = 0; i < style_size; i++) {
         write(style_key[i] + ":\n");
         style_value = info[style_key[i]];
-        for (j = 0; j < sizeof(style_value); j++)
-        {
-            for (k = 0; k < sizeof(style_value[j]); k++)
-            {
+        for (j = 0; j < sizeof(style_value); j++) {
+            for (k = 0; k < sizeof(style_value[j]); k++) {
                 write(sprintf("%2s", "" + style_value[j][k]));
             }
             write("\n");
@@ -98,8 +88,7 @@ void patternInfo(int index)
     write("======================================================================\n");
 }
 
-void setPattern(object who, int index)
-{
+void setPattern(object who, int index) {
     int x, y;
     mapping info, style_value;
     string *style_key;
@@ -124,17 +113,20 @@ void setPattern(object who, int index)
     style_size = sizeof(style_key);
 
     // 設定的資料類型
-    for (i = 0; i < style_size; i++)
-    {
+    for (i = 0; i < style_size; i++) {
         style_value = info[style_key[i]];
 
         // 開始跑資料距陣
-        for (j = 0; j < sizeof(style_value); j++)
-        {
-            for (k = 0; k < sizeof(style_value[j]); k++)
-            {
+        for (j = 0; j < sizeof(style_value); j++) {
+            for (k = 0; k < sizeof(style_value[j]); k++) {
                 area->set_data(x + k, y + j, style_key[i], style_value[j][k]);
-                write(sprintf("(%2d,%2d) %s -> %s\n", x + k, y + j, "" + style_key[i], "" + style_value[j][k]));
+                write(sprintf(
+                    "(%2d,%2d) %s -> %s\n",
+                    x + k,
+                    y + j,
+                    "" + style_key[i],
+                    "" + style_value[j][k]
+                ));
             }
         }
     }

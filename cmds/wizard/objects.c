@@ -1,27 +1,23 @@
 // 打印所有载入游戏的对象
 inherit _CLEAN_UP;
 
-int main(object me, string arg)
-{
+int main(object me, string arg) {
     if (!wizardp(me))
         return 0;
 
     if (arg == "-c")
-        print_r(objects( (:clonep:) ));
+        print_r(objects((: clonep :)));
     else if (arg == "-o")
-        print_r(objects( (: !clonep($1) :) ));
-    else if (arg == "-v")
-    {
-        print_r(objects( (:virtualp:) ));
-    }
-    else
+        print_r(objects((: !clonep($1) :)));
+    else if (arg == "-v") {
+        print_r(objects((: virtualp :)));
+    } else
         print_r(objects());
 
     return 1;
 }
 
-int help(object me)
-{
+int help(object me) {
     if (!wizardp(me))
         return 0;
 

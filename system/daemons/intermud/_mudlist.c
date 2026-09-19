@@ -19,14 +19,12 @@ inherit CORE_CLEAN_UP;
 
 private void create() { seteuid(getuid()); }
 
-void receive_answer(mapping info)
-{
+void receive_answer(mapping info) {
     string name, chunk;
 
     // SECURED_INTERMUD_EVENT;
 
-    foreach (name, chunk in info)
-    {
+    foreach (name, chunk in info) {
         string *prop_list;
         mapping mudinfo;
 
@@ -34,10 +32,9 @@ void receive_answer(mapping info)
             continue;
 
         mudinfo = ([]);
-        prop_list = explode(chunk, "|") - ({""});
+        prop_list = explode(chunk, "|") - ({ "" });
 
-        foreach (string prop in prop_list)
-        {
+        foreach (string prop in prop_list) {
             string p, v;
             if (sscanf(prop, "%s:%s", p, v) == 2)
                 mudinfo[p] = v;
@@ -45,8 +42,8 @@ void receive_answer(mapping info)
 
         // 檢查所有必須的欄位是否都有定義 ...
         if (undefinedp(mudinfo["NAME"])       // MUD 的名稱
-            || undefinedp(mudinfo["PORT"])    // MUD 的連接埠
-            || undefinedp(mudinfo["PORTUDP"]) // MUD 的 intermud 連接埠
+        || undefinedp(mudinfo["PORT"])    // MUD 的連接埠
+        || undefinedp(mudinfo["PORTUDP"])  // MUD 的 intermud 連接埠
         )
             continue;
 
@@ -56,16 +53,14 @@ void receive_answer(mapping info)
     }
 }
 
-void receive_request(mapping info)
-{
+void receive_request(mapping info) {
     // SECURED_INTERMUD_EVENT;
 }
 
-void send_request(string dest, int port)
-{
+void send_request(string dest, int port) {
     // SECURED_INTERMUD_API;
     INTERMUD_D->send_event(dest, port, "mudlist_q", ([
-        "HOSTADDRESS"   :   INTERMUD_D->query_address(),
-        "PORTUDP"       :   "" + INTERMUD_D->query_udp_port(),
+        "HOSTADDRESS": INTERMUD_D->query_address(),
+        "PORTUDP": "" + INTERMUD_D->query_udp_port(),
     ]));
 }

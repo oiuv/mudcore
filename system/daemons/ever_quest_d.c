@@ -141,18 +141,14 @@ QUEST_OB->query_introduce(object knower, object who);
 ***********************************************************/
 
 // 系统增加一个任务
-public void add_quest(object qob)
-{
+public void add_quest(object qob) {
     mapping total;
 
-    if (!mapp(total = query("information")))
-    {
+    if (!mapp(total = query("information"))) {
         // 原先没有任何任务
-        total = ([qob:1]);
+        total = ([ qob: 1 ]);
         set("information", total);
-    }
-    else
-    {
+    } else {
         // 查看这个任务是否已经有定义
         if (undefinedp(total[qob]))
             // 增加一个任务，因为这时候刚刚将任
@@ -164,24 +160,21 @@ public void add_quest(object qob)
 }
 
 // 设置消息
-public void set_information(object qob, string key, mixed info)
-{
+public void set_information(object qob, string key, mixed info) {
     mapping total;
     mapping all_info;
 
-    if (!stringp(key) || (!stringp(info) && !functionp(info)))
-    {
+    if (!stringp(key) || (!stringp(info) && !functionp(info))) {
         return;
     }
 
     if (!mapp(total = query("information")))
         total = ([]);
 
-    if (!mapp(all_info = total[qob]))
-    {
+    if (!mapp(all_info = total[qob])) {
         // 原先没有该任务对象的消息信息
         all_info = ([]);
-        total += ([qob:all_info]);
+        total += ([ qob: all_info ]);
     }
 
     all_info[key] = info;
@@ -189,8 +182,7 @@ public void set_information(object qob, string key, mixed info)
 }
 
 // 查询消息
-public mixed query_information(object qob, string key)
-{
+public mixed query_information(object qob, string key) {
     mapping total;
     mapping all_info;
 
@@ -204,8 +196,7 @@ public mixed query_information(object qob, string key)
 }
 
 // 删除消息
-public void remove_information(object qob, string key)
-{
+public void remove_information(object qob, string key) {
     mapping total;
     mapping all_info;
 
@@ -216,8 +207,7 @@ public void remove_information(object qob, string key)
         return;
 
     map_delete(all_info, key);
-    if (!sizeof(all_info))
-    {
+    if (!sizeof(all_info)) {
         // 该任务对象已经没有消息了
         map_delete(total, qob);
         return;
@@ -225,8 +215,7 @@ public void remove_information(object qob, string key)
 }
 
 // 删除某一个对象的所有消息
-public void remove_all_information(object qob)
-{
+public void remove_all_information(object qob) {
     mapping total;
 
     if (!mapp(total = query("information")))
@@ -241,8 +230,7 @@ public void remove_all_information(object qob)
 }
 
 // 删除某一个任务
-public void remove_quest(string name)
-{
+public void remove_quest(string name) {
     mapping total;
     object *obs;
     object qob;
@@ -257,8 +245,7 @@ public void remove_quest(string name)
         return;
 
     qob = find_object(name);
-    if (!objectp(qob) || member_array(qob, obs) == -1)
-    {
+    if (!objectp(qob) || member_array(qob, obs) == -1) {
         obs = filter_array(obs, (: $1->name() == $(name) :));
         if (!sizeof(obs))
             return;
@@ -270,16 +257,14 @@ public void remove_quest(string name)
 }
 
 // QUEST系统重新启动的时候收集所有任务对象的消息
-protected void collect_all_quest_information()
-{
+protected void collect_all_quest_information() {
     mapping total;
     object qob;
     object *obs;
 
     CHANNEL_D->do_channel(this_object(), "sys", "任务精灵开始收集所有的任务信息。");
 
-    if (!mapp(total = query("information")))
-    {
+    if (!mapp(total = query("information"))) {
         total = ([]);
         set("information", total);
     }
@@ -287,19 +272,17 @@ protected void collect_all_quest_information()
     obs = filter_array(objects(), (: $1->is_quest() :));
 
     // 扫描所有的QUEST对象，登记信息
-    foreach (qob in obs)
-    {
+    foreach (qob in obs) {
         reset_eval_cost();
         total[qob] = 0;
-        catch (qob->register_information());
+        catch(qob->register_information());
     }
 
     // 唤醒几个子任务守护进程
     start_all_quest();
 }
 
-public void start_all_quest()
-{
+public void start_all_quest() {
     string quest;
     string *qlist;
     string name;
@@ -311,8 +294,7 @@ public void start_all_quest()
         return;
 
     qlist = explode(quest, "\n");
-    foreach (name in qlist)
-    {
+    foreach (name in qlist) {
         // 防止运行超时
         reset_eval_cost();
 
@@ -328,20 +310,18 @@ public void start_all_quest()
 
         // 生成文件名字
         name = EVER_QUEST_DIR + name + ".c";
-        if (file_size(name) < 0)
-        {
+        if (file_size(name) < 0) {
             // 没有这个任务
             continue;
         }
 
         // 启动这个任务
-        catch (call_other(name, "startup"));
+        catch(call_other(name, "startup"));
     }
 }
 
 // 整理所有的任务
-protected void heart_beat()
-{
+protected void heart_beat() {
     mapping total;
     mixed key;
     int live_time;
@@ -359,50 +339,45 @@ protected void heart_beat()
     t = time();
 
     // 扫描所有的任务，只保留有效的任务
-    foreach (key in keys(total))
-    {
+    foreach (key in keys(total)) {
         reset_eval_cost();
         if (!objectp(key))
             map_delete(total, key);
         else
-            switch (key->query_status())
-            {
-            case QUEST_CREATE:
-                if (t - key->query("start_time") > QUEST_CREATE_PERIOD)
-                {
-                    // 创建任务超过有效时间了，结束之
-                    catch (key->change_status(QUEST_FINISH));
-                    map_delete(total, key);
-                }
-                break;
+            switch (key->query_status()) {
+                case QUEST_CREATE:
+                    if (t - key->query("start_time") > QUEST_CREATE_PERIOD) {
+                        // 创建任务超过有效时间了，结束之
+                        catch(key->change_status(QUEST_FINISH));
+                        map_delete(total, key);
+                    }
+                    break;
 
-            case QUEST_FINISH:
-                if (t->query("finish_time") > QUEST_FINISH_PERIOD)
-                    // 结束任务超过有效时间了
-                    key->change_status(QUEST_ERROR);
-                break;
+                case QUEST_FINISH:
+                    if (t->query("finish_time") > QUEST_FINISH_PERIOD)
+                        // 结束任务超过有效时间了
+                        key->change_status(QUEST_ERROR);
+                    break;
 
-            case QUEST_ERROR:
-                // 任务在运行错误状态中
-                break;
+                case QUEST_ERROR:
+                    // 任务在运行错误状态中
+                    break;
 
-            default:
-                // 任务在通常运行状态中
-                if ((live_time = key->query("live_time")) > 0 &&
-                    live_time < t - key->query("start_time"))
-                {
-                    // 生存超过了时间
-                    catch (key->change_status(QUEST_FINISH));
-                    map_delete(total, key);
-                }
-                break;
+                default:
+                    // 任务在通常运行状态中
+                    if ((live_time = key->query("live_time")) > 0 &&
+                        live_time < t - key->query("start_time")) {
+                        // 生存超过了时间
+                        catch(key->change_status(QUEST_FINISH));
+                        map_delete(total, key);
+                    }
+                    break;
             }
     }
 }
 
 // 供消息灵通人士调用使用
-public string generate_information(object knower, object who, string topic)
-{
+public string generate_information(object knower, object who, string topic) {
     mapping total;
     object *obs;
     object *dest;
@@ -412,55 +387,49 @@ public string generate_information(object knower, object who, string topic)
 
     total = query("information");
 
-    switch (random(30))
-    {
-    case 0:
-        return "阿嚏！有点感冒，不好意思。";
-    case 1:
-        return "等…等等，你说什么？没听清楚。";
-    case 2:
-        return "嗯，稍等啊，就好…好了，你刚才说啥？";
-    case 3:
-        return "这个…这个…哦，好了，啊？你问我呢？";
-    case 4:
-        return "唉呦！不好意思，是你问我么？";
-    case 5:
-        return "就好…就好…好了，你说啥？";
-    case 7:
-        return "嗯，你稍等一下，我这里还没忙完。";
+    switch (random(30)) {
+        case 0:
+            return "阿嚏！有点感冒，不好意思。";
+        case 1:
+            return "等…等等，你说什么？没听清楚。";
+        case 2:
+            return "嗯，稍等啊，就好…好了，你刚才说啥？";
+        case 3:
+            return "这个…这个…哦，好了，啊？你问我呢？";
+        case 4:
+            return "唉呦！不好意思，是你问我么？";
+        case 5:
+            return "就好…就好…好了，你说啥？";
+        case 7:
+            return "嗯，你稍等一下，我这里还没忙完。";
     }
 
-    if (topic == "rumor" || topic == "消息")
-    {
+    if (topic == "rumor" || topic == "消息") {
         // 生成传闻
         if (!mapp(total) ||
-            !sizeof(obs = filter_array(keys(total), (: objectp($1) :))))
-        {
+            !sizeof(obs = filter_array(keys(total), (: objectp($1) :)))) {
             // 目前没有任何任务
-            switch (random(3))
-            {
-            case 0:
-                return "最近没啥消息。";
-            case 1:
-                return "好像最近挺太平的。";
-            default:
-                return "不知道...你去问问别人吧。";
+            switch (random(3)) {
+                case 0:
+                    return "最近没啥消息。";
+                case 1:
+                    return "好像最近挺太平的。";
+                default:
+                    return "不知道...你去问问别人吧。";
             }
         }
 
         // 过滤该小二可以散布的消息
         obs = filter_array(obs, (: objectp($1) && $1->can_rumor_by($(knower)) :));
-        if (!sizeof(obs))
-        {
+        if (!sizeof(obs)) {
             // 该人士不能散布信息
-            switch (random(3))
-            {
-            case 0:
-                return "我倒是听说最近出了不少事儿。";
-            case 1:
-                return "哎呀呀！你也知道了一些秘密？快给我说说！";
-            default:
-                return "这年头，是越来越乱了。";
+            switch (random(3)) {
+                case 0:
+                    return "我倒是听说最近出了不少事儿。";
+                case 1:
+                    return "哎呀呀！你也知道了一些秘密？快给我说说！";
+                default:
+                    return "这年头，是越来越乱了。";
             }
         }
 
@@ -470,14 +439,13 @@ public string generate_information(object knower, object who, string topic)
         if (answer = last_ob->query_prompt(knower, who))
             return answer;
 
-        switch (random(3))
-        {
-        case 0:
-            return "你可曾听过最近有关『" HIY + last_ob->name() + NOR CYN "』的传闻？";
-        case 1:
-            return "最近正在盛传『" HIY + last_ob->name() + NOR CYN "』这件事情呢！";
-        default:
-            return "你没有听到大家都在议论『" HIY + last_ob->name() + NOR CYN "』吗？";
+        switch (random(3)) {
+            case 0:
+                return "你可曾听过最近有关『" HIY + last_ob->name() + NOR CYN "』的传闻？";
+            case 1:
+                return "最近正在盛传『" HIY + last_ob->name() + NOR CYN "』这件事情呢！";
+            default:
+                return "你没有听到大家都在议论『" HIY + last_ob->name() + NOR CYN "』吗？";
         }
     }
 
@@ -489,29 +457,23 @@ public string generate_information(object knower, object who, string topic)
     obs = filter_array(obs, (: $1->can_know_by($(knower)) :));
 
     // 查看是否问某一个任务的某一个条目
-    if (sscanf(topic, "%s.%s", name, title) == 2)
-    {
+    if (sscanf(topic, "%s.%s", name, title) == 2) {
         dest = filter_array(obs, (: $1->name() == $(name) :));
         if (!sizeof(dest))
             return 0;
 
         last_ob = dest[0];
-    }
-    else
-    {
+    } else {
         // 查看是否问某一个任务
         dest = filter_array(obs, (: $1->name() == $(topic) :));
-        if (sizeof(dest) > 0)
-        {
+        if (sizeof(dest) > 0) {
             last_ob = dest[0];
             knower->set_temp("last_asked_quest", last_ob);
             answer = last_ob->query_introduce(knower, who);
             if (stringp(answer))
                 return answer;
             return "你说的是" HIY + knower->name() + HIY "那件事情吗？你问我算是问对人了。" NOR;
-        }
-        else
-        // 查看最后一次被询问的任务消息中是否有该条目
+        } else  // 查看最后一次被询问的任务消息中是否有该条目
         {
             last_ob = knower->query_temp("last_asked_quest");
             if (!objectp(last_ob) || !mapp(total[last_ob]))

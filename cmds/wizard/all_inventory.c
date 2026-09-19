@@ -2,31 +2,24 @@
 #include <ansi.h>
 inherit _CLEAN_UP;
 
-int main(object me, string arg)
-{
+int main(object me, string arg) {
     object ob;
 
     if (!wizardp(me))
         return 0;
 
-    if (!arg)
-    {
+    if (!arg) {
         printf("%O\n", all_inventory(me));
-    }
-    else if (ob = load_object(arg))
-    {
+    } else if (ob = load_object(arg)) {
         print_r(all_inventory(ob));
-    }
-    else
-    {
+    } else {
         return notify_fail(HIR "没有找到对象 " + arg + "\n" NOR);
     }
 
     return 1;
 }
 
-int help(object me)
-{
+int help(object me) {
     if (!wizardp(me))
         return 0;
 

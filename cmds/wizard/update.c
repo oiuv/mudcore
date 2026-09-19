@@ -3,8 +3,7 @@ inherit _CLEAN_UP;
 
 int help(object me);
 
-int main(object me, string file)
-{
+int main(object me, string file) {
     object env = environment(me), obj;
 
     if (!wizardp(me))
@@ -13,8 +12,7 @@ int main(object me, string file)
     if (!file)
         return help(me);
 
-    if (file == "here")
-    {
+    if (file == "here") {
         file = base_name(env);
     }
     if (file == VOID_OB)
@@ -22,24 +20,19 @@ int main(object me, string file)
 
     write("重新编译[" + file + "]:");
 
-    if (obj = find_object(file))
-    {
+    if (obj = find_object(file)) {
         destruct(obj);
     }
-    if (objectp(load_object(file)))
-    {
+    if (objectp(load_object(file))) {
         cecho("编译成功!");
-    }
-    else
-    {
+    } else {
         cecho("失败，文件不存在!");
     }
 
     return 1;
 }
 
-int help(object me)
-{
+int help(object me) {
     if (!wizardp(me))
         return 0;
 
@@ -47,6 +40,6 @@ int help(object me)
 指令格式: update <对象文件名>
 指令说明:
     这个指令用来重新载入一个对象。
-HELP );
-        return 1;
+HELP);
+    return 1;
 }

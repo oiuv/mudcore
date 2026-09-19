@@ -25,8 +25,7 @@ mapping camp = ([]);
 
 mapping getCamps() { return camp; }
 
-string getCampRank(string c)
-{
+string getCampRank(string c) {
     int value;
 
     if (undefinedp(camp[c]))
@@ -60,8 +59,7 @@ string getCampRank(string c)
     return "未知";
 }
 
-int getCampScore(string c)
-{
+int getCampScore(string c) {
     int value;
 
     if (undefinedp(camp[c]))
@@ -96,8 +94,7 @@ int getCampScore(string c)
 }
 
 // 新增一個陣營
-int addCamp(string c)
-{
+int addCamp(string c) {
     if (!undefinedp(camp[c]))
         return 0;
     if (!CAMP_D->getCampFile(c))
@@ -110,8 +107,7 @@ int addCamp(string c)
 }
 
 // 刪除一個陣營
-int removeCamp(string c)
-{
+int removeCamp(string c) {
     if (undefinedp(camp[c]))
         return 0;
     if (!CAMP_D->getCampFile(c))
@@ -123,8 +119,7 @@ int removeCamp(string c)
     return 1;
 }
 
-private void changeCamp(string c, int cnt)
-{
+private void changeCamp(string c, int cnt) {
     if (undefinedp(camp[c]))
         return;
     camp[c] += cnt;
@@ -135,8 +130,7 @@ private void changeCamp(string c, int cnt)
 }
 
 // 為一個陣營改變其聲望
-int updateCamp(string c, int cnt)
-{
+int updateCamp(string c, int cnt) {
     int sign, value;
     string cam, *camps;
 
@@ -145,21 +139,24 @@ int updateCamp(string c, int cnt)
     if (undefinedp(camp[c]))
         addCamp(c);
 
-    if (cnt >= 0)
-    {
+    if (cnt >= 0) {
         sign = 1;
         value = cnt;
-    }
-    else
-    {
+    } else {
         sign = -1;
         value = -cnt;
     }
 
     if (sign == 1)
-        tell_object(this_object(), HIY "你在陣營「" + CAMP_D->getCampName(c) + "」中的聲望提升了 " + value + " 點。\n" NOR);
+        tell_object(
+            this_object(),
+            HIY "你在陣營「" + CAMP_D->getCampName(c) + "」中的聲望提升了 " + value + " 點。\n" NOR
+        );
     else
-        tell_object(this_object(), HIB "你在陣營「" + CAMP_D->getCampName(c) + "」中的聲望降低了 " + value + " 點。\n" NOR);
+        tell_object(
+            this_object(),
+            HIB "你在陣營「" + CAMP_D->getCampName(c) + "」中的聲望降低了 " + value + " 點。\n" NOR
+        );
 
     changeCamp(c, sign * value);
 
@@ -167,17 +164,22 @@ int updateCamp(string c, int cnt)
 
     // 友好
     camps = CAMP_D->getFriendly(c);
-    foreach (cam in camps)
-    {
+    foreach (cam in camps) {
         int v = random(value) + 1;
 
         if (!CAMP_D->getCampFile(cam))
             return 0;
 
         if (sign == 1)
-            tell_object(this_object(), HIY "你在陣營「" + CAMP_D->getCampName(cam) + "」中的聲望提升了 " + v + " 點。\n" NOR);
+            tell_object(
+                this_object(),
+                HIY "你在陣營「" + CAMP_D->getCampName(cam) + "」中的聲望提升了 " + v + " 點。\n" NOR
+            );
         else
-            tell_object(this_object(), HIB "你在陣營「" + CAMP_D->getCampName(cam) + "」中的聲望降低了 " + v + " 點。\n" NOR);
+            tell_object(
+                this_object(),
+                HIB "你在陣營「" + CAMP_D->getCampName(cam) + "」中的聲望降低了 " + v + " 點。\n" NOR
+            );
 
         if (undefinedp(camp[cam]))
             camp[cam] = 0;
@@ -187,17 +189,22 @@ int updateCamp(string c, int cnt)
     // 敵對
     sign = -sign;
     camps = CAMP_D->getAdversely(c);
-    foreach (cam in camps)
-    {
+    foreach (cam in camps) {
         int v = random(value) + 1;
 
         if (!CAMP_D->getCampFile(cam))
             return 0;
 
         if (sign == 1)
-            tell_object(this_object(), HIY "你在陣營「" + CAMP_D->getCampName(cam) + "」中的聲望提升了 " + v + " 點。\n" NOR);
+            tell_object(
+                this_object(),
+                HIY "你在陣營「" + CAMP_D->getCampName(cam) + "」中的聲望提升了 " + v + " 點。\n" NOR
+            );
         else
-            tell_object(this_object(), HIB "你在陣營「" + CAMP_D->getCampName(cam) + "」中的聲望降低了 " + v + " 點。\n" NOR);
+            tell_object(
+                this_object(),
+                HIB "你在陣營「" + CAMP_D->getCampName(cam) + "」中的聲望降低了 " + v + " 點。\n" NOR
+            );
 
         if (undefinedp(camp[cam]))
             camp[cam] = 0;
@@ -208,17 +215,22 @@ int updateCamp(string c, int cnt)
 }
 
 // 直接設定某陣營的聲望值
-int setCamp(string c, int cnt)
-{
+int setCamp(string c, int cnt) {
     if (!CAMP_D->getCampFile(c))
         return 0;
     if (undefinedp(camp[c]))
         addCamp(c);
 
     if (cnt >= 0)
-        tell_object(this_object(), HIY "你在陣營「" + CAMP_D->getCampName(c) + "」中的聲望提升了 " + cnt + " 點。\n" NOR);
+        tell_object(
+            this_object(),
+            HIY "你在陣營「" + CAMP_D->getCampName(c) + "」中的聲望提升了 " + cnt + " 點。\n" NOR
+        );
     else
-        tell_object(this_object(), HIB "你在陣營「" + CAMP_D->getCampName(c) + "」中的聲望降低了 " + cnt + " 點。\n" NOR);
+        tell_object(
+            this_object(),
+            HIB "你在陣營「" + CAMP_D->getCampName(c) + "」中的聲望降低了 " + cnt + " 點。\n" NOR
+        );
 
     changeCamp(c, cnt);
 
@@ -226,16 +238,14 @@ int setCamp(string c, int cnt)
 }
 
 // 取得某陣營的值
-int getCamp(string c)
-{
+int getCamp(string c) {
     if (undefinedp(camp[c]))
         return 0;
     return camp[c];
 }
 
 // 是否存在該陣營的聲望
-int hasCamp(string c)
-{
+int hasCamp(string c) {
     if (undefinedp(camp[c]))
         return 0;
     return 1;

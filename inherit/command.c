@@ -15,13 +15,11 @@ Date: 2019-03-12
  * 傳回零，則以原來輸入的資料作處理。在此之後才會看使用者輸入是否符合
  * add_actions 當時添加的動詞。
  */
-mixed process_input(string arg)
-{
+mixed process_input(string arg) {
     return COMMAND_D->default_alias(arg);
 }
 
-nomask int command_hook(string arg)
-{
+nomask int command_hook(string arg) {
     string verb;
     object me, file;
 
@@ -33,24 +31,26 @@ nomask int command_hook(string arg)
 
     if (!arg && objectp(environment()) && environment()->query("exits/" + verb) && command("go " + verb))
         ;
-    else if (objectp(file = COMMAND_D->find_command(query_verb())) && call_other(file, "main", me, arg))
+    else if (objectp(file = COMMAND_D->find_command(query_verb())) && call_other(
+        file,
+        "main",
+        me,
+        arg
+    ))
         ;
     else if (EMOTE_D->do_emote(me, verb, arg))
         ;
     else if (CHANNEL_D->do_channel(me, verb, arg))
         ;
-    else
-    {
+    else {
         mixed err = parse_sentence(arg ? verb + " " + arg : verb, 0);
         // debug_message("err = " + err);
-        if (intp(err))
-        {
-            switch (err)
-            {
-            case 1: // verb 匹配成功
-                return 1;
-            default:
-                return 0;
+        if (intp(err)) {
+            switch (err) {
+                case 1:  // verb 匹配成功
+                    return 1;
+                default:
+                    return 0;
             }
         }
         return notify_fail(err);
@@ -59,8 +59,7 @@ nomask int command_hook(string arg)
     return 1;
 }
 
-nomask void enable_living()
-{
+nomask void enable_living() {
     object me = this_object();
 
     if (stringp(query("id")))
@@ -68,24 +67,20 @@ nomask void enable_living()
     else
         set_living_name(query("name"));
 
-    if (!query_temp("living"))
-    {
+    if (!query_temp("living")) {
         enable_commands();
         parse_init();
         set_temp("living", 1);
         add_action("command_hook", "", 1);
     }
 
-    if (userp(me) && getuid(me) == WIZARD)
-    {
+    if (userp(me) && getuid(me) == WIZARD) {
         enable_wizard();
     }
 }
 
-nomask void disable_living(string type)
-{
-    if (query_temp("living"))
-    {
+nomask void disable_living(string type) {
+    if (query_temp("living")) {
         disable_commands();
         delete_temp("living");
     }

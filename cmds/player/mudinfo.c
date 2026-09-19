@@ -1,7 +1,6 @@
 #include <ansi.h>
 
-string duration()
-{
+string duration() {
     int t, d, h, m, s;
     string time;
 
@@ -28,11 +27,9 @@ string duration()
     return time;
 }
 
-int main(object me, string arg)
-{
+int main(object me, string arg) {
     string msg;
-    if (arg == "-v")
-    {
+    if (arg == "-v") {
         write("\nMUD 名称：" + MUD_NAME + "\n");
         write("驱动环境：" + __ARCH__ + "\n");
         write("驱动版本：" + __VERSION__ + "\n");
@@ -43,12 +40,17 @@ int main(object me, string arg)
         write("在线玩家：" + sizeof(users()) + "人\n");
         write("游戏生物：" + sizeof(livings()) + "位\n");
         write("载入对象：" + sizeof(objects()) + "个\n");
-    }
-    else
-    {
+    } else {
         msg = WHT BBLU "\n Mud名称       运行时间            游戏地址   端口   在线人数" NOR;
         msg += "\n-------------------------------------------------------------\n";
-        msg += sprintf(" %-14s%-20s%-11s%-10d%-5d" NOR, MUD_NAME, duration(), "mud.ren", __PORT__, sizeof(users()));
+        msg += sprintf(
+            " %-14s%-20s%-11s%-10d%-5d" NOR,
+            MUD_NAME,
+            duration(),
+            "mud.ren",
+            __PORT__,
+            sizeof(users())
+        );
         msg += "\n-------------------------------------------------------------\n";
         msg += " " + TIME_D->real_time_description() + "\n";
         msg += " 游戏日历：" + TIME_D->game_time_description() + "\n";
@@ -58,13 +60,12 @@ int main(object me, string arg)
     return 1;
 }
 
-int help(object me)
-{
+int help(object me) {
     write(@HELP
 指令格式 : mudinfo [-v]
 
 这个指令可以让你查看游戏基本运行信息。
 
-HELP );
+HELP);
     return 1;
 }

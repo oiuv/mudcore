@@ -23,14 +23,20 @@ Description:
 /**
  * 字符、字号、内容填充、背景填充、前景色、背景色
  */
-varargs string bitmap_font(string str, int size, string fill, string bg, string fcolor, string bgcolor)
-{
+varargs string bitmap_font(
+    string str,
+    int size,
+    string fill,
+    string bg,
+    string fcolor,
+    string bgcolor
+) {
     int offset, fontsize, scale;
-    int *mask = ({0x80, 0x40, 0x20, 0x10, 0x8, 0x4, 0x2, 0x1});
+    int *mask = ({ 0x80, 0x40, 0x20, 0x10, 0x8, 0x4, 0x2, 0x1 });
     buffer char, bstr = string_encode(str, "GBK");
     string file, *out;
     // 当前可用字库16x12、16x14、16x16
-    if (member_array(size, ({12, 14, 16})) < 0)
+    if (member_array(size, ({ 12, 14, 16 })) < 0)
         size = AUTO_SIZE;
 
     // 中文字体占用的字节数(支持32x32等字库)
@@ -43,8 +49,7 @@ varargs string bitmap_font(string str, int size, string fill, string bg, string 
 
     if (!sizeof(fill)) fill = DEFAULT_FILL;
     if (!sizeof(bg)) bg = DEFAULT_BG;
-    if (strwidth(fill) != strwidth(bg))
-    {
+    if (strwidth(fill) != strwidth(bg)) {
         fill = DEFAULT_FILL;
         bg = DEFAULT_BG;
     }
@@ -53,24 +58,20 @@ varargs string bitmap_font(string str, int size, string fill, string bg, string 
     if (!bgcolor) bgcolor = DEFAULT_BGCOLOR;
     // 16x16中文字库随机字体
     if (size == 16)
-        file = HZK + size + element_of(({"C", "F", "H", "K", "L", "S", "V", "X", "Y"}));
+        file = HZK + size + element_of(({ "C", "F", "H", "K", "L", "S", "V", "X", "Y" }));
     else
         file = HZK + size;
 
-    for (int k = 0; k < sizeof(bstr); k++)
-    {
-        if (mask[0] & bstr[k])
-        {
+    for (int k = 0; k < sizeof(bstr); k++) {
+        if (mask[0] & bstr[k]) {
             // 区码：汉字的第一个字节-0xA0
             // 位码：汉字的第二个字节-0xA0
             // offset = (94 * (区码 - 1) + (位码 - 1)) * fontsize;
-            offset = fontsize * ((bstr[k] - 0xA1) * 94 + bstr[k+1] - 0xA1);
+            offset = fontsize * ((bstr[k] - 0xA1) * 94 + bstr[k + 1] - 0xA1);
             char = read_buffer(file, offset, fontsize);
             scale = fontsize / size;
             k++;
-        }
-        else
-        {
+        } else {
             // 英文每个字符占1字节
             offset = bstr[k] * size;
             char = read_buffer(ASC + size, offset, size);
@@ -80,10 +81,8 @@ varargs string bitmap_font(string str, int size, string fill, string bg, string 
         if (!sizeof(char)) return "Can't read bytes from character lib.\n";
 
         //填充字符
-        for (int i = 0; i < sizeof(char); i++)
-        {
-            for (int j = 0; j < 8; j++)
-            {
+        for (int i = 0; i < sizeof(char); i++) {
+            for (int j = 0; j < 8; j++) {
                 if (mask[j] & char[i])
                     out[i / scale] += fcolor + fill;
                 else
@@ -91,8 +90,7 @@ varargs string bitmap_font(string str, int size, string fill, string bg, string 
             }
         }
         // 清除多余的颜色代码
-        for (int i = 0; i < sizeof(out); i++)
-        {
+        for (int i = 0; i < sizeof(out); i++) {
             out[i] = replace_string(out[i], fill + fcolor + fill, fill + fill);
             out[i] = replace_string(out[i], bg + bgcolor + bg, bg + bg);
         }

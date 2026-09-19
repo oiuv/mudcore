@@ -28,23 +28,19 @@ int isSolved(string quest_file);
 void delToDo(string quest_file);
 void delSolved(string quest_file);
 
-mapping getToDoList()
-{
+mapping getToDoList() {
     return toDoList;
 }
 
-string *getSolved()
-{
+string *getSolved() {
     return solved;
 }
 
-int getToDoListSize()
-{
+int getToDoListSize() {
     return sizeof(toDoList);
 }
 
-void setToDo(string quest_file)
-{
+void setToDo(string quest_file) {
     int i, size;
     mapping kill;
     string *key;
@@ -73,8 +69,7 @@ void setToDo(string quest_file)
         addKilled(quest_file, key[i], 0);
 }
 
-void setSolved(string quest_file)
-{
+void setSolved(string quest_file) {
     if (!quest_file || !stringp(quest_file))
         return;
 
@@ -85,11 +80,10 @@ void setSolved(string quest_file)
     if (member_array(quest_file, solved) != -1)
         return;
 
-    solved += ({quest_file});
+    solved += ({ quest_file });
 }
 
-void addKilled(string quest_file, string killed_file, int amount)
-{
+void addKilled(string quest_file, string killed_file, int amount) {
     mapping kill;
 
     if (!quest_file->isQuest())
@@ -109,8 +103,7 @@ void addKilled(string quest_file, string killed_file, int amount)
     toDoList[quest_file]["killed"][killed_file] += amount;
 }
 
-int getKilled(string quest_file, string killed_file)
-{
+int getKilled(string quest_file, string killed_file) {
     if (!quest_file->isQuest())
         return 0;
 
@@ -123,8 +116,7 @@ int getKilled(string quest_file, string killed_file)
     return toDoList[quest_file]["killed"][killed_file];
 }
 
-void addItem(string quest_file, string item_file, int amount)
-{
+void addItem(string quest_file, string item_file, int amount) {
     mapping item;
 
     if (!quest_file->isQuest())
@@ -144,8 +136,7 @@ void addItem(string quest_file, string item_file, int amount)
     toDoList[quest_file]["item"][item_file] += amount;
 }
 
-int getItem(string quest_file, string item_file)
-{
+int getItem(string quest_file, string item_file) {
     if (!quest_file->isQuest())
         return 0;
 
@@ -158,8 +149,7 @@ int getItem(string quest_file, string item_file)
     return toDoList[quest_file]["item"][item_file];
 }
 
-mapping getToDo(string quest_file)
-{
+mapping getToDo(string quest_file) {
     if (!mapp(toDoList) || undefinedp(toDoList[quest_file]))
         return 0;
     return toDoList[quest_file];
@@ -169,21 +159,18 @@ mapping getToDo(string quest_file)
        0 : 未解過
        1 : 解過
  */
-int isSolved(string quest_file)
-{
+int isSolved(string quest_file) {
     return member_array(quest_file, solved || ({})) > -1;
 }
 
-void delToDo(string quest_file)
-{
+void delToDo(string quest_file) {
     if (undefinedp(toDoList[quest_file]))
         return;
     map_delete(toDoList, quest_file);
 }
 
-void delSolved(string quest_file)
-{
+void delSolved(string quest_file) {
     if (member_array(quest_file, solved) == -1)
         return;
-    solved -= ({quest_file});
+    solved -= ({ quest_file });
 }

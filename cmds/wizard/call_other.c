@@ -4,8 +4,7 @@ inherit _CLEAN_UP;
 
 int help(object me);
 
-int main(object me, string arg)
-{
+int main(object me, string arg) {
     object ob;
     string arg1, arg2, err;
     mixed res;
@@ -13,31 +12,22 @@ int main(object me, string arg)
     if (!wizardp(me))
         return 0;
 
-    if (!arg || sscanf(arg,"%s %s",arg1, arg2) != 2)
-    {
+    if (!arg || sscanf(arg, "%s %s", arg1, arg2) != 2) {
         return help(me);
-    }
-    else if (ob = load_object(arg1))
-    {
-        if (err = catch(res = call_other(ob, explode(arg2, " "))))
-        {
+    } else if (ob = load_object(arg1)) {
+        if (err = catch(res = call_other(ob, explode(arg2, " ")))) {
             cecho("运行报错啦~>详细错误信息请看日志记录<：\n" + err);
-        }
-        else
-        {
+        } else {
             cecho("result = " + res);
         }
-    }
-    else
-    {
+    } else {
         cecho("没有找到对象 " + arg1);
     }
 
     return 1;
 }
 
-int help(object me)
-{
+int help(object me) {
     if (!wizardp(me))
         return 0;
 

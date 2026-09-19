@@ -1,7 +1,6 @@
 inherit _CLEAN_UP;
 
-int main(object me, string arg)
-{
+int main(object me, string arg) {
     string *emote;
     int i;
 
@@ -14,16 +13,13 @@ int main(object me, string arg)
     if (arg == "-d" || arg == "-p")
         return notify_fail("指令格式 : emote [-d|-p] <emote>\n");
 
-    if (sscanf(arg, "-d %s", arg))
-    {
+    if (sscanf(arg, "-d %s", arg)) {
         write("删除 emote：" + arg + "\n");
         return EMOTE_D->delete_emote(arg);
     }
 
-    if (sscanf(arg, "-p %s", arg))
-    {
-        if (!arrayp(emote = EMOTE_D->query_emote(arg)) || !sizeof(emote))
-        {
+    if (sscanf(arg, "-p %s", arg)) {
+        if (!arrayp(emote = EMOTE_D->query_emote(arg)) || !sizeof(emote)) {
             write("没有这个表情动词。\n");
             return 1;
         }
@@ -31,8 +27,7 @@ int main(object me, string arg)
         return 1;
     }
 
-    if (arrayp(emote = EMOTE_D->query_emote(arg)) && sizeof(emote))
-    {
+    if (arrayp(emote = EMOTE_D->query_emote(arg)) && sizeof(emote)) {
         write("系统存在这个表情，如果需要编辑请先删除。\n");
         return 1;
     }
@@ -57,17 +52,14 @@ int main(object me, string arg)
     return 1;
 }
 
-int get_msg_myself(string msg, string *emote, string pattern, int n)
-{
+int get_msg_myself(string msg, string *emote, string pattern, int n) {
     msg = replace_string(msg, "\\n", "\n");
-    if (msg == "x")
-    {
+    if (msg == "x") {
         write("你取消了表情编辑。\n");
         return 1;
     }
 
-    if (msg == ".")
-    {
+    if (msg == ".") {
         if (!n)
             write("忽略该项描述。\n");
         write("指定对象使用这个 emote 时的讯息：\n->");
@@ -81,16 +73,13 @@ int get_msg_myself(string msg, string *emote, string pattern, int n)
     return 1;
 }
 
-int get_msg_others(string msg, string *emote, string pattern, int n)
-{
+int get_msg_others(string msg, string *emote, string pattern, int n) {
     msg = replace_string(msg, "\\n", "\n");
-    if (msg == "x")
-    {
+    if (msg == "x") {
         write("你取消了表情编辑。\n");
         return 1;
     }
-    if (msg == ".")
-    {
+    if (msg == ".") {
         if (!n)
             write("忽略该项描述。\n");
         write("OK!");
@@ -103,8 +92,7 @@ int get_msg_others(string msg, string *emote, string pattern, int n)
     return 1;
 }
 
-int help(object me)
-{
+int help(object me) {
     if (!wizardp(me))
         return 0;
 
@@ -121,6 +109,6 @@ int help(object me)
 $ME : 自己的名字.
 $YOU : 目标的名字.
 
-HELP );
+HELP);
     return 1;
 }

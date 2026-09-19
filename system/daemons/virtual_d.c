@@ -6,48 +6,39 @@ Author: xuefeng
 Version: v1.0
 *****************************************************************************/
 // 虚拟环境功能
-mixed compile_area(string file)
-{
+mixed compile_area(string file) {
     string virtual;
     object ob;
     int x, y, z, m, n;
 
     n = strsrch(file, "/", -1);
-    if (n < 1)
-    {
+    if (n < 1) {
         return 0;
     }
 
     virtual = file[0..n - 1];
 
-    if (file_size(virtual + ".c") < 1)
-    {
+    if (file_size(virtual + ".c") < 1) {
         log_file("virtual", sprintf("[%s]%s %O\n", ctime(), file, all_previous_objects()));
         return 0;
     }
 
-    if ((m = sscanf(file[n + 1..], "%d,%d,%d", x, y, z)) != 3)
-    {
-        if ((m = sscanf(file[n + 1..], "%d,%d", x, y)) != 2)
-        {
+    if ((m = sscanf(file[n + 1..], "%d,%d,%d", x, y, z)) != 3) {
+        if ((m = sscanf(file[n + 1..], "%d,%d", x, y)) != 2) {
             return virtual->query_maze_room(file[n + 1..]);
         }
     }
 
-    if (m == 2 && !(ob = new (virtual, x, y)))
-    {
+    if (m == 2 && !(ob = new(virtual, x, y))) {
         return 0;
-    }
-    else if (m == 3 && !(ob = new (virtual, x, y, z)))
-    {
+    } else if (m == 3 && !(ob = new(virtual, x, y, z))) {
         return 0;
     }
 
     return ob;
 }
 // 虚拟怪物功能，开发者可以覆盖功能
-mixed compile_mob(string file)
-{
+mixed compile_mob(string file) {
     string *path, virtual;
     object ob;
     int n;
@@ -65,24 +56,20 @@ mixed compile_mob(string file)
     return ob;
 }
 // 虚拟对象功能路由
-mixed compile_object(string file)
-{
+mixed compile_object(string file) {
 #ifdef WORLD_DIR
-    if (sscanf(file, WORLD_DIR + "%*s", file))
-    {
+    if (sscanf(file, WORLD_DIR + "%*s", file)) {
         return call_other(VIRTUAL_D, "compile_area", file);
     }
 #endif
 
 #ifdef MOB_DIR
-    if (sscanf(file, MOB_DIR + "%*s", file))
-    {
+    if (sscanf(file, MOB_DIR + "%*s", file)) {
         return call_other(VIRTUAL_D, "compile_mob", file);
     }
 #endif
 
-    if (!strsrch(file, CORE_DIR "world/area/"))
-    {
+    if (!strsrch(file, CORE_DIR "world/area/")) {
         return compile_area(file);
     }
 
@@ -91,7 +78,6 @@ mixed compile_object(string file)
     return 0;
 }
 
-string short()
-{
+string short() {
     return "虚拟对象精灵(VIRTUAL_D)";
 }

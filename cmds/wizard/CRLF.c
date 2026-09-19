@@ -8,15 +8,13 @@ inherit _CLEAN_UP;
 
 int convert_file(object me, string file);
 
-int main(object me, string arg)
-{
+int main(object me, string arg) {
     if (!wizardp(me))
         return 0;
 
     seteuid(geteuid(me));
 
-    if (!arg)
-    {
+    if (!arg) {
         return notify_fail("指令格式：CRLF <路径>\n");
     }
 
@@ -27,12 +25,10 @@ int main(object me, string arg)
     return 1;
 }
 
-int convert_file(object me, string file)
-{
+int convert_file(object me, string file) {
     string msg;
 
-    if (file_size(file) < 0)
-    {
+    if (file_size(file) < 0) {
         write("没有" + file + "这个档案。\n");
         return 0;
     }
@@ -41,8 +37,7 @@ int convert_file(object me, string file)
     file = resolve_path(me->query("cwd"), file);
     msg = read_file(file);
 
-    if (!msg)
-    {
+    if (!msg) {
         write(sprintf("read file %s error!\n", file));
         return 0;
     }

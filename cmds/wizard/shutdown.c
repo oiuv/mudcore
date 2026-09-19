@@ -1,5 +1,4 @@
-int main(object me, string arg)
-{
+int main(object me, string arg) {
     if (!wizardp(me)) return 0;
 
     // todo 玩家存档处理
@@ -8,8 +7,7 @@ int main(object me, string arg)
     return 1;
 }
 
-int help(object me)
-{
+int help(object me) {
     if (!wizardp(me)) return 0;
 
     write(@HELP

@@ -8,10 +8,8 @@ Date: 2019-03-12
 History:
 *****************************************************************************/
 // 覆盖efun，新增记录
-int notify_fail(string msg)
-{
-    if (this_player())
-    {
+int notify_fail(string msg) {
+    if (this_player()) {
         this_player()->set_temp("notify_fail", msg);
         return efun::notify_fail(msg);
     } else

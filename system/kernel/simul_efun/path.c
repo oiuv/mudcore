@@ -7,18 +7,15 @@ Version: v1.0
 Date: 2019-03-12
 *****************************************************************************/
 
-string user_cwd(string name)
-{
+string user_cwd(string name) {
     return ("/wizard/" + name);
 }
 
-string user_path(string name)
-{
+string user_path(string name) {
     return (user_cwd(name) + "/");
 }
 
-string resolve_path(string curr, string new_path)
-{
+string resolve_path(string curr, string new_path) {
     int i;
     string *tmp;
     string t1;
@@ -39,8 +36,7 @@ string resolve_path(string curr, string new_path)
         new_path = user_path(getuid(this_player())) + t1;
     else if (sscanf(new_path, "~%s", t1))
         new_path = user_path(t1);
-    else if (new_path[0] != '/')
-    {
+    else if (new_path[0] != '/') {
         if (curr[sizeof(curr) - 1] != '/')
             new_path = curr + "/" + new_path;
         else
@@ -48,17 +44,12 @@ string resolve_path(string curr, string new_path)
     }
     tmp = explode(new_path, "/");
 
-    for (i = 0; i < sizeof(tmp); i++)
-    {
-        if (tmp[i] == "..")
-        {
-            if (sizeof(tmp) > 2)
-            {
+    for (i = 0; i < sizeof(tmp); i++) {
+        if (tmp[i] == "..") {
+            if (sizeof(tmp) > 2) {
                 tmp = tmp[0..(i - 2)] + tmp[(i + 1)..(sizeof(tmp) - 1)];
                 i -= 2;
-            }
-            else
-            {
+            } else {
                 tmp = tmp[2..(sizeof(tmp) - 1)];
                 i = 0;
             }
@@ -78,16 +69,14 @@ string resolve_path(string curr, string new_path)
  * @param root 文件目录，必须以"/"结尾
  * @return string*
  */
-string *deep_path_list(string root)
-{
+string *deep_path_list(string root) {
     string file, *list = ({});
 
-    foreach (file in get_dir(root))
-    {
+    foreach (file in get_dir(root)) {
         if (file_size(root + file) == -2)
             list += deep_path_list(root + file + "/");
         else
-            list += ({root + file});
+            list += ({ root + file });
     }
 
     return list;

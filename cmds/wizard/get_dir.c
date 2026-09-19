@@ -1,31 +1,24 @@
 #include <ansi.h>
 inherit _CLEAN_UP;
 
-int main(object me, string arg)
-{
+int main(object me, string arg) {
     if (!wizardp(me))
         return 0;
 
-    if (!arg)
-    {
+    if (!arg) {
         print_r(get_dir("/"));
-    }
-    else if (file_size(arg) == -2)
-    {
+    } else if (file_size(arg) == -2) {
         if (arg[sizeof(arg) - 1] != '/')
             arg += "/";
         print_r(get_dir(arg));
-    }
-    else
-    {
+    } else {
         cecho(arg + " 不是一个有效目录。");
     }
 
     return 1;
 }
 
-int help(object me)
-{
+int help(object me) {
     if (!wizardp(me))
         return 0;
 

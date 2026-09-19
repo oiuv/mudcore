@@ -18,8 +18,7 @@ string *getAdversely() { return ({}); }
 int getHate() { return -4; }
 
 // Auto Kill 時，所要喊的話,$ME為NPC, $YOU為player
-string getHateMsg()
-{
+string getHateMsg() {
     return HIR "$ME憤恨地喊著：身為一名獵人實在是看不慣$YOU的作風！今天就要$YOU消失！\n" NOR;
 }
 
@@ -27,7 +26,6 @@ string getHateMsg()
 int getAdvHate() { return 3; }
 
 // 目對敵對陣營時Auto kill要喊的話, $ME為NPC, $YOU為player
-string getAdvHateMsg()
-{
+string getAdvHateMsg() {
     return "";
 }

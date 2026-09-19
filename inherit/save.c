@@ -3,12 +3,10 @@
  */
 // void create(){}
 
-int save()
-{
+int save() {
     string file;
 
-    if (stringp(file = this_object()->query_save_file()))
-    {
+    if (stringp(file = this_object()->query_save_file())) {
         assure_file(file);
         return save_object(file);
     }
@@ -16,8 +14,7 @@ int save()
     return 0;
 }
 
-int restore()
-{
+int restore() {
     string file;
 
     if (stringp(file = this_object()->query_save_file()))

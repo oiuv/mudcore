@@ -22,47 +22,43 @@ nosave int log_from;
 string query_msg_log() { return msg_log; }
 
 nosave mapping channels = ([
-    "sys" : ([
-                "msg_speak": HIR "【系统】%s：%s" NOR,
-                "msg_color": RED,
-                "only"     : "wiz",
-                "name"     : "系统",
-                "omit_log" : 1,
-            ]),
-    "msg":  ([
-                "msg_speak": HIR "【公告】%s：%s" NOR,
-                "msg_color": HIG,
-                "name"     : "公告",
-                "omit_log" : 1,
-            ]),
+    "sys": ([
+        "msg_speak": HIR "【系统】%s：%s" NOR,
+        "msg_color": RED,
+        "only": "wiz",
+        "name": "系统",
+        "omit_log": 1,
+    ]),
+    "msg": ([
+        "msg_speak": HIR "【公告】%s：%s" NOR,
+        "msg_color": HIG,
+        "name": "公告",
+        "omit_log": 1,
+    ]),
     "chat": ([
-                "msg_speak": HIC "【闲聊】%s：%s" NOR,
-                "msg_emote": HIC "【闲聊】%s" NOR,
-                "msg_color": HIC,
-                "name"     : "闲聊",
-            ]),
+        "msg_speak": HIC "【闲聊】%s：%s" NOR,
+        "msg_emote": HIC "【闲聊】%s" NOR,
+        "msg_color": HIC,
+        "name": "闲聊",
+    ]),
     "bill": ([
-                "msg_speak": HIY "【交易】%s：%s" NOR,
-                "msg_color": YEL,
-                "name"     : "交易",
-            ]),
-    "shout":([
-                "msg_speak": HIM "【广播】%s：%s" NOR,
-            ]),
+        "msg_speak": HIY "【交易】%s：%s" NOR,
+        "msg_color": YEL,
+        "name": "交易",
+    ]),
+    "shout": ([
+        "msg_speak": HIM "【广播】%s：%s" NOR,
+    ]),
 ]);
 
-void create()
-{
-}
+void create() {}
 
-string short()
-{
+string short() {
     return "频道精灵(CHANNEL_D)";
 }
 
 // 记录频道消息的日志
-void channel_log(string msg, string verb, object user)
-{
+void channel_log(string msg, string verb, object user) {
     string lfn;
     mixed lt;
     int t;
@@ -78,29 +74,25 @@ void channel_log(string msg, string verb, object user)
 
     t = time();
     msg_log += sprintf("[%s]%s\n", log_time(), remove_ansi(msg));
-    if (strlen(msg_log) > 40 || t - log_from > 20)
-    {
+    if (strlen(msg_log) > 40 || t - log_from > 20) {
         lt = localtime(t);
 
         lfn = sprintf("channel/%d-%d-%d", lt[LT_YEAR],
-                      lt[LT_MON] + 1, lt[LT_MDAY]);
+            lt[LT_MON] + 1, lt[LT_MDAY]);
         log_file(lfn, msg_log);
         msg_log = "";
         log_from = t;
     }
 }
 
-varargs int do_channel(object me, string verb, string arg, int emote)
-{
+varargs int do_channel(object me, string verb, string arg, int emote) {
     object *obs;
     string msg;
     string vb, emote_arg;
 
     // Check if this is a channel emote.
-    if (sizeof(verb) > 2)
-    {
-        if (verb[sizeof(verb) - 1] == '*')
-        {
+    if (sizeof(verb) > 2) {
+        if (verb[sizeof(verb) - 1] == '*') {
             emote = 1;
             verb = verb[0..<2];
         }
@@ -113,41 +105,33 @@ varargs int do_channel(object me, string verb, string arg, int emote)
     if (!stringp(arg) || arg == "" || arg == " ")
         arg = "...";
 
-    if (userp(me) && !wizardp(me))
-    {
-        if (verb == "msg")
-        {
+    if (userp(me) && !wizardp(me)) {
+        if (verb == "msg") {
             return notify_fail("你不能使用这个频道。\n");
         }
 
-        switch (channels[verb]["only"])
-        {
-        case "wiz":
-            return notify_fail("你不能使用这个频道。\n");
+        switch (channels[verb]["only"]) {
+            case "wiz":
+                return notify_fail("你不能使用这个频道。\n");
         }
 
         if (verb == "bill" && me->query("lv") < 20)
             return notify_fail(channels[verb]["name"] + "频道需要 20 级以后才能使用。\n");
 
-        if (time() - me->query_temp("last_use_channel") < 4)
-        {
+        if (time() - me->query_temp("last_use_channel") < 4) {
             if (me->query_temp("last_message") == arg)
                 return notify_fail("不要在短期内使用频道发布重复的信息。\n");
             me->set_temp("last_message", arg);
-        }
-        else
-        {
+        } else {
             me->set_temp("last_message", arg);
             me->set_temp("last_use_channel", time());
         }
     }
 
-    if (verb == "shout")
-    {
+    if (verb == "shout") {
         if (!arg)
             return notify_fail("你想要广播什么？\n");
-        if (!wizardp(me) && userp(me))
-        {
+        if (!wizardp(me) && userp(me)) {
             if (me->query("coin") < 100)
                 return notify_fail("你至少需要 100 金币才能广播。\n");
             me->add("coin", -100);
@@ -160,14 +144,12 @@ varargs int do_channel(object me, string verb, string arg, int emote)
         return 1;
     }
 
-    if (emote && me->is_character())
-    {
+    if (emote && me->is_character()) {
         // return notify_fail("表情系统暂未开放...\n");
         if (undefinedp(channels[verb]["msg_emote"]))
             return notify_fail("这个频道不支持发送表情。\n");
 
-        if (sscanf(arg, "%s %s", vb, emote_arg) != 2)
-        {
+        if (sscanf(arg, "%s %s", vb, emote_arg) != 2) {
             vb = arg;
             emote_arg = "";
         }
@@ -183,37 +165,35 @@ varargs int do_channel(object me, string verb, string arg, int emote)
     if (!arg || arg == "" || arg == " ")
         arg = "...";
 
-    if (emote)
-    {
+    if (emote) {
         if (!stringp(arg))
             return 0;
 
         return EMOTE_D->do_emote(me, vb, emote_arg, obs, channels[verb]["msg_emote"]);
-    }
-    else
-    {
+    } else {
         // NPC监听聊天接口
-        if (userp(me) && verb == "chat")
-        {
+        if (userp(me) && verb == "chat") {
             ROBOT_NPC->receive_report(me, verb, arg);
         }
-        msg = sprintf(channels[verb]["msg_speak"], me->short() || me->query("channel_id"), channels[verb]["msg_color"] + arg);
+        msg = sprintf(
+            channels[verb]["msg_speak"],
+            me->short() || me->query("channel_id"),
+            channels[verb]["msg_color"] + arg
+        );
         message(verb, msg, obs);
         channel_log(msg, verb, me);
     }
     return 1;
 }
 
-int filter_listener(object ppl, string only, object me)
-{
+int filter_listener(object ppl, string only, object me) {
     // Don't bother those in the login limbo.
     if (!environment(ppl))
         return 0;
 
-    switch (only)
-    {
-    case "wiz":
-        return (wizardp(ppl));
+    switch (only) {
+        case "wiz":
+            return (wizardp(ppl));
     }
 
     return 1;

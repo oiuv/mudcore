@@ -24,8 +24,7 @@ private void create() { seteuid(getuid()); }
 
 string query(string prop) { return prop == "channel_id" ? id : 0; }
 
-void receive(mapping info)
-{
+void receive(mapping info) {
     mapping m;
     // int port;
     string mid, encoding, msg;
@@ -59,14 +58,10 @@ void receive(mapping info)
         encoding = m["ENCODING"];
 
     // 需要的話進行轉碼。
-    if (encoding && encoding != MUDLIB_LOCALE)
-    {
-        if (encoding == "GB" && MUDLIB_LOCALE == "BIG5")
-        {
+    if (encoding && encoding != MUDLIB_LOCALE) {
+        if (encoding == "GB" && MUDLIB_LOCALE == "BIG5") {
             // todo
-        }
-        else if (encoding == "BIG5" && MUDLIB_LOCALE == "GB")
-        {
+        } else if (encoding == "BIG5" && MUDLIB_LOCALE == "GB") {
             //todo
         }
     }
@@ -75,28 +70,26 @@ void receive(mapping info)
     CHANNEL_D->do_channel(this_object(), info["CHANNEL"], msg, info["EMOTE"]);
 }
 
-void send(string ch, string id, string name, string msg, int emote, function flt)
-{
+void send(string ch, string id, string name, string msg, int emote, function flt) {
     string mid;
     mapping info, mud;
 
     // SECURED_INTERMUD_API;
 
     info = ([
-        "NAME"      :   MUD_NAME_INTERMUD,
-        "PORTUDP"   :   "" + INTERMUD_D->query_udp_port(),
-        "USRNAME"   :   id,
-        "CNAME"     :   name,
-        "CHANNEL"   :   ch,
-        "ENCODING"  :   MUDLIB_LOCALE,
-        "MSG"       :   msg,
+        "NAME": MUD_NAME_INTERMUD,
+        "PORTUDP": "" + INTERMUD_D->query_udp_port(),
+        "USRNAME": id,
+        "CNAME": name,
+        "CHANNEL": ch,
+        "ENCODING": MUDLIB_LOCALE,
+        "MSG": msg,
     ]);
 
     if (emote)
         info["EMOTE"] = "YES";
 
-    foreach (mid, mud in INTERMUD_D->query_mudlist())
-    {
+    foreach (mid, mud in INTERMUD_D->query_mudlist()) {
         if (!evaluate(flt, mud))
             continue;
         INTERMUD_D->send_event(mud["HOSTADDRESS"], mud["PORTUDP"], "gchannel", info);

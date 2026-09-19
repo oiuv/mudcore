@@ -3,8 +3,7 @@ inherit _CLEAN_UP;
 
 int help(object me);
 
-int main(object me, string arg)
-{
+int main(object me, string arg) {
     object file;
     if (!wizardp(me))
         return 0;
@@ -20,8 +19,7 @@ int main(object me, string arg)
     return 1;
 }
 
-int help(object me)
-{
+int help(object me) {
     write(@TEXT
 指令格式: which <命令>
 指令说明:
