@@ -2,6 +2,12 @@
 #ifndef MUDCORE_H
 #define MUDCORE_H
 
+// 框架版本；发布与兼容规则见 docs/maintenance.md。
+#define MUDCORE_VERSION       "2.0.0-dev"
+#define MUDCORE_VERSION_MAJOR 2
+#define MUDCORE_VERSION_MINOR 0
+#define MUDCORE_VERSION_PATCH 0
+
 #define ROOT_UID      "Root"
 #define BACKBONE_UID  "Backbone"
 

@@ -1,5 +1,7 @@
 # 框架能力与业务依赖边界
 
+本文记录 `2.0.0-dev` 开发线相对旧实现的兼容调整。初次接入见 [接入指南](integration.md)，升级和正式发布步骤见 [版本管理](maintenance.md)。
+
 mudcore 提供通用机制，由 MUDLIB 决定使用哪些模块、连接什么服务、何时调用。支持网络或数据库不等于依赖某个运营服务；不能通过删掉通用能力实现解耦。
 
 ## 保留的接口
@@ -31,6 +33,8 @@ HTTP 的 `get`、`post`、`head`、`ws` 入口保留。`ws` 仍仅构造升级�
 默认 `valid_database()` 仅允许 UID/EUID 均为 Root 的服务对象。SQLite 还需显式配置 `DB_SQLITE_DATABASE`，路径必须完全匹配，连接参数使用空 host/user，返回 `1` 代表允许无密码访问。其他后端要求 database/host/user 匹配 `DB_DATABASE/DB_HOST/DB_USERNAME`，且 `DB_PASSWORD` 为字符串（空字符串代表明确配置的空密码）。不配置即不允许连接。
 
 宿主可覆盖 `valid_database(caller, operation, info)` 对自己的 DAO 对象做白名单授权。FluffOS 的连接 `info` 为 `({ database, host, user })`，不含后端类型；需要限制类型的宿主应让指定 DAO 固定使用相应驱动常量（SQLite 为 `__USE_SQLITE3__`），并在 master 限制该 DAO 和数据库路径，不能假称此 apply 可以检查驱动未传入的类型。数据库组件仅对 MySQL 执行字符集初始化，不再向 SQLite 发送 MySQL 语句。
+
+数据库构造器现在统一编码值，原生 SQL 可用 `sql(sqlText, params)` 的匿名 `?` 参数；这不是驱动原生预处理接口。`groupBy()` / `having()` 开始生成实际 SQL，数组条件不再覆盖前面的筛选。字段及运算符改为受限结构输入，复杂表达式迁移到受控 SQL 模板；整数、文本和 `undefined` 分别保留数值、文本、NULL 语义。`setConnection()` 切换目标会关闭旧连接并清空查询。完整示例和兼容边界见 [数据库接口](inherit/DB.md)。
 
 `read_lines()` 保留有效行的前后空白，只去掉 CRLF 的行末 CR；过滤空行与缩进注释时才使用裁剪后的文本。预加载在解析路径时单独 `trim()`，公告等普通文本调用方无需为了本次修复自行补回缩进。
 

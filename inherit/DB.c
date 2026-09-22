@@ -40,6 +40,8 @@ nosave string *db_table_column = ({});
  * [SELECT ***]
  */
 nosave string db_sql;
+// 显式 sql() 模板与最近执行的语句分开，链式查询每次重新构造。
+nosave private string db_rawSql;
 /**
  * @brief The columns that should be returned.
  *
@@ -70,7 +72,7 @@ nosave string db_sql_orders;
  * @brief The maximum number of records to return.
  *
  */
-nosave int db_sql_limit;
+nosave int db_sql_limit = -1;
 /**
  * @brief The number of records to skip.
  *
@@ -82,6 +84,10 @@ nosave int db_distinct;
 nosave int db_inRandomOrder;
 nosave int db_withColumn;
 nosave int db_autoClose = 1;
+
+varargs mixed close(int flag);
+void resetSql();
+#include "db_sql.h"
 /**
  * @brief 数据库连接初始化
  *
@@ -110,6 +116,8 @@ varargs void create(string host, string db, string user, int type) {
  * @param db
  */
 void setConnection(mapping db) {
+    close(1);
+    resetSql();
     db_host = db["host"];
     db_db = db["database"];
     db_user = db["user"];
@@ -131,13 +139,16 @@ void resetSql() {
     db_withColumn = 0;
     db_distinct = 0;
     db_sql = "";
+    db_rawSql = 0;
+    db_table = 0;
+    db_table_column = ({});
     db_sql_columns = "*";
     db_sql_where = "";
     db_sql_wheres = ({});
     db_sql_groups = "";
     db_sql_havings = "";
     db_sql_orders = "";
-    db_sql_limit = 0;
+    db_sql_limit = -1;
     db_sql_offset = 0;
     db_inRandomOrder = 0;
 }
@@ -146,9 +157,15 @@ void resetSql() {
  *
  * @return this_object()
  */
-object sql(string sql) {
+varargs object sql(string sql, mixed *bindings) {
+    string prepared;
+
+    if (!stringp(sql)) error("SQL template must be a string.\n");
+    if (bindings && !arrayp(bindings)) error("SQL bindings must be an array.\n");
+    prepared = arrayp(bindings) ? bindSql(sql, bindings) : sql;
     resetSql();
-    db_sql = sql;
+    db_rawSql = prepared;
+    db_sql = prepared;
 
     return this_object();
 }
@@ -160,7 +177,7 @@ object sql(string sql) {
  */
 object table(string table) {
     resetSql();
-    db_table = table;
+    db_table = sqlIdentifier(table);
 
     return this_object();
 }
@@ -182,205 +199,112 @@ object distinct() {
  * @return string
  */
 string implodeX(mixed *arr, string del) {
-    string s = "";
+    string *result;
+    mixed value;
 
-    foreach (mixed x in arr) {
-        // debug_message(typeof(x));
-        switch (typeof(x)) {
-            case "int":
-            case "float":
-                s += x + del;
-                break;
-            default:
-                s += "'" + x + "'" + del;
-                break;
-        }
-    }
-
-    return s[0..<sizeof(del) + 1];
+    result = ({});
+    foreach (value in arr) result += ({ sqlValue(value) });
+    return implode(result, del);
 }
-/**
- * @brief where条件查询处理
- *
- * @param where
- * @param boolean 条件关系" AND "、" OR "...
- */
+
+// 数组条件作为一组追加，保留已有条件，避免多次调用互相覆盖。
 void addArrayOfWheres(mixed *where, string boolean) {
-    foreach (mixed *x in where) {
-        if (arrayp(x) && sizeof(x) == 2) {
-            db_sql_wheres += ({ x[0] + "='" + x[1] + "'" });
-        } else if (arrayp(x) && sizeof(x) == 3) {
-            db_sql_wheres += ({ x[0] + " " + x[1] + " '" + x[2] + "'" });
-        }
+    string *conditions;
+    mixed item;
+
+    if (!sizeof(where)) error("SQL condition group cannot be empty.\n");
+    conditions = ({});
+    foreach (item in where) {
+        if (!arrayp(item)) error("SQL condition group must contain arrays.\n");
+        conditions += ({ sqlCondition(item) });
     }
-    if (boolean == " OR ") {
-        db_sql_where += " OR " + implode(db_sql_wheres, " AND ");
-    } else {
-        db_sql_where = implode(db_sql_wheres, " AND ");
-    }
+    appendWhere("(" + implode(conditions, " AND ") + ")", boolean);
 }
 
 object where(mixed *x...) {
-    // debug_message(sprintf("%O", x));
-    if (sizeof(db_sql_where)) {
-        db_sql_where += " AND ";
-    }
-    if (arrayp(x[0])) {
-        addArrayOfWheres(x[0], " AND ");
-    } else if (sizeof(x) == 2) {
-        db_sql_where += x[0] + "='" + x[1] + "'";
-    } else if (sizeof(x) == 3) {
-        db_sql_where += x[0] + " " + x[1] + " '" + x[2] + "'";
-    }
-
+    if (sizeof(x) == 1 && arrayp(x[0])) addArrayOfWheres(x[0], "AND");
+    else appendWhere(sqlCondition(x), "AND");
     return this_object();
 }
 
 object orWhere(mixed *x...) {
-    if (arrayp(x[0])) {
-        addArrayOfWheres(x[0], " OR ");
-    } else if (sizeof(x) == 2) {
-        db_sql_where += " OR " + x[0] + "='" + x[1] + "'";
-    } else if (sizeof(x) == 3) {
-        db_sql_where += " OR " + x[0] + " " + x[1] + " '" + x[2] + "'";
-    }
+    if (sizeof(x) == 1 && arrayp(x[0])) addArrayOfWheres(x[0], "OR");
+    else appendWhere(sqlCondition(x), "OR");
+    return this_object();
+}
 
+private object addBetween(string column, mixed *values, int not, string boolean) {
+    string condition;
+
+    if (!arrayp(values) || sizeof(values) != 2) error("BETWEEN requires two values.\n");
+    condition = sqlColumn(
+        column,
+        0
+    ) + (not ? " NOT BETWEEN " : " BETWEEN ") + sqlValue(values[0]) + " AND " + sqlValue(values[1]);
+    appendWhere(condition, boolean);
     return this_object();
 }
 
 varargs object whereBetween(string column, mixed *x, int not) {
-    string between = " BETWEEN ";
-
-    if (not) {
-        between = " NOT BETWEEN ";
-    }
-
-    if (sizeof(db_sql_where)) {
-        db_sql_where += " AND ";
-    }
-
-    if (sizeof(x) == 2) {
-        db_sql_where += column + between + x[0] + " AND " + x[1];
-    }
-
-    return this_object();
+    return addBetween(column, x, not, "AND");
 }
-
-object whereNotBetween(string column, mixed *x) {
-    return whereBetween(column, x, 1);
-}
-
+object whereNotBetween(string column, mixed *x) { return addBetween(column, x, 1, "AND"); }
 varargs object orWhereBetween(string column, mixed *x, int not) {
-    string between = " BETWEEN ";
+    return addBetween(column, x, not, "OR");
+}
+object orWhereNotBetween(string column, mixed *x) { return addBetween(column, x, 1, "OR"); }
 
-    if (not) {
-        between = " NOT BETWEEN ";
-    }
-
-    if (sizeof(x) == 2) {
-        db_sql_where += " OR " + column + between + x[0] + " AND " + x[1];
-    }
-
+private object addNull(string column, int not, string boolean) {
+    appendWhere(sqlColumn(column, 0) + (not ? " IS NOT NULL" : " IS NULL"), boolean);
     return this_object();
 }
 
-object orWhereNotBetween(string column, mixed *x) {
-    return orWhereBetween(column, x, 1);
-}
+varargs object whereNull(string column, int not) { return addNull(column, not, "AND"); }
+object whereNotNull(string column) { return addNull(column, 1, "AND"); }
+varargs object orWhereNull(string column, int not) { return addNull(column, not, "OR"); }
+object orWhereNotNull(string column) { return addNull(column, 1, "OR"); }
 
-varargs object whereNull(string column, int not) {
-    string null = " IS NULL";
+private object addIn(string column, mixed *values, int not, string boolean) {
+    string field, condition;
 
-    if (not) {
-        null = " IS NOT NULL";
-    }
-
-    if (sizeof(db_sql_where)) {
-        db_sql_where += " AND ";
-    }
-
-    db_sql_where += column + null;
-
+    field = sqlColumn(column, 0);
+    if (!arrayp(values)) error("IN requires an array.\n");
+    // 空集合不产生无效 SQL，IN 恒假，NOT IN 恒真。
+    condition = sizeof(values) ? field + (not ? " NOT IN (" : " IN (") + implodeX(
+        values,
+        ","
+    ) + ")" : (not ? "1=1" : "1=0");
+    appendWhere(condition, boolean);
     return this_object();
 }
 
-object whereNotNull(string column) {
-    return whereNull(column, 1);
-}
+varargs object whereIn(string column, mixed *x, int not) { return addIn(column, x, not, "AND"); }
+object whereNotIn(string column, mixed *x) { return addIn(column, x, 1, "AND"); }
+varargs object orWhereIn(string column, mixed *x, int not) { return addIn(column, x, not, "OR"); }
+object orWhereNotIn(string column, mixed *x) { return addIn(column, x, 1, "OR"); }
 
-varargs object orWhereNull(string column, int not) {
-    string null = " IS NULL";
-
-    if (not) {
-        null = " IS NOT NULL";
-    }
-
-    db_sql_where += " OR " + column + null;
-
-    return this_object();
-}
-
-object orWhereNotNull(string column) {
-    return orWhereNull(column, 1);
-}
-
-object whereIn(string column, mixed *x, int not) {
-    string notin = " IN ";
-
-    if (not) {
-        notin = " NOT IN ";
-    }
-
-    if (sizeof(db_sql_where)) {
-        db_sql_where += " AND ";
-    }
-
-    db_sql_where += column + notin + "(" + implodeX(x, ",") + ")";
-
-    return this_object();
-}
-
-object whereNotIn(string column, mixed *x) {
-    return whereIn(column, x, 1);
-}
-
-object orWhereIn(string column, mixed *x, int not) {
-    string notin = " IN ";
-
-    if (not) {
-        notin = " NOT IN ";
-    }
-
-    db_sql_where += " OR " + column + notin + "(" + implodeX(x, ",") + ")";
-
-    return this_object();
-}
-
-object orWhereNotIn(string column, mixed *x) {
-    return orWhereIn(column, x, 1);
-}
-/**
- * @brief 分组
- *
- * @param column
- * @return object
- */
 object groupBy(string *column...) {
-    // todo
+    string *groups;
+    string field;
+
+    if (!sizeof(column)) error("GROUP BY requires at least one column.\n");
+    groups = ({});
+    foreach (field in column) groups += ({ sqlIdentifier(field) });
+    db_sql_groups += (sizeof(db_sql_groups) ? "," : "") + implode(groups, ",");
     return this_object();
 }
-/**
- * @brief 分组过滤
- *
- * @param column
- * @param operator
- * @param value
- * @param boolean
- * @return object
- */
-object having(string column, string operator, mixed value, string boolean) {
-    // todo
+
+varargs object having(string column, string operator, mixed value, string boolean) {
+    string condition, op;
+
+    condition = sqlCondition(({ column, operator, value }));
+    op = sqlBoolean(boolean);
+    db_sql_havings += (sizeof(db_sql_havings) ? " " + op + " " : "") + condition;
     return this_object();
+}
+
+object orHaving(string column, string operator, mixed value) {
+    return having(column, operator, value, "OR");
 }
 /**
  * @brief 排序
@@ -390,7 +314,10 @@ object having(string column, string operator, mixed value, string boolean) {
  * @return object
  */
 varargs object orderBy(string column, string order) {
+    string field;
+
     if (!nullp(column)) {
+        field = sqlColumn(column, 0);
         if (!stringp(order) || member_array(lower_case(order), ({ "asc", "desc" })) < 0) {
             order = "ASC";
         }
@@ -398,7 +325,7 @@ varargs object orderBy(string column, string order) {
             db_sql_orders += ",";
         }
 
-        db_sql_orders += column + " " + upper_case(order);
+        db_sql_orders += field + " " + upper_case(order);
     }
 
     return this_object();
@@ -416,6 +343,7 @@ object inRandomOrder() {
  * @return object
  */
 object limit(int n) {
+    if (n < 0) error("LIMIT must not be negative.\n");
     db_sql_limit = n;
 
     return this_object();
@@ -427,6 +355,7 @@ object limit(int n) {
  * @return object
  */
 object offset(int n) {
+    if (n < 0) error("OFFSET must not be negative.\n");
     db_sql_offset = n;
 
     return this_object();
@@ -445,36 +374,32 @@ object with(string str) {
     return this_object();
 }
 
-// 构造条件语句
-private void db_sql_bindings() {
-    if (sizeof(db_sql_where)) {
-        db_sql += " WHERE " + db_sql_where;
-    }
+// 构造完整语句后再执行；校验失败不能留下半条 UPDATE/DELETE。
+private varargs string db_sql_bindings(string query, int writeQuery, int firstOnly) {
+    int rowLimit;
 
-    if (sizeof(db_sql_orders)) {
-        db_sql += " ORDER BY " + db_sql_orders;
+    rowLimit = db_sql_limit;
+    if (firstOnly && (rowLimit < 0 || rowLimit > 1)) rowLimit = 1;
+    if (db_sql_offset && rowLimit < 0) error("OFFSET requires LIMIT.\n");
+    if (writeQuery && (sizeof(db_sql_groups) || sizeof(db_sql_havings)))
+        error("GROUP BY and HAVING are only supported for SELECT.\n");
+    if (sizeof(db_sql_where)) query += " WHERE " + db_sql_where;
+    if (!writeQuery && sizeof(db_sql_groups)) query += " GROUP BY " + db_sql_groups;
+    if (!writeQuery && sizeof(db_sql_havings)) query += " HAVING " + db_sql_havings;
+    if (sizeof(db_sql_orders)) query += " ORDER BY " + db_sql_orders;
+    if (rowLimit >= 0) {
+        query += " LIMIT " + rowLimit;
+        if (db_sql_offset) query += " OFFSET " + db_sql_offset;
     }
-
-    if (db_sql_limit) {
-        db_sql += " LIMIT " + db_sql_limit;
-
-        if (db_sql_offset) {
-            db_sql += " OFFSET " + db_sql_offset;
-        }
-    }
+    return query;
 }
-// 构造查询语句
-private string db_sql() {
-    if (!sizeof(db_sql)) {
-        if (db_distinct) {
-            db_sql_columns = "DISTINCT " + db_sql_columns;
-        }
 
-        db_sql = "SELECT " + db_sql_columns + " FROM " + db_table;
-        db_sql_bindings();
-    }
-
-    return db_sql;
+// 原始 SQL 保持原样；构造器不复用上一次执行的 SQL。
+private varargs string db_sql(int firstOnly) {
+    if (stringp(db_rawSql)) return db_rawSql;
+    if (!stringp(db_table)) error("Call table() or sql() before executing a query.\n");
+    return db_sql_bindings("SELECT " + (db_distinct ? "DISTINCT " : "") +
+        db_sql_columns + " FROM " + db_table, 0, firstOnly);
 }
 /**
  * @brief 连接数据库并返回handle
@@ -514,14 +439,18 @@ varargs mixed close(int flag) {
  * @brief 执行SQL语句并返回结果行数
  *
  */
-varargs mixed exec() {
+private mixed executeQuery(string query) {
     mixed rows;
+
+    db_error = 0;
+    db_table_column = ({});
+    db_sql = query;
     // 连接数据库
     if (stringp(connect())) {
         return db_error;
     }
     // 执行SQL语句
-    rows = db_exec(db_handle, db_sql());
+    rows = db_exec(db_handle, query);
     /* error */
     if (stringp(rows)) {
         close();
@@ -533,21 +462,32 @@ varargs mixed exec() {
     return rows;
 }
 
+varargs mixed exec() {
+    return executeQuery(db_sql());
+}
+
+// 某些 SQLite 驱动把执行失败也返回为 0，读取接口还必须确认列元数据。
+private int hasResultColumns() {
+    if (arrayp(db_table_column) && sizeof(db_table_column)) return 1;
+    close();
+    db_error = "Database query returned no column metadata.";
+    return 0;
+}
+
 varargs mixed get(string *columns...) {
     mixed rows, *res;
+    int i;
 
-    if (sizeof(columns)) {
-        db_sql_columns = implode(columns, ",");
-    }
+    db_sql_columns = sizeof(columns) ? sqlColumns(columns) : "*";
 
     rows = exec();
     /* error */
-    if (stringp(db_error)) {
+    if (stringp(db_error) || !hasResultColumns()) {
         return db_error;
     }
 
     res = allocate(rows);
-    for (int i = 1; i <= rows; i++) {
+    for (i = 1; i <= rows; i++) {
         res[i - 1] = db_fetch(db_handle, i);
     }
     close();
@@ -563,20 +503,16 @@ varargs mixed get(string *columns...) {
 }
 
 mixed pluck(string column) {
-    mixed *res, *arr = ({});
-    int index;
+    mixed res, *arr;
+    int index, start, i;
 
-    db_sql_columns = column;
-    res = get();
-    /* error */
-    if (stringp(db_error)) {
-        return db_error;
-    }
-    index = member_array(column, db_table_column);
-    for (int i = 0; i < sizeof(res); i++) {
-        arr += ({ res[i][index] });
-    }
-
+    res = get(column);
+    if (stringp(db_error)) return db_error;
+    index = stringp(db_rawSql) ? member_array(column, db_table_column) : 0;
+    if (index < 0) return db_error = "Requested column is not in the query result.";
+    start = db_withColumn ? 1 : 0;
+    arr = allocate(sizeof(res) - start);
+    for (i = start; i < sizeof(res); i++) arr[i - start] = res[i][index];
     return arr;
 }
 
@@ -584,16 +520,18 @@ varargs mixed first(string *columns...) {
     mixed rows, *res;
     int i = 1;
 
-    if (sizeof(columns)) {
-        db_sql_columns = implode(columns, ",");
-    }
+    db_sql_columns = sizeof(columns) ? sqlColumns(columns) : "*";
 
-    rows = exec();
+    rows = executeQuery(db_sql(!db_inRandomOrder));
     /* error */
-    if (stringp(db_error)) {
+    if (stringp(db_error) || !hasResultColumns()) {
         return db_error;
     }
 
+    if (!rows) {
+        close();
+        return ({});
+    }
     if (db_inRandomOrder) {
         i = random(rows) + 1;
     }
@@ -608,14 +546,14 @@ mixed find(int id) {
 }
 
 mixed value(string column) {
-    mixed *res = first(column);
-    int index = member_array(column, db_table_column);
+    mixed result;
+    int index;
 
-    if (sizeof(res)) {
-        return res[index];
-    }
-
-    return "";
+    result = first(column);
+    if (stringp(result)) return result;
+    index = stringp(db_rawSql) ? member_array(column, db_table_column) : 0;
+    if (index < 0) return db_error = "Requested column is not in the query result.";
+    return sizeof(result) ? result[index] : "";
 }
 
 /**
@@ -627,24 +565,22 @@ mixed value(string column) {
  */
 private mixed aggregate(string func, mixed column) {
     mixed rows, *res;
+    string query, expression;
 
-    if (column) {
-        db_sql = "SELECT " + func + "(" + column + ") FROM " + db_table;
-        db_sql_bindings();
-    } else {
-        return "";
+    if (!column) return "";
+    if (!stringp(db_table)) error("Call table() before an aggregate query.\n");
+    expression = intp(column) ? sprintf("%d", column) : sqlColumn(column, 0);
+    if (db_distinct && stringp(column) && column != "*") expression = "DISTINCT " + expression;
+    query = "SELECT " + func + "(" + expression + ") FROM " + db_table;
+    rows = executeQuery(db_sql_bindings(query));
+    if (stringp(db_error) || !hasResultColumns()) return db_error;
+    if (!rows) {
+        close();
+        return 0;
     }
-
-    rows = exec();
-    /* error */
-    if (stringp(db_error)) {
-        return db_error;
-    }
-
     res = db_fetch(db_handle, 1);
     close();
-
-    return res[0];
+    return arrayp(res) && sizeof(res) ? res[0] : 0;
 }
 
 varargs mixed count(mixed column) {
@@ -676,64 +612,50 @@ mixed sum(string column) {
  *
  */
 mixed insert(mapping m) {
-    // 构造插入语句
-    db_sql = "INSERT INTO " + db_table + " (" + implode(
-        keys(m),
+    string *columns, *fields, *encoded;
+    string column, query;
+
+    if (!stringp(db_table)) error("Call table() before INSERT.\n");
+    if (!sizeof(m)) error("INSERT requires at least one field.\n");
+    columns = keys(m);
+    fields = ({});
+    encoded = ({});
+    foreach (column in columns) {
+        fields += ({ sqlIdentifier(column) });
+        encoded += ({ sqlValue(m[column]) });
+    }
+    query = "INSERT INTO " + db_table + " (" + implode(
+        fields,
         ","
-    ) + ") VALUES (" + implodeX(values(m), ",") + ")";
-    //执行SQL
-    exec();
-    /* error */
-    if (stringp(db_error)) {
-        return db_error;
-    }
+    ) + ") VALUES (" + implode(encoded, ",") + ")";
+    executeQuery(query);
+    if (stringp(db_error)) return db_error;
     close();
-
     return 1;
 }
 
-/**
- * @brief 更新
- *
- */
 mixed update(mapping m) {
+    string *assignments;
+    string query;
     mixed key, value;
-    string sql = "";
-    foreach (key, value in m) {
-        value = typeof(value) == "string" ? "'" + value + "'" : value;
-        sql += key + "=" + value + ",";
-    }
-    sql = sql[0..<2];
-    // 构造更新语句
-    db_sql = "UPDATE " + db_table + " SET " + sql;
-    db_sql_bindings();
-    //执行SQL
-    exec();
-    /* error */
-    if (stringp(db_error)) {
-        return db_error;
-    }
-    close();
 
+    if (!stringp(db_table)) error("Call table() before UPDATE.\n");
+    if (!sizeof(m)) error("UPDATE requires at least one field.\n");
+    assignments = ({});
+    foreach (key, value in m)
+        assignments += ({ sqlIdentifier(key) + "=" + sqlValue(value) });
+    query = "UPDATE " + db_table + " SET " + implode(assignments, ",");
+    executeQuery(db_sql_bindings(query, 1));
+    if (stringp(db_error)) return db_error;
+    close();
     return 1;
 }
 
-/**
- * @brief 删除
- *
- */
 mixed delete() {
-    // 构造删除语句
-    db_sql = "DELETE FROM " + db_table;
-    db_sql_bindings();
-    //执行SQL
-    exec();
-    /* error */
-    if (stringp(db_error)) {
-        return db_error;
-    }
+    if (!stringp(db_table)) error("Call table() before DELETE.\n");
+    executeQuery(db_sql_bindings("DELETE FROM " + db_table, 1));
+    if (stringp(db_error)) return db_error;
     close();
-
     return 1;
 }
 

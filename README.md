@@ -4,11 +4,11 @@
 
 LPMUD游戏开发框架核心代码，仅仅包括核心代码，可以在此基础上开发任何MUD，本框架需配合 FluffOS utf-8版使用。
 
-当前版本：`v1.6.*`
+当前开发版本：`2.0.0-dev`，由 [MUDCORE_VERSION](include/mudcore.h) 定义；正式发布前保留 `-dev`。变更见 [更新日志](CHANGELOG.md)，版本规则见 [版本管理](docs/maintenance.md)。
 
 这个项目的诞生源于我的[LPC零基础开发教程](https://bbs.mud.ren)，在写教程的过程中，发现很多同学并不关心底层细节，只想能直接开发游戏项目，国内绝大多数MUD游戏都是《东方故事2》底层，在已有MUD基础上修改的优点是可以快速上手，但这个算不上独立的游戏框架。能不能把底层独立出来，开发任何类型的MUD都可以使用？在思考后，我开始了这个项目，特色是只提供底层代码和接口，几乎不提供任何游戏性的内容，独立于游戏项目之外，只需简单配置即可实现MUD游戏开发。
 
-> 本项目不考虑旧版驱动的兼容性，只支持 FluffOS v2019 以后的版本。
+> 面向 UTF-8 FluffOS。框架生产源码默认使用 `.c`，仅测试代码可使用 `.lpc`；具体模块仍需对应的驱动 efun 和可选包。接入要求见 [兼容说明](docs/integration.md#源文件与驱动能力)。
 
  - 框架下载地址：https://github.com/mudcore/mudcore
  - 国内镜像地址：https://gitee.com/mudcore/mudcore
@@ -31,112 +31,30 @@ LPMUD游戏开发框架核心代码，仅仅包括核心代码，可以在此基
 
 ## 框架使用说明
 
-### 安装
+新项目推荐从 [minimud 基础模板](https://github.com/mudcore/mud) 开始：
 
-如果你是新项目使用mudcore框架，请直接使用[mudcore项目模板](https://github.com/mudcore/mud)安装：
-
-```bash
+```sh
 git clone --recurse-submodules https://github.com/mudcore/mud.git
 ```
 
-如果是已有MUD集成框架，请把本框架放在你的MUD项目中（保持默认目录名称 `mudcore`），推荐安装方式：
+已有 Git 项目可在宿主根目录添加框架子模块：
 
-1. 如果你的游戏使用git管理，请添加框架为子模块：
-
-```bash
-git submodule add https://github.com/mudcore/mudcore.git
-```
-2. 如果你的游戏没有使用git管理，请在游戏目录直接安装框架：
-
-```bash
-git clone https://github.com/mudcore/mudcore.git
+```sh
+git submodule add https://github.com/mudcore/mudcore.git mudcore
 ```
 
-### 配置
+未使用 Git 子模块的项目也可单独克隆框架到 `mudcore/`。保留宿主自己的脚本、配置、玩法与玩家数据，定制优先通过继承和别名覆盖完成。
 
-如果你使用[mudcore项目模板](https://github.com/mudcore/mud)安装，不需要做任何配置可直接运行，否则请按以下配置集成框架到你的MUD游戏中：
+- [框架接入与扩展](docs/integration.md)：新项目最小接入、已有 MUD 按需集成、宏覆盖及三类配置。
+- [版本管理与升级验证](docs/maintenance.md)：版本宏、兼容升级、验证和子模块同步顺序。
+- [开发文档索引](docs/README.md)：登录、命令、数据库、网络及其他模块。
+- [隔离回归测试](tests/README.md)：默认实现与宿主覆盖测试，不读取实际玩家数据。
 
-1. 运行时配置文件<config.ini>中定义包含mudcore框架文件目录：
-
-```ini
-include directories : /include:/mudcore/include
-```
-
-2. 全局包含头文件<globals.h>中做如下配置：
-
-```c
-// 定义日志目录
-#define LOG_DIR "/log/"
-
-// 定义存档目录
-#define DATA_DIR "/data/"
-
-// 引用框架头文件(放在最后)
-#include <mudcore.h>
-```
-
-对新MUD开发，如果不想使用框架提供的登录注册功能，请在 <globals.h> 中定义连线对象`LOGIN_OB` 和 `USER_OB` 指向自己实现功能的文件。
-
-如果需要预加载，请定义 `PRELOAD` 并指定文件位置，在对应文件内列出预加载对象文件，如果需要加载目录下所有文件，直接在文件中列表目录即可，如：
-
-```
-# 自动载入指定目录中的守护进程（不包括子目录）
-/system/daemons/
-# 自动更新系统头文件
-/mudcore/system/daemons/header_d.c
-```
-
-如果使用系统自带注册登录系统，但想使用个人的欢迎界面，请定义 `MOTD` 并指定位置，如果需要更多的玩家信息初始化，可以定义 `CHAR_D` 并从 `setup()` 方法中初始化。
-
-如果要使用框架提供的指令系统，请在<globals.h>中做如下示例定义：
-
-```c
-// 管理员
-#define WIZARD "mudren"
-
-// 管理员指令路径
-#define CMD_PATH_WIZ ({"/cmds/wiz/", "/mudcore/cmds/wizard/"})
-
-// 玩家指令路径
-#define CMD_PATH_STD ({"/cmds/std/", "/mudcore/cmds/player/"})
-
-```
-
-指令需要实现以下方法：
-
-```c
-int main(object me, string arg)
-{
-    // todo 指令功能
-
-    return 1;
-}
-
-int help(object me)
-{
-    // todo 指令使用说明
-
-    return 1;
-}
-```
-
-3. 主控对象文件继承框架对象（可选）：
-
-```c
-inherit CORE_MASTER_OB;
-```
-
-4. 模拟外部函数文件继承框架对象（可选）：
-
-```c
-inherit CORE_SIMUL_EFUN_OB;
-```
-
-> 提示：请务必不要直接修改 `mudcore` 的任何代码，如果需要增加功能，请通过继承和覆盖的方式实现。
-
-使用泥芯框架从零开始开发新游戏详细示例教程：https://bbs.mud.ren/threads/66
+模板已提供基本入口文件，仍需准备可用驱动，并由运维在开放注册前完成管理员账号初始化。已有 MUD 无需整体替换原来的 master、登录和安全策略。
 
 ## 框架目录结构
+
+下表的目录与文件路径相对 `mudcore/`；实际对象路径包含框架目录前缀，默认是 `/mudcore/`。
 
 目录|说明
 -|-
@@ -148,7 +66,7 @@ system|系统文件目录
 verbs|框架提供的基本parser指令
 world|框架示例世界环境
 
-#### system系统目录
+### system 系统目录
 
 目录|说明
 -|-
@@ -227,7 +145,7 @@ CORE_VRM|/inherit/vrm.c|随机迷宫功能接口，实现随机迷宫功能
 
 ### 守护进程(Daemons)
 
-守护进程是独立出来的系统服务，每个进程有自己的API可以调用，具体参考 `/docs/dameons/` 目录。
+守护进程是独立出来的系统服务，每个进程有自己的API可以调用，具体参考 [docs/daemons/](docs/daemons/) 目录。
 
 名称|文件路径|核心功能
 -|-|-
@@ -284,11 +202,11 @@ chinese_number|返回中文数字
 chinese|返回指定字符串的中文名称
 color_cat|彩色输出内容到屏幕
 color_len|统计字符串中颜色占用的长度
-config|读取或设置游戏自定义配置的值(`/config.json`)
+config|读取并缓存游戏自定义 JSON 配置(`/config.json`)
 debug|随机颜色输出内容至驱动控制台
 deep_path_list|获取指定目录及子目录下的文件列表
 element_of_weighted|根据权重随机返回元素，权重高机率大
-env|读取或设置游戏自定义配置的值(`/data/.env`)
+env|读取游戏配置或修改 ENV_D 内存中的值；不自动写回 `/data/.env`
 expand_keys|把键为数组的映射展示
 file_exists|判断文件是否存在
 getcid|返回复制对象的ID

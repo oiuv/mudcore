@@ -1,818 +1,213 @@
-虽然MUD游戏多数只使用到`save_object()`存档数据，但总有一些情况我们需要使用到mysql，存一些必要的数据到数据库中，LPC中提供了数据库操作的核心函数：`db_connect`、`db_exec`、`db_fetch`、`db_close`、`db_status`，可以满足我们所有数据库操作的需求，比如，像在游戏中读取bbs.mud.ren论坛的帖子，可以用以下代码实现：
+# 数据库接口与授权
+
+`CORE_DB`（`/mudcore/inherit/DB`）提供数据库连接和链式 SQL 构造，也可通过宿主可覆盖的 `_DB` 使用。支持哪些后端取决于 FluffOS 编译选项，不要求连接外部服务；SQLite 可以只使用宿主本地文件。
+
+## 驱动与权限前提
+
+驱动需要启用 `__PACKAGE_DB__` 和所选后端。创建对象或调用 `setConnection()` 只设置连接参数，执行查询时才实际连接；指定参数不等于获得 master 授权。
+
+默认 master 的 `valid_database()` 要求数据库调用对象的 UID、EUID 均为 `ROOT_UID`，并校验显式配置的目标：
+
+| 后端 | 默认授权条件 |
+| --- | --- |
+| SQLite | 配置非空 `DB_SQLITE_DATABASE`，请求路径完全一致，使用空 host/user |
+| 其他后端 | database、host、user 与 `DB_DATABASE`、`DB_HOST`、`DB_USERNAME` 一致，且 `DB_PASSWORD` 为字符串 |
+
+未配置目标时拒绝连接。SQLite 的允许结果为 `1`，表示允许无密码连接；整数 `0` 表示拒绝。其他后端允许显式配置空字符串密码，但不等同于缺少密码配置。
+
+宿主有自己的 master 时，应按自己的 DAO 对象和目标授权。驱动传给连接检查的 `info` 是 `({ database, host, user })`，不含后端类型；由指定 DAO 固定后端，并在 master 限制调用者及目标，不要把 `setConnection()` 当作权限检查。
+
+## 连接配置
+
+### SQLite
+
+在宿主 `DATA_DIR + ".env"` 中按需配置：
+
+```text
+DB_SQLITE_DATABASE : /data/game.sqlite
+```
+
+已获授权的服务对象可创建并配置组件。以下是函数体片段，`db` 供后续查询使用：
 
 ```c
-// 读取论坛内容
-varargs string content(int id, string host, string db, string user)
-{
-#ifdef __PACKAGE_DB__
-    if (id)
-    {
-        mixed handle;
+object db;
 
-        if (stringp(host) && stringp(db) && stringp(user))
-        {
-            handle = db_connect(host, db, user);
-        }
-        else
-        {
-            handle = db_connect("127.0.0.1", "mudren", "root");
-        }
-
-        if (stringp(handle)) /* error */
-            return handle;
-        else
-        {
-            mixed rows;
-
-            db_exec(handle, "set names utf8"); // 防止乱码
-            rows = db_exec(handle, "SELECT markdown FROM contents WHERE contentable_type LIKE '%Thread' AND contentable_id='" + id + "'");
-            if (!rows)
-            {
-                db_close(handle);
-                return "";
-            }
-            else if (stringp(rows)) /* error */
-            {
-                db_close(handle);
-                return rows;
-            }
-            else
-            {
-                mixed *res;
-                string content = "";
-
-                for (int i = 1; i <= rows; i++)
-                {
-                    res = db_fetch(handle, i);
-                    // write(res[0] + "\n");
-                    content += res[0];
-                }
-                db_close(handle);
-                return content;
-            }
-        }
-    }
-    else
-    {
-        return "请指定主题ID~";
-    }
-#else
-    return "注意：数据库功能被禁用，无法读取论坛内容。";
-#endif
-}
+db = new(CORE_DB);
+db->setConnection(([
+    "host": "",
+    "database": "/data/game.sqlite",
+    "user": "",
+    "type": __USE_SQLITE3__
+]));
 ```
 
-代码看起来有一点多，想不想更优雅的操作数据库？看看以下实现相同功能的代码：
+`__USE_SQLITE3__` 仅在驱动启用对应后端时可用；可选代码需要相应条件编译。路径应符合宿主文件权限且父目录存在。`DB_SQLITE_DATABASE` 用于默认 master 授权，并不会自动替代组件的 `database` 参数。
 
-```c
-inherit CORE_DB;
-// 读取论坛内容
-varargs string content(int id, string host, string db, string user)
-{
-#ifdef __PACKAGE_DB__
-    if (id)
-    {
-        string content;
+### MySQL 等服务端数据库
 
-        if (stringp(host) && stringp(db) && stringp(user))
-        {
-            DB::setConnection(([
-                "host":host,
-                "database":db,
-                "user":user,
-            ]));
-        }
-        content = DB::table("contents")->where(({({"contentable_type", "LIKE", "%Thread"}), ({"contentable_id", id})}))->value("markdown");
+宿主 `.env` 使用冒号格式，以下值为占位示例，应替换为自己的连接信息：
 
-        return content;
-    }
-    else
-    {
-        return "请指定主题ID~";
-    }
-#else
-    return "注意：数据库功能被禁用，无法读取论坛内容。";
-#endif
-}
-```
-
-
-这个数据库API文件已集成在FluffOS驱动的STD代码中:[database.c]( https://github.com/fluffos/fluffos/blob/master/testsuite/std/database.c),可以直接复制这个文件到自己的LIB中使用然后继承`inherit DATABASE;`使用。
-
-泥芯框架v1.3版开始自动提供这个API，可以`inherit CORD_DB;`使用。
-
-API文档介绍如下：
-
-----
-
-## 基础配置
-
-方式一：使用mudcore框架
-
-当你需要使用数据库增删改查功能时，可直接使用`CORE_DB`(`/mudcore/inherit/DB`)：
-
-首先，在你的`/data/`目录中新增环境配置文件`.env`（如果你用git做版本管理，这个文件一定要加到.gitignore中），文件内容增加以下配置：
-
-```
+```text
 DB_HOST : 127.0.0.1
-DB_DATABASE : mud
-DB_USERNAME : root
-DB_PASSWORD : root
+DB_DATABASE : game
+DB_USERNAME : game_user
+DB_PASSWORD : 请替换为实际密码
 ```
 
-注意，`.env`文件中只是指定了数据库默认配置，如果不使用文件配置，也可以在初始化时配置。
+`new(CORE_DB)` 默认读取前三项，并使用驱动 `__DEFAULT_DB__`。需要显式选择时使用 `setConnection()` 的 `type` 或构造参数：
 
 ```c
-void test()
-{
-    /**
-     * @brief 初始化数据库连接
-     *
-     */
-    object DB = new(CORE_DB, host, db, user);
+object db;
 
-    // ...
-}
+db = new(CORE_DB, "127.0.0.1", "game", "game_user", __USE_MYSQL__);
 ```
 
-或者使用 `setConnection()` 方法配置数据库：
+密码由 master 的 `valid_database()` 提供，不是 `setConnection()` 的字段。不要将实际凭据写入源码或提交 `.env`。模块只对 MySQL 执行 `set names utf8mb4` 初始化。
 
-```c
-void test()
-{
-    object DB = new(CORE_DB);
-    mapping db = ([
-        "host":"127.0.0.1",
-        "database":"mud",
-        "user":"root",
-    ]);
-    DB->setConnection(db);
-}
-```
+### 公共配置方法
 
-上以配置使用以的是系统默认数据库类型`__DEFAULT_DB__`，如果要指定数据库类型可以使用以下方式：
+| 方法 | 作用 |
+| --- | --- |
+| `create(host, database, user, type)` | 创建时设置连接信息，参数可省略 |
+| `setConnection(mapping connection)` | 设置 `host`、`database`、`user`，可选 `type`；未指定类型时保留当前类型 |
+| `setAutoClose(int flag)` | 控制高层查询结束后的自动关闭，默认开启 |
+| `close(1)` | 强制关闭当前连接，下次查询再连接 |
 
-```c
-void test()
-{
-    // 初始化时指定type
-    object DB = new(CORE_DB, host, db, user, type);
-    // 通过配置指定type(使用SQLITE3)
-    mapping db = ([
-        "host":"",
-        "database":"/data/mudlite.db",
-        "user":"",
-        "type":__USE_SQLITE3__
-    ]);
-    DB->setConnection(db);
-}
-```
-
-数据库类型可以使用宏定义：`__USE_MYSQL__`、`__USE_SQLITE3__`、`__USE_POSTGRE__`或`__DEFAULT_DB__`。
-
-----
-
-方式二：直接复制database.c到自己的项目
-
-复制[database.c]( https://github.com/fluffos/fluffos/blob/master/testsuite/std/database.c)到自己的项目的`/inherit/database.c`中，并在`globals.h`中宏定义`#define DATABASE "/inherit/database.c"`，然后继承`inherit DATABASE;`或`new(DATABASE);`使用，通过`setConnection()`方式配置数据连接，具体可参考方式一中的示例。
+`setConnection()` 会先关闭旧连接并清空查询状态，再应用新目标，避免继续使用旧连接或旧后端的参数编码。不同查询流程不要交叉修改同一个组件的构造状态。
 
 ## 查询
 
-### 从数据表中查询所有行
-
-使用`DB`对象的`table`方法指定要查询的数据表并返回一个查询对象，使用`get`方法获取所有结果，返回值为结果二维数组，示例代码：
+下面片段假定 `db` 已配置且获授权，数据表由宿主创建：
 
 ```c
-inherit CORE_DB;
+mixed rows;
 
-void test()
-{
-    mixed res;
-
-    // 获取 users 表的所有结果
-    res = DB->table("users")->get();
-    printf("%O\n", res);
+rows = db->table("players")->where("level", ">=", 10)->get("id", "name");
+if (stringp(rows)) {
+    // 处理数据库返回的错误文本。
+    error(rows + "\n");
 }
+printf("%O\n", rows);
 ```
 
-### 从数据表中获取单行或单列
+`table()` 和 `sql()` 开始一条新查询，会重置前一条查询的条件。同一个 `table()` 查询可继续追加条件并再次读取；每次按当前条件重新生成 SQL，聚合或写入不会变成后续读取的语句。`get()` / `first()` 省略列名时重新选择全部列，失败后重试不会沿用旧错误。
 
-使用`first`方法可以获取查询结果的第一行，返回值为一维数组结果，如果指定数组做为参数，只查询指定的列，另外你可以使用`where`方法限制查询条件，核心代码：
+| 方法 | 结果或作用 |
+| --- | --- |
+| `get()` / `get("id", "name")` | 返回二维数组；无行时为空数组，常规数据库错误返回字符串 |
+| `first()` / `first("id", "name")` | 取第一行，列名是可变参数，不是一个数组参数 |
+| `find(int id)` | 按 `id` 列查找第一行 |
+| `value(string column)` | 取首行指定列的值 |
+| `pluck(string column)` | 返回指定列的值数组 |
+| `count()`、`max()`、`min()`、`avg()`、`sum()` | 聚合查询 |
+| `with("column")` | `get()` 的结果第一行包含列名 |
+
+普通链式查询的 `first()`、`find()` 和 `value()` 在数据库端使用 `LIMIT 1`，保留分页偏移且不改变查询对象原有的 limit。显式 `limit(0)` 仍返回空结果；`inRandomOrder()` 保留原有候选集，原始 `sql()` 不自动改写。`pluck()` 只返回列值，不包含 `with("column")` 的表头。
+
+`first()` 无记录时返回空数组，`value()` 无记录时沿用空字符串返回；数据库返回的错误字符串继续向上传递。字符串既可能是业务值，也可能是错误，因此需要严格区分结果时优先使用 `get()` / `first()` 检查数组结果。权限拒绝等驱动错误可能抛异常，在服务边界使用 `catch` 处理。
+
+部分 SQLite 驱动在查询失败时返回 `0`；读取接口还会检查列元数据，缺失时返回错误，避免把失败当作空结果。此检查不能弥补驱动对建表、写入等无结果集语句的所有错误报告缺陷。
+
+### 条件与排序
+
+| 调用 | 含义 |
+| --- | --- |
+| `where("id", 1)` | 等号条件 |
+| `where("level", ">=", 10)` | 指定运算符 |
+| `where(({ ({ "level", ">=", 10 }), ({ "active", 1 }) }))` | 同时满足多项条件 |
+| `orWhere(...)` | 追加 OR 条件；作为第一个条件时不生成多余 OR |
+| `whereBetween("level", ({ 10, 20 }))` | 区间条件 |
+| `whereIn("id", ({ 1, 2, 3 }))` | 集合条件，第三参数可省略，表示是否取反 |
+| `whereNull("deleted_at")` | NULL 条件 |
+| `distinct()` | 查询去重；指定字段的聚合对该字段去重，如 `distinct()->count("team")` |
+| `orderBy("level", "desc")` | 排序，多次调用可追加字段 |
+| `limit(10)->offset(20)` | 限制行数与偏移；均须非负，偏移必须配合 limit |
+| `inRandomOrder()` | 对读取到的结果随机处理，不等同于数据库端随机查询 |
+
+`count()` / `count("*")` 统计行数；需要统计不同值时明确提供字段，例如 `distinct()->count("team")`。
+
+数组形式的 `where` / `orWhere` 将数组内的条件以 AND 组合，并整体追加到已有条件，不覆盖先前的筛选。空 `IN` 集合恒假，空 `NOT IN` 集合恒真。
+
+区间、集合和 NULL 条件还有 `orWhere...`、`whereNot...` 等对应方法，签名见 [实现](../../inherit/DB.c)。
+
+## 分组与过滤
+
+`groupBy()` 支持多个字段及重复调用追加，`having()` 默认以 AND 追加，第四参数可指定 `"AND"` 或 `"OR"`；也可使用 `orHaving()`。
 
 ```c
-// 查询用户表中的第一条数据
-res = DB->table("users")->first();
-// 查询用户表中的第一条数据的name和email
-res = DB->table("users")->first("name", "email");
-// 查询用户表中用户名为 ivy 的数据
-res = DB->table("users")->where("name", "ivy")->first();
+mixed rows;
+
+rows = db->table("scores")
+    ->where("active", 1)
+    ->groupBy("team")
+    ->having("SUM(points)", ">=", 20)
+    ->orderBy("total", "desc")
+    ->get("team", "SUM(points) AS total", "COUNT(*) AS members");
 ```
 
-如果不需要整行数据，则可以使用`value`方法从记录中获取单个值。该方法将直接返回该字段的值：
+生成顺序为 `WHERE → GROUP BY → HAVING → ORDER BY → LIMIT/OFFSET`。`get()` 用于获取全部分组；`first()` 及标量聚合方法只取首个结果。分组条件只用于 SELECT，对带 GROUP BY/HAVING 的 `update()` 或 `delete()` 会报错，不静默忽略条件。
+
+新一轮 `table()` / `sql()` 会清空之前的分组、过滤和排序。被拒绝的分组写入不会留下待执行的 UPDATE/DELETE。
+
+## 写入与原生 SQL
 
 ```c
-// 获得用户 ivy 的 email
-email = DB->table("users")->where("name", "ivy")->value("email");
-// 获取随机用户的 email
-email = DB->table("users")->inRandomOrder()->value("email");
+mixed result;
+
+result = db->table("players")->insert(([ "id": 1, "name": "示例角色" ]));
+result = db->table("players")->where("id", 1)->update(([ "name": "新名称" ]));
+result = db->table("players")->where("id", 1)->delete();
 ```
 
-如果是通过 id 字段值获取一行数据，可以使用 find 方法：
+这是三个独立操作的调用示例，实际代码应逐次检查结果。`insert()`、`update()`、`delete()` 的正常结果为 `1`，表示 SQL 执行成功，不是实际受影响行数；常规错误返回字符串。更新和删除不指定条件时会作用于整张表。
+
+原生语句通过 `sql(...)->exec()` 执行：
 
 ```c
-// 获取 ID 为 1 的用户数据
-res = DB->table("users")->find(1);
+mixed result;
+
+result = db->sql("CREATE TABLE IF NOT EXISTS sample (id INTEGER PRIMARY KEY, name TEXT)")->exec();
+db->close(1);
 ```
 
-### 获取一列的值
+`exec()` 返回驱动的执行结果，不能把建表等语句返回 `0` 一概当作失败；成功路径不会自动关闭连接，因此显式调用 `close(1)`。异常路径也应由调用方完成清理。高层 `get()`、`first()`、聚合及写入方法在默认设置下会结束连接。
 
-如果你想获取单列数据的集合，则可以使用 pluck 方法。在下面的例子中，我们将获取角色表中所有邮箱：
-```c
-// 返回所有用户的邮箱数组
-res = DB->table("users")->pluck("email");
-```
+`sql(...)->value("name")` / `pluck("name")` 按原始结果集的列名选择值；使用别名时传入对应别名，缺少列时返回错误。
 
-### 聚合
+`dump()` 返回当前连接与 SQL 状态，调试时使用 `printf("%s", db->dump())`。不要把可能包含业务数据的诊断信息直接展示给玩家。
 
-查询构造器还提供了各种聚合方法，比如 `count`，`max`，`min`，`avg`，还有 `sum`。你可以在构造查询后调用任何方法：
+## 占位参数
 
-```c
-// 获取用户总数
-users = DB->table("users")->count();
-// 获取等级最高的用户
-level = DB->table("users")->max("level");
-```
-
-同样，你可以通过条件查询限制聚合查询：
+在 `sql()` 的第二个参数中传入数组，每个匿名 `?` 对应一个值：
 
 ```c
-// 返回ID为9的用户发贴的访问量之和
-res = DB->table("topics")->where("user_id", 9)->sum("view_count");
-// 判断用户mudren是否存在
-count = DB->table("users")->where("name", "mudren")->count();
+mixed rows;
+string playerName;
+
+playerName = "O'Reilly";
+rows = db->sql("SELECT id, name FROM players WHERE name = ? AND level >= ?",
+    ({ playerName, 10 }))->get();
 ```
 
-### Where Clauses
+框架只替换引号和普通注释之外的 `?`，支持 SQL 的重复引号转义；参数数量必须匹配。数组中的字符串、整数、有限浮点数和 `undefined` 分别编码为文本、数字和 SQL NULL；整数 `0` 与空字符串保持各自含义。mapping 缺失项属于 `undefined`，需要默认数值时应由调用方显式提供。
 
-#### where 语句
+相同的值编码也用于 `where`、`having`、IN/BETWEEN、`insert` 和 `update`。字符串中的单引号、反斜杠、中文和注入样式文本都作为数据处理。SQL NULL 的 `where` 等号比较会生成 `IS NULL`，不等号生成 `IS NOT NULL`；也可直接使用 `whereNull()`。
 
-在构造 `where` 查询实例中，你可以使用 `where` 方法。调用 `where` 最基本的方式是需要传递三个参数：第一个参数是列名，第二个参数是任意一个数据库系统支持的运算符，第三个是该列要比较的值。如：
+当前 FluffOS 的 `db_exec(handle, sql)` 没有向 LPC 暴露原生绑定接口。这里是**框架层的参数替换与值编码**，不是数据库服务端预处理语句，也不提供预处理缓存。SQLite 使用十六进制 BLOB 转 TEXT，MySQL 使用十六进制字面量转 utf8mb4 文本，PostgreSQL 使用 UTF-8 十六进制解码；不依赖字符串反斜杠转义模式。对应语法见 [SQLite](https://www.sqlite.org/lang_expr.html)、[MySQL](https://dev.mysql.com/doc/refman/8.4/en/hexadecimal-literals.html)、[PostgreSQL](https://www.postgresql.org/docs/current/functions-binarystring.html)。
 
-```c
-user = DB->table("users")->where("name", "=", "mudren")->get();
-```
+绑定值不接受对象、mapping、数组或 buffer；文本中的 NUL 会被拒绝，避免部分驱动截断 TEXT。绑定模板仅支持匿名 `?`，不支持编号参数、命名参数、dollar 引号、可执行注释或嵌套块注释。引号内存在反斜杠的模板会报错，因为其含义受 SQL 模式影响；应将该文本改为参数传入。
 
-为了方便，如果你只是简单比较列值和给定数值是否相等，可以将数值直接作为 where 方法的第二个参数：
+省略第二个参数的 `sql(sqlText)` 保留原始 SQL 用法，不扫描问号，也不替调用方处理嵌入的值。原始 SQL 模板始终由程序控制；玩家输入应放在参数数组中。
 
-```c
-user = DB->table("users")->where("name", "mudren")->get();
-```
+## 字段、表达式与兼容
 
-当然，你也可以使用其他的运算符来编写 `where` 子句：
+占位参数只能表示值，不能表示表名、列名、排序方向或 SQL 片段。构造器会验证结构参数：
 
-```c
-users = DB->table("users")
-                ->where("id", ">=", 100)
-                ->get();
+- 表名和字段使用英文字母或下划线开头的名称，支持数字后缀和 `table.column`；由组件按后端引用。
+- 查询字段支持 `*`、`table.*`、`AS` 别名，以及 `COUNT` / `SUM` / `MIN` / `MAX` / `AVG` 聚合；COUNT 支持 `*`、`1`，聚合支持 DISTINCT 字段。
+- 比较运算符限定在实现的白名单中，HAVING 连接词只接受 AND/OR。动态字段仍应由宿主按业务权限选择。
+- 需要算术表达式、JOIN、子查询、特殊引用名称或后端专有语法时，使用受控的 `sql(sqlText, params)` 模板，不再向字段名位置塞入任意 SQL。
 
-users = DB->table("users")
-                ->where("id", "<>", 100)
-                ->get();
+数字与文本按传入类型编码；希望保持文本比较语义时传字符串。原来依赖任意字段表达式或隐式数值转换的调用方应按上述约定调整。
 
-users = DB->table("users")
-                ->where("email", "like", "%@mud.ren")
-                ->get();
-```
-
-你还可以传递条件数组到 where 函数中实现 `AND` 查询：
-
-```c
-// 相当于 WHERE user_id>7 AND category_id=4
-res = DB->table("topics")->where(({ ({"user_id", ">", 7}), ({"category_id", 4}) }))->get();
-```
-
-你也可以对 `where` 函数链式调用，以上查询可以使用以下方式：
-```c
-// 相当于 WHERE user_id>7 AND category_id=4
-res = DB->table("topics")->where("user_id", ">", 7)->where("category_id", 4)->get();
-```
-
-#### orWhere 语句
-你可以一起链式调用 `where` 约束，也可以在查询中添加 or 字句。 `orWhere` 方法和 `where` 方法接收的参数一样：
-
-```c
-// 相当于 WHERE user_id>7 OR category_id=4
-res = DB->table("topics")->where("user_id", ">", 7)->orWhere("category_id", 4)->get();
-```
-
-请注意：`orWhere`方法之前必须至少有一次`where`调用，否则报错。
-
-### 附加 Where 语句
-
-除了基础的 `where` 和 `orWhere`，还有以下语句可用：
-
-#### whereBetween / orWhereBetween / whereNotBetween / orWhereNotBetween
-
-验证字段值是否在给定的两个值之间或之外：
-
-```c
-users = DB->table("users")
-           ->whereBetween("votes", ({1, 100}))
-           ->get();
-```
-
-#### whereIn / whereNotIn / orWhereIn / orWhereNotIn
-
-验证字段值是否在给定的数组中：
-
-```c
-users = DB->table("users")
-           ->whereIn("id", ({1, 3, 5, 7, 9}))
-           ->get();
-```
-
-#### whereNull / orWhereNull / whereNotNull / orWhereNotNull
-
-验证指定的字段是否是 `NULL`：
-
-```c
-users = DB->table("users")
-           ->whereNull("updated_at")
-           ->get();
-```
-
-### Distinct, Ordering, Grouping, Limit & Offset
-
-#### distinct
-
-`distinct` 方法会强制让查询返回的结果不重复：
-
-```c
-users = DB->table("users")
-                ->distinct()
-                ->get("name");
-```
-
-#### orderBy
-
-`orderBy` 方法允许你通过给定字段对结果集进行排序。 `orderBy` 的第一个参数应该是你希望排序的字段，第二个参数控制排序的方向，可以是 `asc` 或 `desc`：
-
-```c
-users = DB->table("users")
-                ->orderBy("name", "desc")
-                ->get();
-```
-
-如果你需要使用多个字段进行排序，你可以多次引用 `orderBy`：
-
-```c
-users = DB->table("users")
-                ->orderBy("name", "desc")
-                ->orderBy("email", "asc")
-                ->get();
-```
-
-#### inRandomOrder
-
-`inRandomOrder` 方法被用来将结果进行随机排序。例如，你可以使用此方法随机找到一个用户：
-
-```c
-randomUser = DB->table("users")
-                ->inRandomOrder()
-                ->first();
-```
-
-#### limit / offset
-
-要限制结果的返回数量，或跳过指定数量的结果，你可以使用 `limit` 和 `offset` 方法：
-
-```c
-users = DB->table("users")
-                ->offset(10)
-                ->limit(5)
-                ->get();
-```
-
-----
-
-## 插入
-
-查询构造器还提供了 `insert` 方法用于插入记录到数据库中。 `insert` 方法接收映射形式的字段名和字段值进行插入操作：
-
-```c
-DB->table("users")->insert((["name":"test", "email":"test@mud.ren"]));
-```
-
-## 更新
-
-查询构造器也可以通过 `update` 方法更新已有的记录。 `update` 方法和 `insert` 方法一样，接受包含要更新的字段及值的映射。你可以通过 `where` 子句对 `update` 查询进行约束：
-
-```c
-DB->table("users")->where("id", ">", 120)->limit(5)->update((["level":777]));
-```
-
-## 删除
-
-查询构造器也可以使用 `delete` 方法从表中删除记录。 在使用 `delete` 前，可以添加 `where` 子句来约束 `delete` 语法：
-
-```c
-DB->table("migrations")->where("id",">", 55)->limit(5)->delete();
-```
-
-----
-
-## 原生语句
-
-除了使用封装好的方法外，查询构造器还提供了原生SQL语句的使用，通过使用 `sql` 方法执行，注意对 `SELECT` 语句可以使用 `get`、`first`、`pluck`、`value`方法获取查询结果，而 `INSERT`、`UPDATE`、`DELETE` 语句使用 `exec` 执行。
-
-```c
-// 查询
-res = DB->sql("select * from users")->get();
-res = DB->sql("select * from users")->pluck("name");
-res = DB->sql("select * from users where name='mudren'")->value("email");
-// 删除
-res = DB->sql("delete from users where id>130 limit 5")->exec();
-```
-
-----
-
-## 长连接
-
-需要注意的是，`CORE_DB` 默认使用的是短连接，所有数据库操作完成后自动释放 db_handle ，如果是大量重复查询，最好改为长连接，并自己在必要时操作释放 db_handle 。
-
-如需长连接，请使用 `setAutoClose(0)` 方法禁用自动释放，并在执行结束时调用 `close(1)` 方法释放 db_handle
-
-```c
-void test()
-{
-    // 初始化数据库连接
-    object DB = new(CORE_DB, host, db, user);
-    // 禁用自动关闭连接
-    DB->setAutoClose(0);
-
-    // ...数据库操作
-
-    // 关闭数据库连接
-    DB->close(1);
-}
-```
-
-## 调试
-
-在绑定查询的时候，您可以使用 `dump` 方法来输出最近一次查询SQL：
-
-```c
-printf(DB->dump());
-```
-
-调试输出结果类似以下：
-
-    -*--*--*--*--*--*--*--*--*--*--*--*--*--*--*--*--*--*--*--*-
-    db_host = 127.0.0.1
-    db_db = mud
-    db_user = root
-    db_handle = 1
-    db_error = 0
-    db_table = topics
-    db_table_column = ({ /* sizeof() == 2 */
-    "user_id",
-    "title"
-    })
-    db_sql = SELECT user_id,title FROM topics WHERE user_id > '7' AND category_id='4'
-    -*--*--*--*--*--*--*--*--*--*--*--*--*--*--*--*--*--*--*--*-
-
-----
-
-如果你只是简单查询，可以通过继承`CORE_DB`的方式，而不需要用 `new()` 方法生成数据库连接对象，示例如下：
-
-```c
-inherit CORE_DB;
-
-void test()
-{
-    mixed res;
-
-    /**
-     * @brief 配置数据库连接
-     *
-     */
-     mapping db = ([
-     	"host":"127.0.0.1",
-        "database":"mud",
-        "user":"root"
-     ]);
-    DB::setConnection(db);
-
-    // 获取 users 表的所有结果
-    res = DB::table("users")->get();
-    printf("%O", res);
-}
-```
-
-----
-
-## Introduction
-
-The database query builder provides a convenient, fluent interface to creating and running database queries. It can be used to perform most database operations in your mud and works perfectly with all of fluffos supported database systems.
-
-## Config
-
-You can inherit `/std/database.c` and set config with `setConnection()`, for example:
-
-```c
-inherit "/std/database";
-
-void test()
-{
-    mixed res;
-    // use SQLITE3
-    mapping db = ([
-        "host":"",
-        "database":"/data/db.sqlite",
-        "user":"",
-        "type":__USE_SQLITE3__
-    ]);
-    database::setConnection(db);
-    // database queries
-    printf("%O\n", database::table("users")->get());
-}
-```
-
-The database type can be `__USE_MYSQL__`、`__USE_SQLITE3__`、`__USE_POSTGRE__` or `__DEFAULT_DB__`。
-
-Or, clone database object like this:
-
-```c
-void test()
-{
-    object db = new("/std/database", "", "/sqlite.db", "", __USE_SQLITE3__);
-    printf("%O\n", db->table("users")->get());
-}
-```
-
-## Running Database Queries
-
-### Retrieving All Rows From A Table
-
-You may use the `table` method provided by the `/std/database.c` to begin a query. The `table` method returns a fluent query builder instance for the given table, allowing you to chain more constraints onto the query and then finally retrieve the results of the query using the `get` method:
-
-```c
-void test()
-{
-    object db = new("/std/database", "", "/sqlite.db", "", __USE_SQLITE3__);
-    // Retrieving all rows from users table
-    printf("%O\n", db->table("users")->get());
-}
-```
-
-The `get` method return a 2D array.
-
-### Retrieving A Single Row / Column From A Table
-
-If you just need to retrieve a single row from a database table, you may use the `first` method. This method will return an array:
-
-```c
-    printf("%O\n", db->table("users")->first());
-```
-
-If you don't need an entire row, you may extract a single value from a record using the `value` method. This method will return the value of the column directly:
-
-```c
-    printf("%s\n", db->table("users")->where("name", "mudren")->value("email"));
-```
-
-To retrieve a single row by its id column value, use the `find` method:
-
-
-```c
-    printf("%O\n", db->table("users")->find(3));
-```
-
-### Retrieving A List Of Column Values
-
-If you would like to retrieve result containing the values of a single column, you may use the `pluck` method. In this example, we'll retrieve an array of user names:
-
-```c
-    printf("%O\n", db->table("users")->pluck("name"));
-```
-
-### Aggregates
-
-The query builder also provides a variety of methods for retrieving aggregate values like `count`, `max`, `min`, `avg`, and `sum`. You may call any of these methods after constructing your query:
-
-```c
-    printf("user_count = %d\n", db->table("users")->count());
-    printf("max_age = %d\n", db->table("users")->max("age"));
-```
-
-Of course, you may combine these methods with other clauses to fine-tune how your aggregate value is calculated:
-
-```c
-    printf("count = %d\n", db->table("users")->where("age", 14)->count());
-```
-
-## Raw Expressions
-
-Sometimes you may need to insert an arbitrary string into a query. To create a raw string expression, you may use the `sql` and `exec` method：
-
-```c
-    object db = new("/std/database", "", "/sqlite.db", "", __USE_SQLITE3__);
-    mixed res;
-    db->sql("DROP TABLE IF EXISTS `users`")->exec();
-    res = db->sql("CREATE TABLE IF NOT EXISTS `users` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,`name` varchar(25) NOT NULL,`bio` TEXT(255) DEFAULT NULL,`activated_at` timestamp DEFAULT NULL)")->exec();
-```
-
-## Basic Where Clauses
-
-### Where Clauses
-
-You may use the query builder's `where` method to add "where" clauses to the query. The most basic call to the `where` method requires three arguments. The first argument is the name of the column. The second argument is an operator, which can be any of the database's supported operators. The third argument is the value to compare against the column's value.
-
-For example, the following query retrieves users where the value of the `exp` column is equal to `100` and the value of the `age` column is greater than `15`:
-
-```c
-res = database::table("users")
-            ->where("exp", "=", 100)
-            ->where("age", ">", 15)
-            ->get();
-```
-
-For convenience, if you want to verify that a column is `=` to a given value, you may pass the value as the second argument to the `where` method. database will assume you would like to use the `=` operator:
-
-```c
-    res = database::table("users")->where("age", 16)->get();
-```
-
-As previously mentioned, you may use any operator that is supported by your database system:
-
-```c
-users = database::table("users")
-                ->where("id", ">=", 100)
-                ->get();
-
-users = database::table("users")
-                ->where("id", "<>", 100)
-                ->get();
-
-users = database::table("users")
-                ->where("email", "like", "%@mud.ren")
-                ->get();
-```
-
-You may also pass an array of conditions to the `where` function. Each element of the array should be an array containing the three arguments typically passed to the where method:
-
-```c
-// WHERE user_id > 7 AND category_id = 4
-res = db->table("topics")->where(({ ({"user_id", ">", 7}), ({"category_id", 4}) }))->get();
-```
-
-### Or Where Clauses
-
-When chaining together calls to the query builder's `where` method, the "where" clauses will be joined together using the `and` operator. However, you may use the `orWhere` method to join a clause to the query using the `or` operator. The `orWhere` method accepts the same arguments as the `where` method:
-
-```c
-// WHERE user_id > 7 OR category_id = 4
-res = db->table("topics")->where("user_id", ">", 7)->orWhere("category_id", 4)->get();
-```
-
-### Additional Where Clauses
-
-#### whereBetween / orWhereBetween
-
-The `whereBetween` method verifies that a column's value is between two values:
-
-```c
-users = db->table("users")->whereBetween("age", ({14, 18}))->get();
-```
-
-
-#### whereNotBetween / orWhereNotBetween
-
-The `whereNotBetween` method verifies that a column's value lies outside of two values:
-
-```c
-users = db->table("users")->whereNotBetween("age", ({14, 18}))->get();
-```
-
-#### whereIn / whereNotIn / orWhereIn / orWhereNotIn
-
-The `whereIn` method verifies that a given column's value is contained within the given array. The `whereNotIn` method verifies that the given column's value is not contained in the given array.
-
-```c
-users = db->table("users")->whereIn("age", ({14, 18, 24, 30}))->get();
-```
-
-#### whereNull / orWhereNull / whereNotNull / orWhereNotNull
-
-The `whereNull` method verifies that the value of the given column is `NULL`, The `whereNotNull` method verifies that the column's value is not `NULL`:
-
-```c
-users = db->table("users")->whereNull("updated_at")->get();
-```
-
-## Ordering, Grouping, Limit & Offset
-
-### Ordering
-
-The `orderBy` method allows you to sort the results of the query by a given column. The first argument accepted by the `orderBy` method should be the column you wish to sort by, while the second argument determines the direction of the sort and may be either `asc` or `desc`:
-
-```c
-users = db->table("users")
-            ->orderBy("name", "desc")
-            ->get();
-```
-
-To sort by multiple columns, you may simply invoke `orderBy` as many times as necessary:
-
-```c
-users = db->table("users")
-            ->orderBy("name", "desc")
-            ->orderBy("email", "asc")
-            ->get();
-```
-
-### Random Ordering
-
-The `inRandomOrder` method may be used to sort the query results randomly. For example, you may use this method to fetch a random user:
-
-```c
-randomUser = DB->table("users")
-                ->inRandomOrder()
-                ->get();
-```
-
-### Limit & Offset
-
-You may use the `limit` and `offset` methods to limit the number of results returned from the query or to skip a given number of results in the query:
-
-```c
-users = db->table("users")
-            ->offset(10)
-            ->limit(5)
-            ->get();
-```
-
-## Insert Statements
-
-The query builder also provides an `insert` method that may be used to insert records into the database table. The `insert` method accepts an mapping of column names and values:
-
-```c
-db->table("users")->insert((["name":"test", "email":"test@mud.ren"]));
-```
-
-## Update Statements
-
-In addition to inserting records into the database, the query builder can also update existing records using the `update` method. The `update` method, like the insert method, accepts an mapping of column and value pairs indicating the columns to be updated. You may constrain the update query using where clauses:
-
-```c
-db->table("users")->where("id", ">", 120)->limit(5)->update((["level":99]));
-```
-
-## Delete Statements
-
-The query builder's `delete` method may be used to delete records from the table. You may constrain delete statements by adding "where" clauses before calling the `delete` method:
-
-```c
-db->table("users")->delete();
-db->table("users")->where("id",">", 5)->limit(5)->delete();
-```
-
-## Auto Close
-
-By default, database will auto close connection and release db_handle, you can use `setAutoClose(0)` disable this and close the database connection with `close(1)`：
-
-```c
-void test()
-{
-    object DB = new(CORE_DB, host, db, user);
-    // close auto close
-    DB->setAutoClose(0);
-
-    // ...sql
-
-    // close
-    DB->close(1);
-}
-```
-
-## Debugging
-
-You may use the `dump` methods while building a query to dump the current query bindings and SQL.
-
-```c
-printf(db->dump());
-```
-
-    -*--*--*--*--*--*--*--*--*--*--*--*--*--*--*--*--*--*--*--*-
-    db_host = 127.0.0.1
-    db_db = mud
-    db_user = root
-    db_handle = 1
-    db_error = 0
-    db_table = topics
-    db_table_column = ({ /* sizeof() == 2 */
-    "user_id",
-    "title"
-    })
-    db_sql = SELECT user_id,title FROM topics WHERE user_id > '7' AND category_id='4'
-    -*--*--*--*--*--*--*--*--*--*--*--*--*--*--*--*--*--*--*--*-
+后端可用性与 SQL 方言仍由驱动和数据库决定，例如 UPDATE/DELETE 的 LIMIT 支持并不一致。本机真实 SQLite 已验证参数往返、分组、增删改查和权限拒绝；MySQL/PostgreSQL 的编码按相应语法实现，尚未执行真实服务端集成测试，不能据此宣称所有后端均已验收。

@@ -1,16 +1,38 @@
-mudcore 框架说明文档目录，目前文档不完善，关于框架的使用可参考框架根目录下的README.md。
+# mudcore 开发文档
 
-- 入门指南
-   - [框架说明](../README.md)
-   - [配置信息]
-   - [目录结构]
-   - [基础模板]
-- 进阶文档
-   - [daemon]
-   - [sefun]
-   - [inherit]
-   - [cmds&verbs]
+初次使用从 [框架接入与扩展](integration.md) 开始；已有项目升级时先阅读 [版本管理与升级验证](maintenance.md) 和 [兼容迁移说明](dependency-boundary.md)。
 
-## 质量审查与维护
+## 入门与维护
 
-- [2026-09-22 修改质量审查与缺陷修复清单](quality-audit-2026-09-22.md)：问题分级、复现结果、修复验收要求及宿主集成验证清单。
+| 文档 | 内容 |
+| --- | --- |
+| [框架概览](../README.md) | 定位、安装方式、目录及主要能力 |
+| [框架接入与扩展](integration.md) | 新项目、旧 MUD 集成、宏覆盖、配置与驱动要求 |
+| [版本管理与升级验证](maintenance.md) | 版本宏、兼容规则、发布与多宿主同步 |
+| [框架能力与兼容迁移](dependency-boundary.md) | 通用能力边界、默认行为及权限变化 |
+| [更新日志](../CHANGELOG.md) | 按版本整理的更新与历史变更 |
+| [隔离回归测试](../tests/README.md) | 执行方法、检查范围及验证边界 |
+| [精简运行配置](../config.mini.ini) / [完整配置示例](../config.example.ini) | FluffOS 配置参考 |
+
+## 核心对象与模块
+
+- [系统对象与守护进程](system.md)
+- [可组合继承模块](inherit.md)
+- [登录与角色身份](daemons/login_d.md)、[角色初始化](daemons/char_d.md)
+- [命令查找与别名](daemons/command_d.md)、[虚拟对象](daemons/virtual_d.md)
+- [房间](inherit/room.md)、[玩家消息与分页](inherit/message.md)
+- [任务](quest.md)、[战斗接口](daemons/combat_d.md)
+
+## 网络、存储与服务
+
+- [HTTP 客户端](Http.md)、[Socket 与 TLS](Socket.md)
+- [数据库接口及授权](inherit/DB.md)、[对象数据存档](daemons/dbase_d.md)
+- [频道](daemons/channel_d.md)、[表情](daemons/emote_d.md)
+- [时间与调度](daemons/time_d.md)、[中文名称字典](daemons/chinese_d.md)
+- [Intermud 显式启停与状态](dependency-boundary.md#迁移调整)
+
+## 模拟外部函数
+
+单项说明位于 [simul_efun](simul_efun/)；包括数组与数值处理、位操作、中文转换和调试输出。完整入口及源码分别见 [框架函数目录](../README.md#系统函数simul-efuns) 与 [simul efun 实现](../system/kernel/simul_efun/)。
+
+文档尚未逐一覆盖所有公共方法，接口签名以对应源码为准。修改接口时同步维护相关说明，不以一次编译成功替代实际行为验证。

@@ -43,6 +43,12 @@ node tools/format_lpc.mjs --check mudcore/inherit/dbase.c
 
 宿主有 `docs/LPC_Language_FluffOS.md` 时，以其最新内容为项目语法标准；独立开发以所用 FluffOS 版本的源码、efun 定义和测试为依据，记录版本及可选包要求。驱动升级后同步核对相关文档。
 
+## 版本管理
+
+框架版本以 `include/mudcore.h` 的 `MUDCORE_VERSION` 及主、次、修订号宏为准，宿主不能覆盖。主版本表示需要宿主迁移的不兼容变化，次版本表示兼容的新功能，修订号表示兼容修复；安全修复也按实际兼容影响分类。日常提交记入未发布条目，不为每次修改单独递增版本。
+
+准备发布时同步头文件、README、CHANGELOG 和版本文档；开发版本保留 `-dev`，正式版本使用对应的 `vX.Y.Z` Git 标签。未获发布授权时不得创建或推送标签，不能仅凭版本字符串宣称已发布。具体步骤见 `docs/maintenance.md`。
+
 ## 提交与协作
 
 沿用 `fix:`、`feat:`、`refactor:`、`style:`、`docs:` 等简短提交主题。PR 写明行为变化、兼容影响、验证环境和步骤，关联相关问题；接口变更同步更新 `README.md`、`docs/`，破坏性变更补充 `CHANGELOG.md` 和迁移说明。

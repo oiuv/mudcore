@@ -6,11 +6,13 @@
  * @Description:
  *  https://bbs.mud.ren
 -->
-mudcore 框架系统目录，提供部分守护进程（daemons）和游戏核对对象（kernel），游戏LIB可选择继承使用。
+mudcore 框架系统目录，提供部分守护进程（daemons）和游戏核心对象（kernel），游戏LIB可选择继承使用。
+
+下表路径相对框架目录，默认实际前缀为 `/mudcore/`。接入方式见 [接入指南](integration.md)，登录约定见 [登录说明](daemons/login_d.md)。
 
 ### 核心对象(Kernel)
 
-核对对象包括游戏运行必需的主控对象和模拟外部函数对象，可选择继承。
+核心对象包括游戏运行必需的主控对象和模拟外部函数对象，可选择继承。
 
 名称|文件路径|核心功能
 -|-|-
