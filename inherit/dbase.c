@@ -23,9 +23,9 @@ nomask mixed _query(mapping map, string *parts) {
     value = map;
     s = sizeof(parts);
     for (i = 0; i < s; i++) {
-        if (undefinedp(value = value[parts[i]]))
-            break;
         if (!mapp(value))
+            return ([])[0];
+        if (undefinedp(value = value[parts[i]]))
             break;
     }
     return value;

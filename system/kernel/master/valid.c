@@ -3,7 +3,6 @@
  * 返回１为允许，返回０为拒绝
  */
 #include <mysql.h>
-
 nosave int DEBUG = 0;
 
 // controls the use of the bind() efun
@@ -12,7 +11,9 @@ int valid_bind(object binder, object old_owner, object new_owner) {
         debug_message("[CORE_MASTER_OB]->valid_bind()!");
         debug_message("([binder : " + binder + ", old_owner : " + old_owner + ", new_owner : " + new_owner + "])");
     }
-    return 1;
+    return objectp(binder) && objectp(old_owner) && objectp(new_owner) && (geteuid(binder) == ROOT_UID ||
+        (geteuid(binder) && geteuid(binder) == getuid(old_owner) &&
+            geteuid(binder) == getuid(new_owner)));
 }
 
 // Each of the database efunctions calls valid_database() prior to executing.
@@ -21,10 +22,10 @@ mixed valid_database(object caller, string func, mixed *info) {
         debug_message("[CORE_MASTER_OB]->valid_database():");
         debug_message("([caller : " + caller + ", func : " + func + "])");
     }
+    // 凭据来自 MUDLIB 配置；此钩子本身不建立连接。
     if (func == "connect")
-        return DB_PASSWORD;  // mysql数据库密码
-        else
-            return 1;
+        return DB_PASSWORD;
+    return 1;
 }
 
 int valid_hide(object ob) {
@@ -89,7 +90,7 @@ int valid_seteuid(object obj, string euid) {
         debug_message("[CORE_MASTER_OB]->valid_seteuid():");
         debug_message("([obj : " + obj + ", euid : " + euid + "])");
     }
-    return 1;
+    return objectp(obj) && (!euid || euid == getuid(obj) || getuid(obj) == ROOT_UID);
 }
 
 // controls which objects can be shadowed(with the shadow() efun)

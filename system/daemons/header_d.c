@@ -25,19 +25,26 @@ int valid_file_name(string file) {
 
 varargs string files(string *files, string prefix) {
     string sf, file = "", pre = "";
+    mapping seen = ([]);
 
     if (stringp(prefix)) {
         pre = prefix + "_";
     }
 
     foreach (string f in files) {
-        if (f[<2..<1] != ".c")
+        if (lpc_object_path(f) == f || seen[lpc_object_path(f)])
             continue;
+        seen[lpc_object_path(f)] = 1;
 
-        sf = f[strsrch(f, "/", -1) + 1..<3];
+        sf = explode(lpc_object_path(f), "/")[<1];
 
         if (valid_file_name(sf))
-            file += sprintf("%s%-40s%s", "#define ", pre + upper_case(sf), " \"" + f + "\"\n");
+            file += sprintf(
+                "%s%-40s%s",
+                "#define ",
+                pre + upper_case(sf),
+                " \"" + lpc_object_path(f) + "\"\n"
+            );
     }
 
     return file;

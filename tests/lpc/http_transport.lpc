@@ -1,0 +1,12 @@
+#include <socket.h>
+
+inherit CORE_HTTP;
+
+void run() {
+    int fd;
+
+    // 初始化真实 TLS 套接字及选项，不建立连接、不查询 DNS。
+    fd = open_http_socket(1, "example.invalid");
+    MASTER_OB->check(fd >= 0, "HTTP transport creates TLS socket");
+    socket_close(fd);
+}

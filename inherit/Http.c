@@ -79,12 +79,51 @@ protected void on_resolve(string host, string addr, int key) {
     }
 }
 
+// 独立封装传输初始化，便于使用方替换传输以及离线测试请求构造。
+protected int open_http_socket(int isTLS, string host) {
+    int fd;
+    mixed err;
+
+    fd = socket_create(isTLS ? STREAM_TLS : STREAM, "receive_callback", "socket_shutdown");
+    if (fd < 0)
+        error("HTTP socket_create: " + socket_error(fd));
+    if (isTLS) {
+        err = catch {
+            socket_set_option(fd, SO_TLS_VERIFY_PEER, 1);
+            socket_set_option(fd, SO_TLS_SNI_HOSTNAME, host);
+        };
+        if (err) {
+            socket_close(fd);
+            error("HTTP TLS initialization failed: " + err);
+        }
+    }
+    return fd;
+}
+
+protected string encodeQueryPart(mixed value) {
+    buffer bytes;
+    string result = "";
+    int ch;
+
+    if (!stringp(value))
+        value = sprintf("%O", value);
+    bytes = string_encode(value, "utf-8");
+    foreach (ch in bytes) {
+        if ((ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z') ||
+            (ch >= '0' && ch <= '9') || member_array(ch, ({ '-', '_', '.', '~' })) != -1)
+            result += sprintf("%c", ch);
+        else
+            result += sprintf("%%%02X", ch);
+    }
+    return result;
+}
+
 nomask protected object request(string method, string url, mixed data, mapping header) {
     int fd, is_tls = 0;
     string host, path;
     int port;
     mixed key, value;
-    string params, headers, body = "";
+    string params, headers = "", body = "";
 
     if (strsrch(url, "https://") == 0) {
         is_tls = 1;
@@ -123,17 +162,15 @@ nomask protected object request(string method, string url, mixed data, mapping h
 
     if (method == "GET" && mapp(data)) {
         foreach (key, value in data) {
-            params = (params ? params + "&" : "") + key + "=" + value;
+            params = (params ? params + "&" : "") + encodeQueryPart(key) + "=" + encodeQueryPart(value);
         }
-        path += "?" + params;
+        if (params)
+            path += (strsrch(path, '?') == -1 ? "?" : "&") + params;
     }
 
     if (method == "POST") {
-        if (mapp(data) && sizeof(data)) {
-            foreach (key, value in data) {
-                params = (params ? params + "," : "") + key + ":" + value;
-            }
-            body = "{" + params + "}";
+        if (mapp(data)) {
+            body = json_encode(data);
         } else if (stringp(data)) {
             body = data;
         }
@@ -141,11 +178,7 @@ nomask protected object request(string method, string url, mixed data, mapping h
         headers += "\r\nContent-Length: " + sizeof(string_encode(body, "utf-8"));
     }
 
-    fd = socket_create(is_tls ? STREAM_TLS : STREAM, "receive_callback", "socket_shutdown");
-    if (is_tls) {
-        socket_set_option(fd, SO_TLS_VERIFY_PEER, 0);
-        socket_set_option(fd, SO_TLS_SNI_HOSTNAME, host);
-    }
+    fd = open_http_socket(is_tls, host);
     Host_fd[host] = fd;
     Status[fd] = ([]);
     Status[fd]["status"] = STATE_RESOLVING;

@@ -99,9 +99,9 @@ int check_return(string name) {
 
 // 中文数字
 string chinese_number(int i) {
-    return CORE_CHINESE_D->chinese_number(i);
+    return CHINESE_D->chinese_number(i);
 }
 // 英文转中文
 string chinese(string str) {
-    return CORE_CHINESE_D->chinese(str);
+    return CHINESE_D->chinese(str);
 }

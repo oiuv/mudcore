@@ -1,0 +1,54 @@
+inherit CORE_DIR "cmds/wizard/loadall";
+
+string *excluded = ({
+    CORE_DIR "tests/loadall_fixture.lpc",
+    CORE_DIR "tests/nested/loadall_fixture.lpc",
+    CORE_DIR "docs/loadall_fixture.lpc",
+    CORE_DIR "system/kernel/master/loadall_fixture.lpc",
+    CORE_DIR "system/kernel/simul_efun/loadall_fixture.lpc",
+    "/fixtures/.hidden/loadall_fixture.lpc",
+    "/.loadall_hidden/nested/loadall_fixture.lpc",
+});
+
+string *included = ({
+    "/cmds/test/loadall_fixture.c",
+    "/docs/loadall_fixture.lpc",
+    "/fluffos/loadall_fixture.lpc",
+    "/data/loadall_fixture.lpc",
+    "/tests/loadall_fixture.lpc",
+    "/master/loadall_fixture.lpc",
+    "/simul_efun/loadall_fixture.lpc",
+    CORE_DIR "tests_extra/loadall_fixture.lpc",
+});
+
+void run() {
+    string file, dir;
+
+    foreach (file in excluded) {
+        dir = file[0..strsrch(file, "/", -1)];
+        MASTER_OB->check(skipLoadDir(dir), "loadall excluded directory: " + dir);
+        loadall(dir);
+        loadall(dir[0..<2]);
+        MASTER_OB->check(!objectp(find_object(file)), "loadall direct path skipped: " + file);
+    }
+    foreach (file in included) {
+        dir = file[0..strsrch(file, "/", -1)];
+        MASTER_OB->check(!skipLoadDir(dir), "loadall preserves host directory: " + dir);
+    }
+    MASTER_OB->check(skipLoadDir("mudcore//tests/nested"), "loadall normalizes filter path");
+    loadall("/");
+}
+
+void finish() {
+    string file;
+
+    foreach (file in excluded)
+        MASTER_OB->check(!objectp(find_object(file)), "loadall recursive path skipped: " + file);
+    foreach (file in included)
+        MASTER_OB->check(objectp(find_object(file)), "loadall recursive source loaded: " + file);
+    MASTER_OB->check(objectp(find_object(CORE_MASTER_OB)), "loadall preserves master entry");
+    MASTER_OB->check(
+        objectp(find_object(CORE_SIMUL_EFUN_OB)),
+        "loadall preserves simul efun entry"
+    );
+}

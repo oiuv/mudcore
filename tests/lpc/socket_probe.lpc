@@ -1,0 +1,108 @@
+#include <socket.h>
+#include <socket_err.h>
+
+inherit CORE_SOCKET;
+
+int udpPort;
+int tcpReceived;
+int udpReceived;
+int accepted;
+int closed;
+string tcpBuffer = "";
+
+void onError(int fd, string message) {
+    MASTER_OB->check(0, "socket callback: " + message);
+}
+
+void onAccept(int fd) {
+    accepted++;
+}
+
+void onClose(int fd) {
+    closed++;
+}
+
+void onConnect(int fd) {
+    MASTER_OB->check(send(fd, "tcp-ping") == EESUCCESS, "TCP client sends");
+}
+
+void onServerData(int fd, string message) {
+    send(fd, message);
+}
+
+void onClientData(int fd, string message) {
+    tcpBuffer += message;
+    if (tcpBuffer == "tcp-ping") {
+        tcpReceived++;
+        close(fd);
+    }
+}
+
+void onUdpServer(int fd, string message, string addr) {
+    string host;
+    int port;
+
+    sscanf(addr, "%s %d", host, port);
+    send(fd, message, host, port);
+}
+
+varargs void onUdpClient(int fd, string message, string addr) {
+    if (!addr) {
+        // 就绪回调里立即发送，验证绑定早于通知。
+        MASTER_OB->check(
+            send(fd, "udp-ping", "127.0.0.1", udpPort) == EESUCCESS,
+            "UDP ready after bind"
+        );
+    } else if (message == "udp-ping") {
+        udpReceived++;
+    }
+}
+
+void run() {
+    int listener, tcpPort, udpListener, tlsFd;
+    string host;
+
+    SocketDnsCache["127.0.0.1"] = "127.0.0.1";
+    listener = tcp_server(0, this_object(), "onAccept", "onError", "onServerData", "onClose");
+    MASTER_OB->check(listener >= 0, "TCP listen");
+    if (listener >= 0) {
+        sscanf(socket_address(listener, 1), "%s %d", host, tcpPort);
+        MASTER_OB->check(tcpPort > 0, "TCP ephemeral port");
+        tcp_client(
+            "127.0.0.1",
+            tcpPort,
+            this_object(),
+            "onConnect",
+            "onClientData",
+            "onClose",
+            "onError"
+        );
+    }
+    udpListener = udp_server(0, this_object(), "onUdpServer", "onError");
+    MASTER_OB->check(udpListener >= 0, "UDP listen");
+    if (udpListener >= 0) {
+        sscanf(socket_address(udpListener, 1), "%s %d", host, udpPort);
+        udp_client("127.0.0.1", udpPort, this_object(), "onUdpClient", "onError");
+    }
+    tlsFd = create_socket(STREAM_TLS, "handle_receive_callback", "handle_close_callback");
+    MASTER_OB->check(tlsFd >= 0, "generic TLS remains available");
+    if (tlsFd >= 0) {
+        MASTER_OB->check(
+            set_option(tlsFd, SO_TLS_VERIFY_PEER, 1) == EESUCCESS,
+            "socket option success contract"
+        );
+        socket_close(tlsFd);
+    }
+}
+
+void finish() {
+    int fd;
+
+    MASTER_OB->check(accepted == 1, "TCP accept callback");
+    MASTER_OB->check(tcpReceived == 1, "TCP accepted connection inherits data callback");
+    MASTER_OB->check(closed == 1, "TCP accepted connection inherits close callback");
+    MASTER_OB->check(udpReceived == 1, "UDP loopback round trip");
+    foreach (fd in keys(get_connections()))
+        close(fd);
+    MASTER_OB->check(sizeof(get_connections()) == 0, "socket cleanup");
+}

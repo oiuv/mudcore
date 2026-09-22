@@ -13,7 +13,7 @@ History:
 varargs string log_time(int timestamp) {
     if (!timestamp) timestamp = time();
 
-    return CORE_TIME_D->replace_ctime(timestamp);
+    return TIME_D->replace_ctime(timestamp);
 }
 
 // 获取复制对象的唯一ID
@@ -170,19 +170,24 @@ varargs string sort_string(string input, int width, int prefix) {
 // 游戏配置内容.env的读取或设置
 varargs mixed env(string key, mixed value) {
     if (nullp(key)) {
-        return CORE_ENV_D->query_entire_dbase();
+        return ENV_D->query_entire_dbase();
     }
 
     if (nullp(value)) {
-        return CORE_ENV_D->query(key);
+        return ENV_D->query(key);
     } else {
-        return CORE_ENV_D->set(key, value);
+        return ENV_D->set(key, value);
     }
 }
 // 系统配置信息，缓存到全局变量
 nosave mapping Config;
 mixed config(string key) {
-    Config = Config || json_decode(read_file("config.json"));
+    string content;
+
+    if (!mapp(Config)) {
+        content = read_file("config.json");
+        Config = stringp(content) && trim(content) != "" ? json_decode(content) : ([]);
+    }
     if (mapp(Config) && key) {
         return Config[key];
     } else {

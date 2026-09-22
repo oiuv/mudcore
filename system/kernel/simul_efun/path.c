@@ -26,8 +26,8 @@ string resolve_path(string curr, string new_path) {
     if (!new_path || new_path == ".")
         return curr;
 
-    if (new_path == "here" && this_player())
-        return file_name(environment(this_player())) + ".c";
+    if (new_path == "here" && this_player() && environment(this_player()))
+        return lpc_file(base_name(environment(this_player()))) || base_name(environment(this_player()));
 
     if (new_path == "~" || new_path == "~/")
         new_path = user_path(getuid(this_player()));

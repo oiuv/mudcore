@@ -23,7 +23,7 @@ string getErrorMessage(string verb) {
 }
 
 int getValidVerb(string verb) {
-    if (!strsrch(verb, VERB_DIR))
+    if (stringp(verb) && !strsrch(verb, VERB_DIR) && strsrch(verb, "..") == -1)
         return 1;
     else
         return 0;
@@ -37,7 +37,7 @@ protected int scheduledVerbLoad(string *cache) {
             destruct(ob);
         if (!catch(ob = load_object(verb)) && ob) {
             if (!(verb_list = ob->getVerbs()))
-                verb_list = ({ explode(verb, "/")[<1][0..<3] });
+                verb_list = ({ explode(lpc_object_path(verb), "/")[<1] });
             else if (verb_list && ob->getSynonyms()) {
                 verb_list += ob->getSynonyms();
             }
@@ -53,22 +53,19 @@ varargs void eventReloadVerbs(mixed val) {
     if (arrayp(val))
         verbs = filter(val, (: getValidVerb($1) :));
     else if (stringp(val)) {
-        if (strlen(val) > 2 && val[<2..] == ".c")
-            val = val[0..<3];
+        val = lpc_object_path(val);
         if (getValidVerb(val))
             verbs = ({ val });
         if (!verbs)
             return;
     } else {
         string dir;
-        verbs = ({});
-        foreach (dir in get_dir(VERB_DIR)) {
+        verbs = lpc_source_files(VERB_DIR);
+        Verbs = ([]);
+        foreach (dir in get_dir(VERB_DIR) || ({})) {
             dir = VERB_DIR + dir;
             if (file_size(dir) == -2)
-                verbs += map(get_dir(dir + "/*.c"), (: $(dir) + "/" + $1 :));
-            else if (file_size(dir) > 0 && test_load(dir)) {
-                verbs += ({ dir });
-            }
+                verbs += lpc_source_files(dir);
         }
     }
 
@@ -85,6 +82,10 @@ varargs void eventReloadVerbs(mixed val) {
 
 string short() {
     return "谓词指令精灵(VERB_D)";
+}
+
+void rehash() {
+    eventReloadVerbs();
 }
 
 protected void create() {

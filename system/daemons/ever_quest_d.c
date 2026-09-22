@@ -309,8 +309,8 @@ public void start_all_quest() {
         name = replace_string(name, " ", "");
 
         // 生成文件名字
-        name = EVER_QUEST_DIR + name + ".c";
-        if (file_size(name) < 0) {
+        name = lpc_file(EVER_QUEST_DIR + name);
+        if (!name) {
             // 没有这个任务
             continue;
         }

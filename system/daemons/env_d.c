@@ -12,9 +12,13 @@ inherit CORE_DBASE;
 #define ENV_FILE DATA_DIR ".env"
 
 void create() {
-    string *cfg = read_lines(ENV_FILE);
+    string *cfg;
     string key;
     mixed value;
+
+    if (file_size(ENV_FILE) <= 0)
+        return;
+    cfg = read_lines(ENV_FILE);
 
     foreach (string line in cfg) {
         if (sscanf(line, "%s:%s", key, value) == 2) {

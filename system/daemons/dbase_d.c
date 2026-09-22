@@ -103,7 +103,7 @@ int cleanup_all_save_object(int raw) {
         if (!stringp(e[i]))
             // 不应该不是字符串
             map_delete(save_dbase, e[i]);
-        else if (file_size(e[i] + ".c") < 0) {
+        else if (!lpc_file(e[i])) {
             log_file("dbase", sprintf("data of (%s) cleaned because no found object.\n", e[i]));
             if (raw)
                 map_delete(save_dbase, e[i]);
@@ -189,7 +189,7 @@ int clear_object(mixed ob) {
 
     if (stringp(ob)) {
         index = ob;
-        sscanf(index, "%s.c", index);
+        index = lpc_object_path(index);
         xob = find_object(index);
     } else if (objectp(ob)) {
         xob = ob;

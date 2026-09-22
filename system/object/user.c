@@ -80,7 +80,7 @@ string get_id() {
 
     id = geteuid();
     if (!id) id = getuid();
-    if (!id) query("id");
+    if (!id) id = query("id");
 
     return id;
 }

@@ -6,13 +6,8 @@ string *epilog(int load_empty) {
 #ifdef PRELOAD
     preload_list = read_lines(PRELOAD);
     foreach (string path in preload_list) {
-        string file;
-
-        if (path[<1] == '/' && file_size(path) == -2) {
-            foreach (file in get_dir(path)) {
-                if (file[<2..<1] == ".c" && file_size(path + file) > 0)
-                    preload_list += ({ path + file });
-            }
+        if (file_size(path) == -2) {
+            preload_list += lpc_source_files(path);
             preload_list -= ({ path });
         }
     }

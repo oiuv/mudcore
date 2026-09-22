@@ -11,9 +11,6 @@ Date: 2019-03-12
 
 inherit CORE_DBASE;
 // 聊天监听触发NPC
-#ifndef ROBOT_NPC
-#define ROBOT_NPC ({"/world/npc/ivy"})
-#endif
 int filter_listener(object ppl, string only, object me);
 
 nosave string msg_log;
@@ -172,9 +169,11 @@ varargs int do_channel(object me, string verb, string arg, int emote) {
         return EMOTE_D->do_emote(me, vb, emote_arg, obs, channels[verb]["msg_emote"]);
     } else {
         // NPC监听聊天接口
+#ifdef ROBOT_NPC
         if (userp(me) && verb == "chat") {
             ROBOT_NPC->receive_report(me, verb, arg);
         }
+#endif
         msg = sprintf(
             channels[verb]["msg_speak"],
             me->short() || me->query("channel_id"),

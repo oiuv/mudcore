@@ -29,7 +29,9 @@ inherit CORE_SAVE;
 #endif /* SAVE_MUDLIST */
 
 nosave int udp_port;
-nosave int udp_socket;
+nosave int udp_socket = -1;
+nosave string peerHost;
+nosave int peerPort;
 
 nosave string my_address;
 
@@ -51,8 +53,6 @@ void set_mud_alias(string alias, string name);
 // --------------------------------------------------------------------------
 
 private void create() {
-    // int err;
-
     seteuid(getuid());
     set("channel_id", "網路精靈");
 
@@ -60,14 +60,49 @@ private void create() {
     restore();
 #endif /* SAVE_MUDLIST */
 
-    udp_port = INTERMUD_UDP_PORT;
-    if ((udp_socket = socket_create(DATAGRAM, "read_callback")) < 0)
-        error("Unable to create UDP socket.\n");
-    while (EEADDRINUSE == socket_bind(udp_socket, udp_port))
-        udp_port++;
+    if (!mapp(mudlist))
+        mudlist = ([]);
+}
 
+// 只有 MUDLIB 显式提供对端并调用此方法时才启用网络。
+varargs int start(string host, int port, int bindPort) {
+    int result;
+
+    SECURED_INTERMUD_API;
+    if (!stringp(host) || host == "" || port < 1 || port > 65535 || bindPort < 0 || bindPort > 65535)
+        return 0;
+    if (udp_socket >= 0)
+        return 1;
+    udp_socket = socket_create(DATAGRAM, "read_callback");
+    if (udp_socket < 0)
+        return 0;
+    udp_port = bindPort ? bindPort : INTERMUD_UDP_PORT;
+    result = socket_bind(udp_socket, udp_port);
+    if (result != EESUCCESS) {
+        socket_close(udp_socket);
+        udp_socket = -1;
+        return 0;
+    }
+    peerHost = host;
+    peerPort = port;
     resolve(query_host_name(), "resolve_callback");
     call_out("startup", 1);
+    return 1;
+}
+
+void stop() {
+    SECURED_INTERMUD_API;
+    remove_call_out("startup");
+    remove_call_out("update");
+    if (udp_socket >= 0)
+        socket_close(udp_socket);
+    udp_socket = -1;
+    peerHost = 0;
+    peerPort = 0;
+}
+
+int is_started() {
+    return udp_socket >= 0;
 }
 
 #ifdef SAVE_MUDLIST
@@ -80,6 +115,8 @@ private void update() {
     string mud;
     mapping m;
 
+    if (udp_socket < 0)
+        return;
     if (mapp(mudlist))
         foreach (mud, m in mudlist)
             INTERMUD_SERVICE("ping")->send_request(
@@ -90,18 +127,24 @@ private void update() {
 }
 
 private void startup() {
+    if (udp_socket < 0)
+        return;
     CHANNEL_D->do_channel(this_object(), "sys",
         "Intermud 網路服務準備就緒，使用 UDP 埠號 " + udp_port);
 
-    INTERMUD_SERVICE("ping")->send_request(MUDLIST_SERVER, MUDLIST_SERVER_PORT);
-    INTERMUD_SERVICE("mudlist")->send_request(MUDLIST_SERVER, MUDLIST_SERVER_PORT);
+    INTERMUD_SERVICE("ping")->send_request(peerHost, peerPort);
+    INTERMUD_SERVICE("mudlist")->send_request(peerHost, peerPort);
     update();
 }
 
 void remove() {
     if (file_name(previous_object()) != SIMUL_EFUN_OB)
         error("Permission denied\n");
-    socket_close(udp_socket);
+    remove_call_out("startup");
+    remove_call_out("update");
+    if (udp_socket >= 0)
+        socket_close(udp_socket);
+    udp_socket = -1;
 
 #ifdef SAVE_MUDLIST
     save();
@@ -222,7 +265,9 @@ void send_event(string dest, int port, string event, mapping args) {
     int sock;
     string msg, p, v;
 
-    // SECURED_INTERMUD_API;
+    SECURED_INTERMUD_API;
+    if (udp_socket < 0)
+        return;
 
     // 不要傳送連我們自己都不了解的事件。
     if (undefinedp(event_handler[event]))
@@ -233,7 +278,7 @@ void send_event(string dest, int port, string event, mapping args) {
         return;
 
     sock = socket_create(DATAGRAM, "read_callback");
-    if (!sock)
+    if (sock < 0)
         return;
 
     // 將訊息包裝成 Intermud-2 的訊息串。

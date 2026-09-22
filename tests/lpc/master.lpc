@@ -1,0 +1,79 @@
+inherit CORE_MASTER_OB;
+
+int failures;
+int checks;
+
+void check(int condition, string label) {
+    checks++;
+    if (!condition) {
+        failures++;
+        debug_message("FAIL: " + label);
+    }
+}
+
+// Tests never contact external services, even if a future create() regresses.
+int valid_socket(object caller, string action, mixed *info) {
+    if (file_name(caller) == "/tests/socket_probe" || file_name(caller) == "/tests/http_transport")
+        return 1;
+    check(0, "unexpected socket operation from " + file_name(caller));
+    return 0;
+}
+
+void error_handler(mapping details, int caught) {
+    if (!caught)
+        check(0, "uncaught: " + details["error"]);
+}
+
+void log_error(string file, string message) {
+    debug_message(file + ": " + message);
+}
+
+void finish() {
+    mixed err;
+
+    err = catch(load_object("/tests/regression")->deferred());
+    if (err)
+        check(0, "deferred regression: " + err);
+    err = catch(load_object("/tests/socket_probe")->finish());
+    if (err)
+        check(0, "socket regression: " + err);
+    err = catch(load_object("/tests/loadall_probe")->finish());
+    if (err)
+        check(0, "loadall regression: " + err);
+    debug_message(sprintf("CHECKS: %d, FAILURES: %d", checks, failures));
+    debug_message(failures ? "MUDCORE TESTS FAIL" : "MUDCORE TESTS PASS");
+    shutdown(failures ? 1 : 0);
+}
+
+void run() {
+    string file;
+    mixed err;
+    int count;
+
+    foreach (file in read_lines("/manifest.txt")) {
+        reset_eval_cost();
+        err = catch(load_object(file));
+        check(!err, "compile " + file + (err ? ": " + err : ""));
+        count++;
+    }
+    debug_message(sprintf("COMPILED: %d programs attempted", count));
+    err = catch(load_object("/tests/regression")->run());
+    if (err)
+        check(0, "regression: " + err);
+    err = catch(load_object("/tests/socket_probe")->run());
+    if (err)
+        check(0, "socket startup: " + err);
+    err = catch(load_object("/tests/loadall_probe")->run());
+    if (err)
+        check(0, "loadall startup: " + err);
+    call_out("finish", 5);
+}
+
+string *epilog(int flag) {
+    string *files;
+
+    files = ::epilog(flag);
+    check(sizeof(files) == 2, "preload directory accepts .c and .lpc");
+    call_out("run", 0);
+    return ({});
+}

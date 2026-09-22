@@ -173,14 +173,17 @@
 #ifndef _NOCLONE
 #define _NOCLONE        CORE_NOCLONE
 #endif
-#ifndef _DBASE
-#define _DBASE          CORE_DBSAVE
+#ifndef _DBSAVE
+#define _DBSAVE         CORE_DBSAVE
 #endif
 #ifndef _ROOM
 #define _ROOM           CORE_ROOM
 #endif
 #ifndef _SAVE
 #define _SAVE           CORE_SAVE
+#endif
+#ifndef _SOCKET
+#define _SOCKET         CORE_SOCKET
 #endif
 #ifndef _TEAM
 #define _TEAM           CORE_TEAM

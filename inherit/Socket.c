@@ -101,7 +101,12 @@ public int tcp_client(
     class socket_connection conn;
 
     if (fd < 0) {
-        if (callback_error) call_other(callback_obj, callback_error, fd, "创建TCP socket失败");
+        if (callback_error && callback_obj) call_other(
+            callback_obj,
+            callback_error,
+            fd,
+            "创建TCP socket失败"
+        );
         return fd;
     }
 
@@ -165,11 +170,25 @@ public int udp_client(
     string callback_error
 ) {
     int fd = create_socket(PROTOCOL_UDP, "handle_receive_callback");
+    int result;
     class socket_connection conn;
 
     if (fd < 0) {
-        if (callback_error) call_other(callback_obj, callback_error, fd, "创建UDP socket失败");
+        if (callback_error && callback_obj) call_other(
+            callback_obj,
+            callback_error,
+            fd,
+            "创建UDP socket失败"
+        );
         return fd;
+    }
+
+    result = socket_bind(fd, 0);
+    if (result != EESUCCESS) {
+        socket_close(fd);
+        if (callback_error && callback_obj)
+            call_other(callback_obj, callback_error, result, "绑定UDP socket失败");
+        return result;
     }
 
     conn = new(class socket_connection);
@@ -201,26 +220,29 @@ public int udp_client(
         resolve(host, "handle_dns_resolve");
     }
 
-    // 绑定端口确保可以接收响应
-    socket_bind(fd, 0);
-    trace("udp:绑定成功", ([ "fd": fd ]));
-
     return fd;
 }
 
 // 创建TCP服务器
-public int tcp_server(
+public varargs int tcp_server(
     int port,
     object callback_obj,
     string callback_accept,
-    string callback_error
+    string callback_error,
+    string callback_data,
+    string callback_close
 ) {
     int fd = create_socket(PROTOCOL_TCP, "handle_receive_callback", "handle_close_callback");
     int result;
     class socket_connection conn;
 
     if (fd < 0) {
-        if (callback_error) call_other(callback_obj, callback_error, fd, "创建监听socket失败");
+        if (callback_error && callback_obj) call_other(
+            callback_obj,
+            callback_error,
+            fd,
+            "创建监听socket失败"
+        );
         return fd;
     }
 
@@ -228,7 +250,12 @@ public int tcp_server(
     if (result != EESUCCESS) {
         trace("绑定端口失败", socket_error(result));
         socket_close(fd);
-        if (callback_error) call_other(callback_obj, callback_error, result, socket_error(result));
+        if (callback_error && callback_obj) call_other(
+            callback_obj,
+            callback_error,
+            result,
+            socket_error(result)
+        );
         return result;
     }
 
@@ -236,7 +263,12 @@ public int tcp_server(
     if (result != EESUCCESS) {
         trace("监听失败", socket_error(result));
         socket_close(fd);
-        if (callback_error) call_other(callback_obj, callback_error, result, socket_error(result));
+        if (callback_error && callback_obj) call_other(
+            callback_obj,
+            callback_error,
+            result,
+            socket_error(result)
+        );
         return result;
     }
 
@@ -248,6 +280,8 @@ public int tcp_server(
     conn->callbacks = ([
         "accept": callback_accept,
         "error": callback_error,
+        "data": callback_data,
+        "close": callback_close,
         "object": callback_obj
     ]);
     conn->last_active = time();
@@ -265,7 +299,12 @@ public int udp_server(int port, object callback_obj, string callback_data, strin
     class socket_connection conn;
 
     if (fd < 0) {
-        if (callback_error) call_other(callback_obj, callback_error, fd, "创建UDP监听socket失败");
+        if (callback_error && callback_obj) call_other(
+            callback_obj,
+            callback_error,
+            fd,
+            "创建UDP监听socket失败"
+        );
         return fd;
     }
 
@@ -273,7 +312,12 @@ public int udp_server(int port, object callback_obj, string callback_data, strin
     if (result != EESUCCESS) {
         trace("udp_listen:绑定端口失败", ([ "error": socket_error(result) ]));
         socket_close(fd);
-        if (callback_error) call_other(callback_obj, callback_error, result, socket_error(result));
+        if (callback_error && callback_obj) call_other(
+            callback_obj,
+            callback_error,
+            result,
+            socket_error(result)
+        );
         return result;
     }
 
@@ -374,7 +418,8 @@ public mapping get_info(int fd) {
 
 // 设置socket选项
 public int set_option(int fd, int option, mixed value) {
-    return socket_set_option(fd, option, value);
+    socket_set_option(fd, option, value);
+    return EESUCCESS;
 }
 
 // 极简UDP接口 - 无状态单次发送
@@ -584,6 +629,8 @@ protected void handle_accept_callback(int fd) {
     newConn->fd = newFd;
     newConn->protocol = serverConn->protocol;
     newConn->state = SOCKET_STATE_CONNECTED;
+    newConn->callbacks = copy(serverConn->callbacks);
+    newConn->remote_addr = socket_address(newFd);
     newConn->last_active = time();
 
     SocketConnections[newFd] = newConn;

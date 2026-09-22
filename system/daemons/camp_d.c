@@ -10,8 +10,8 @@ void create() {
 
 string getCampFile(string camp) {
     string camp_file;
-    camp_file = CAMP_DIR + camp + ".c";
-    if (file_size(camp_file) == -1 || file_size(camp_file) == -2)
+    camp_file = lpc_file(CAMP_DIR + camp);
+    if (!camp_file)
         return 0;
     if (camp_file->isCamp() == 0)
         return 0;
@@ -49,7 +49,7 @@ int getHate(string camp) {
     camp_file = getCampFile(camp);
     if (!stringp(camp_file))
         return 0;
-    return camp_file->getHat();
+    return camp_file->getHate();
 }
 
 string getHateMsg(string camp) {

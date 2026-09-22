@@ -13,10 +13,15 @@ int file_exists(string file) {
 }
 
 string *read_lines(string file) {
+    string content;
+
     if (file_exists(file)) {
+        content = read_file(file);
+        if (!stringp(content))
+            return ({});
         return filter_array(
-            explode(read_file(file), "\n"),
-            (: trim($1) != "" && $1[0] != '#' && $1[0] != ';' :)
+            map(explode(content, "\n"), (: trim($1) :)),
+            (: $1 != "" && $1[0] != '#' && $1[0] != ';' :)
         );
     } else
         error("文件 " + file + " 不存在！");
@@ -69,12 +74,46 @@ int tail(string path) {
     return 0;
 }
 
-mixed lpc_file(string str) {
-    if (!file_exists(str)) {
-        if (file_exists(str + ".c"))
-            return str + ".c";
-        else
-            return 0;
-    } else
-        return str;
+// 对象名只去掉末尾的源码扩展名，目录中出现的 .c 不受影响。
+string lpc_object_path(string path) {
+    if (!stringp(path))
+        return 0;
+    if (strlen(path) > 4 && path[<4..] == ".lpc")
+        return path[0..<5];
+    if (strlen(path) > 2 && path[<2..] == ".c")
+        return path[0..<3];
+    return path;
+}
+
+mixed lpc_file(string path) {
+    if (!stringp(path) || path == "")
+        return 0;
+    if (lpc_object_path(path) != path)
+        return file_exists(path) ? path : 0;
+    if (file_exists(path + ".lpc"))
+        return path + ".lpc";
+    if (file_exists(path + ".c"))
+        return path + ".c";
+    return file_exists(path) ? path : 0;
+}
+
+// 单层目录扫描；与驱动无扩展名加载一致，优先 .lpc 并去重。
+string *lpc_source_files(string dir) {
+    string *entries, *names;
+    string entry, name;
+
+    if (!stringp(dir) || dir == "")
+        return ({});
+    if (dir[<1] != '/')
+        dir += "/";
+    entries = get_dir(dir);
+    names = ({});
+    if (!arrayp(entries))
+        return names;
+    foreach (entry in entries) {
+        name = lpc_object_path(entry);
+        if (name != entry && file_size(dir + entry) >= 0 && member_array(name, names) == -1)
+            names += ({ name });
+    }
+    return map(sort_array(names, 1), (: lpc_file($(dir) + $1) :));
 }

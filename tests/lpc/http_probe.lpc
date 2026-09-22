@@ -1,0 +1,35 @@
+inherit CORE_HTTP;
+
+int nextFd = 1000;
+int secure;
+
+protected int open_http_socket(int isTLS, string host) {
+    secure = isTLS;
+    return nextFd++;
+}
+
+protected void connect(string host, string addr) {
+    // 请求内容测试不建立连接。
+}
+
+void run() {
+    string packet;
+    mapping body;
+
+    Host["example.invalid"] = "127.0.0.1";
+    get("https://example.invalid/search?first=1", ([ "q": "中文 &+" ]), ([]));
+    packet = Status[nextFd - 1]["http"];
+    MASTER_OB->check(secure == 1, "https selects TLS");
+    MASTER_OB->check(
+        strsrch(packet, "?first=1&q=%E4%B8%AD%E6%96%87%20%26%2B") != -1,
+        "HTTP query encoding"
+    );
+    post("http://example.invalid/json", ([ "message": "中文\"\n", "n": 3 ]), ([]));
+    packet = Status[nextFd - 1]["http"];
+    body = json_decode(explode(packet, "\r\n\r\n")[1]);
+    MASTER_OB->check(body["message"] == "中文\"\n" && body["n"] == 3, "HTTP JSON serialization");
+    MASTER_OB->check(
+        strsrch(packet, "Host: example.invalid\r\nContent-Length:") != -1,
+        "empty HTTP header mapping"
+    );
+}

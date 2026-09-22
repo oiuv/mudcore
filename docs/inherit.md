@@ -27,7 +27,7 @@ CORE_MESSAGE|/inherit/message.c|玩家信息处理功能接口，实现分页显
 CORE_MOVE|/inherit/move.c|对象移动接口，由角色、物品对象继承，方便移动
 CORE_NAME|/inherit/name.c|ID和名称接口，让对象可以被看见(查找)和命名
 CORE_NOCLONE|/inherit/noclone.c|限制对象禁止被复制功能接口，需调用`check_clone()`检查
-CORE_ROOM|/inherit/room.c|游戏环境标准接口，实现房间核心功能，需要继承DBASE、NAME、CLEAN_UP
+CORE_ROOM|/inherit/room.c|游戏环境标准接口，已组合可覆盖的 _DBASE、_NAME 和 _CLEAN_UP
 CORE_SAVE|/inherit/save.c|对象数据存取接口，主要是玩家角色使用存档和读档
 CORE_SOCKET|/inherit/Socket.c|Socket网络通信接口，支持TCP/UDP客户端和服务器功能
 CORE_TEAM|/inherit/team.c|角色组队功能接口，实现组队相关功能

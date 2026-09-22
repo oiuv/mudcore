@@ -1,0 +1,91 @@
+void check(int value, string label) {
+    MASTER_OB->check(value, label);
+}
+
+void run() {
+    object ob, other, virtualRoom;
+    string header;
+
+    check(_DBSAVE == CORE_DBSAVE, "_DBSAVE alias");
+    check(_SOCKET == CORE_SOCKET, "_SOCKET alias");
+    check(lpc_file("/fixtures/commands/modern") == "/fixtures/commands/modern.lpc", "resolve .lpc");
+    check(lpc_file("/fixtures/commands/legacy") == "/fixtures/commands/legacy.c", "resolve .c");
+    check(
+        lpc_file("/fixtures/commands/duplicate") == "/fixtures/commands/duplicate.lpc",
+        "prefer .lpc"
+    );
+    check(
+        lpc_file("/fixtures/commands/duplicate.c") == "/fixtures/commands/duplicate.c",
+        "explicit extension"
+    );
+    check(lpc_object_path("/dir.c/name.lpc") == "/dir.c/name", "strip suffix only");
+    check(sizeof(lpc_source_files("/fixtures/commands")) == 3, "scan only sources and deduplicate");
+    check(sizeof(lpc_source_files("/missing")) == 0, "missing directory");
+    check(sizeof(read_lines("/fixtures/commands/empty.txt")) == 0, "empty text file");
+    check(sizeof(read_lines(PRELOAD)) == 1, "trim comments and CRLF");
+    check(COMMAND_D->default_alias("") == "", "empty input");
+    ob = COMMAND_D->find_command("shortcut");
+    check(objectp(ob) && ob->main(0, 0) == 1, ".lpc alias and directory without trailing slash");
+    check(!COMMAND_D->find_command("fake"), "reject .c.bak command");
+    rm("/fixtures/commands/legacy.c");
+    COMMAND_D->rehash();
+    check(!COMMAND_D->find_command("legacy"), "clear stale command cache");
+    check(!env("absent"), "missing optional .env");
+    check(mapp(config(0)), "missing optional config.json");
+    env("saved", 7);
+    check(env("saved") == 7, "local env round trip");
+    ob = new("/tests/saved");
+    ob->set("nested/value", 17);
+    check(!ob->query("nested/value/missing"), "nested scalar is not a descendant");
+    ob->set_temp("scratch", 23);
+    check(ob->save(), "save locally");
+    other = new("/tests/saved");
+    check(other->restore() && other->query("nested/value") == 17, "restore nested values");
+    check(!other->query_temp("scratch"), "temporary values not persisted");
+    ob = new(CORE_ROOM);
+#ifdef _DBASE
+    if (_DBASE != CORE_DBASE) {
+        check(ob->host_marker() == 42, "room respects host dbase override");
+        check(env("host_marker") == 42, "env respects host daemon override");
+    }
+#endif
+    virtualRoom = VIRTUAL_D->compile_area("/fixtures/virtual/grid/7,2");
+    check(objectp(virtualRoom) && virtualRoom->marker() == 7, "virtual .lpc source");
+    header = HEADER_D->files(
+        ({ "/fixtures/commands/modern.lpc", "/fixtures/commands/fake.c.bak" }),
+        "F"
+    );
+    check(
+        strsrch(header, "F_MODERN") != -1 && strsrch(header, "fake") == -1,
+        "header source scanning"
+    );
+    DBASE_D->set_object_data(load_object("/fixtures/commands/modern"), ([ "value": 3 ]));
+    DBASE_D->cleanup_all_save_object(1);
+    check(
+        mapp(DBASE_D->query_object_data(load_object("/fixtures/commands/modern"))),
+        "cleanup retains .lpc data"
+    );
+    check(
+        MASTER_OB->valid_database(this_object(), "connect", ({})) == 0,
+        "no default database credentials"
+    );
+    check(objectp(load_object(CORE_HTTP)), "generic HTTP remains available");
+    load_object("/tests/http_probe")->run();
+    load_object("/tests/http_transport")->run();
+    check(objectp(load_object(CORE_DB)), "generic database remains available");
+    check(objectp(load_object(CORE_CMD)), "generic external commands remain available");
+    check(objectp(load_object(CORE_SOCKET)), "generic sockets remain available");
+    check(!INTERMUD_D->is_started(), "Intermud loading does not start networking");
+    check(mapp(INTERMUD_D->query_mudlist()), "offline Intermud list is usable");
+    check(
+        !CORE_MASTER_OB->valid_seteuid(this_object(), ROOT_UID),
+        "non-root object cannot elevate UID"
+    );
+    check(CORE_MASTER_OB->valid_seteuid(this_object(), getuid()), "own UID remains allowed");
+    VERB_D->rehash();
+}
+
+void deferred() {
+    check(stringp(VERB_D->getVerb("fallback")), ".lpc verb fallback name");
+    check(stringp(VERB_D->getVerb("legacyverb")), "legacy .c verb");
+}

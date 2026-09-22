@@ -18,7 +18,7 @@ mixed compile_area(string file) {
 
     virtual = file[0..n - 1];
 
-    if (file_size(virtual + ".c") < 1) {
+    if (!lpc_file(virtual)) {
         log_file("virtual", sprintf("[%s]%s %O\n", ctime(), file, all_previous_objects()));
         return 0;
     }
@@ -47,7 +47,7 @@ mixed compile_mob(string file) {
     n = sizeof(path) - 1;
     virtual = replace_string(file, "/" + path[n], "");
 
-    if (file_size(virtual + ".c") < 1)
+    if (!lpc_file(virtual))
         return "对象不存在！";
 
     if (!(ob = new(virtual, to_int(path[n]))))

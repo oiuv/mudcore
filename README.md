@@ -23,6 +23,12 @@ LPMUD游戏开发框架核心代码，仅仅包括核心代码，可以在此基
 
 框架提供大量常用模拟外部函数和最基本的游戏底层（包括指令系统、聊天频道、表情系统和档案存取功能），可以用来快速开发MUD游戏，框架部分独立维护，更新升级不影响个人项目。个人项目目录结构和功能灵活自主，框架提供的功能可灵活选择使用，只需要继承对应模块即可。
 
+## 框架依赖边界
+
+框架保留 HTTP/HTTPS、Socket、数据库和外部命令等通用能力。服务地址、凭据、请求时机和业务规则由 MUDLIB 提供；加载框架不能自动访问某个具体外部服务。Intermud 需由使用方显式调用 `INTERMUD_D->start(host, port)`，不会自动连接预置中心。固定二维码网站等业务功能放在使用方项目。
+
+开发验证和兼容调整见 [测试说明](tests/README.md) 与 [依赖边界迁移说明](docs/dependency-boundary.md)。
+
 ## 框架使用说明
 
 ### 安装
@@ -192,10 +198,11 @@ CORE_AREA|/inherit/area/area.c|游戏区域环境标准接口，实现区域模�
 CORE_ATTACK|/inherit/attack.c|角色攻击接口，实现战斗行为功能，需自己实现具体战斗方式
 CORE_CAMP|/inherit/camp.c|游戏阵营接口，实现阵营声望相关功能
 CORE_CLEAN_UP|/inherit/clean_up.c|自动清理接口，实现 clean_up() 方法的垃圾回收功能
+CORE_CMD|/inherit/CMD.c|通用外部命令接口，由 MUDLIB 配置可执行文件
 CORE_COMMAND|/inherit/command.c|角色指令系统接口，实现生物对象特征功能
 CORE_CONDITION_MOD|/inherit/condition_mod.c|角色增益功能接口，提供增益相关方法
 CORE_CONDITION|/inherit/condition.c|角色增益状态控制接口，实现游戏BUFF功能
-CORE_DB|/inherit/DB.c|MySQL数据库接口，可以优雅的操作数据库的增删改查
+CORE_DB|/inherit/DB.c|数据库接口，按驱动可选包支持 MySQL、SQLite 等后端
 CORE_DBASE|/inherit/dbase.c|数据存取功能接口，实现对象参数的增删改查功能
 CORE_DBSAVE|/inherit/dbsave.c|系统数据存取接口，配合 DBASE_D 使用
 CORE_HTTP|/inherit/Http.c|HTTP客户端，方便发起http请求
@@ -204,8 +211,9 @@ CORE_MESSAGE|/inherit/message.c|玩家信息处理功能接口，实现分页显
 CORE_MOVE|/inherit/move.c|对象移动接口，由角色、物品对象继承，方便移动
 CORE_NAME|/inherit/name.c|ID和名称接口，让对象可以被看见(查找)和命名
 CORE_NOCLONE|/inherit/noclone.c|限制对象禁止被复制功能接口，需调用`check_clone()`检查
-CORE_ROOM|/inherit/room.c|游戏环境标准接口，实现房间核心功能，需要继承DBASE、NAME、CLEAN_UP
+CORE_ROOM|/inherit/room.c|游戏环境标准接口，已组合可覆盖的 _DBASE、_NAME 和 _CLEAN_UP
 CORE_SAVE|/inherit/save.c|对象数据存取接口，主要是玩家角色使用存档和读档
+CORE_SOCKET|/inherit/Socket.c|通用 Socket 封装，提供 TCP、UDP 及 TLS 基础支持
 CORE_TEAM|/inherit/team.c|角色组队功能接口，实现组队相关功能
 CORE_UNIQUE|/inherit/unique.c|对象唯一性功能接口，注意和noclone不同，唯一性允许复制，但仅限一次
 CORE_USER_COMBAT_RECORD|/inherit/user_combat_record.c|玩家战斗记录功能，实现玩家战斗数据记录

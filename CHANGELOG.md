@@ -8,6 +8,15 @@
 -->
 ## 更新日志
 
+### 未发布：框架边界与兼容修复
+
+- 保留通用 Socket、HTTP、数据库、外部命令及 Intermud API；移除二维码网站命令和预设 Intermud 中心。模板中的 curl 路径保留为注释示例，默认不启用；具体业务由 MUDLIB 实现或配置。
+- Intermud 加载不再自动联网，由有权限的宿主调用 `start(host, port, bindPort)` 启动、`stop()` 停止；频道机器人仅在宿主定义 `ROBOT_NPC` 后调用。迁移见 [依赖边界说明](docs/dependency-boundary.md)。
+- 补齐 `_DBSAVE`、`_SOCKET` 别名；修复 master 的 simul efun 身份路径、UID 提权与跨所有者绑定检查、玩家存档 ID，以及属性路径查询。
+- 命令、谓词、预加载、任务、虚拟对象和存档清理支持 `.c`/`.lpc`；修复空配置读取、命令缓存重建、宿主 daemon 覆盖及阵营接口拼写。
+- 修复 HTTP JSON/查询编码与空请求头、启用 HTTPS 证书验证；修复 UDP 就绪通知顺序、TCP 接入连接回调和 Socket 选项返回值。
+- 新增隔离驱动回归测试，覆盖默认实现、宿主覆盖与本机 TCP/UDP；不设统一覆盖率门槛。
+
 ### 2023年6月
 
 本次更新有不兼容调整：

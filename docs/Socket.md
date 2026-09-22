@@ -1,6 +1,6 @@
-# FluffOS Socket 编程权威指南
+# FluffOS Socket 编程指南
 
-基于 FluffOS 官方文档验证，100% 准确的中文 Socket 编程指南
+接口以所用驱动的 `src/packages/sockets/sockets.spec` 和 `include/socket_err.h` 为准。以下代码为独立的调用流程片段，需包含 `<socket.h>`、`<socket_err.h>` 并实现所引用回调；业务地址、权限、超时、缓冲与协议解析由 MUDLIB 补齐。
 
 ---
 
@@ -9,23 +9,23 @@
 ### 基础操作函数
 ```lpc
 // 套接字创建与管理
-int socket_create(int mode, string read_callback, string close_callback);
-int socket_bind(int s, int port);
-int socket_listen(int s, string listen_callback);
-int socket_accept(int s, string read_callback, string write_callback);
-int socket_connect(int s, string address, string read_callback, string write_callback);
+int socket_create(int mode, string|function read_callback, string|function|void close_callback);
+int socket_bind(int s, int port, string|void address);
+int socket_listen(int s, string|function listen_callback);
+int socket_accept(int s, string|function read_callback, string|function write_callback);
+int socket_connect(int s, string address, string|function read_callback, string|function write_callback);
 int socket_write(int s, mixed message, string|void address);
 int socket_close(int s);
 
 // 选项与状态
-int socket_set_option(int socket, int option, mixed value);
+void socket_set_option(int socket, int option, mixed value);
 string socket_error(int error);
 mixed *socket_status(void|int s);
-string socket_address(int s);
+string socket_address(int|object s, int default: 0);
 
 // 所有权管理
-int socket_acquire(int socket, string read_callback, string write_callback, string close_callback);
-int socket_release(int socket, object ob, string release_callback);
+int socket_acquire(int socket, string|function read_callback, string|function write_callback, string|function close_callback);
+int socket_release(int socket, object ob, string|function release_callback);
 ```
 
 ### 模式与选项常量
@@ -59,19 +59,21 @@ void write_callback(int fd);
 
 | 错误码 | 数值 | 含义 |
 |--------|------|------|
-| `EESUCCESS` | 0 | 操作成功 |
-| `EEFDRANGE` | -1 | 描述符超出范围 |
-| `EEBADF` | -2 | 描述符无效 |
-| `EESECURITY` | -3 | 安全违规 |
-| `EEMODENOTSUPP` | -4 | 套接字模式不支持 |
-| `EEISBOUND` | -5 | 套接字已绑定 |
-| `EEADDRINUSE` | -6 | 地址已在使用 |
-| `EEBIND` | -7 | 绑定问题 |
-| `EECONNREFUSED` | -25 | 连接被拒绝 |
-| `EECONNECT` | -26 | 连接问题 |
-| `EENOTCONN` | -18 | 套接字未连接 |
+| `EESUCCESS` | 1 | 操作成功 |
+| `EEFDRANGE` | -5 | 描述符超出范围 |
+| `EEBADF` | -6 | 描述符无效 |
+| `EESECURITY` | -7 | 安全违规 |
+| `EEMODENOTSUPP` | -12 | 套接字模式不支持 |
+| `EEISBOUND` | -8 | 套接字已绑定 |
+| `EEADDRINUSE` | -9 | 地址已在使用 |
+| `EEBIND` | -10 | 绑定问题 |
+| `EECONNREFUSED` | -23 | 连接被拒绝 |
+| `EECONNECT` | -24 | 连接问题 |
+| `EENOTCONN` | -25 | 套接字未连接 |
 
 完整32个错误码详见 `mudcore/include/socket_err.h`
+
+`socket_create()` 和 `socket_accept()` 成功返回非负描述符，`0` 也是合法值；不能与 `EESUCCESS` 比较。`socket_set_option()` 无返回值，失败抛错。框架的 `CORE_SOCKET->set_option()` 成功返回 `EESUCCESS`，失败沿用异常。`socket_write()` 的 `EECALLBACK` 表示等待可写回调，不能立即重复发送同一数据。
 
 ---
 
@@ -89,7 +91,7 @@ void write_callback(int fd);
 
 ---
 
-## 4. 完整实现示例
+## 4. 调用流程示例
 
 ### 4.1 TCP服务端
 ```lpc
@@ -158,6 +160,11 @@ int udp_client_fd;
 
 void create() {
     udp_client_fd = socket_create(DATAGRAM, "udp_response");
+    if (udp_client_fd < 0) return;
+    if (socket_bind(udp_client_fd, 0) != EESUCCESS) {
+        socket_close(udp_client_fd);
+        return;
+    }
     socket_write(udp_client_fd, "UDP测试消息", "127.0.0.1 7777");
 }
 
@@ -170,7 +177,13 @@ void udp_response(int fd, mixed data, string addr) {
 
 ## 5. TLS配置与HTTP客户端
 
+以下为按需调用示例，不是启动依赖。框架的 `CORE_SOCKET`、`CORE_HTTP` 加载时不联网；实际地址与调用时机由 MUDLIB 决定，TLS 默认验证对端证书。
+
+`CORE_SOCKET->tcp_server(port, callbackObject, onAccept, onError, onData, onClose)` 的后两个参数可省略；接受的连接继承这些回调。UDP 客户端绑定成功后才通知就绪。
+
 ### TLS配置示例
+
+此方法只初始化套接字，仍需解析地址并调用 `socket_connect()` 建立连接；初始化失败时应关闭套接字。
 ```lpc
 int create_tls_connection(string host, int port) {
     int fd = socket_create(STREAM_TLS, "tls_read", "tls_close");
@@ -185,7 +198,9 @@ int create_tls_connection(string host, int port) {
 }
 ```
 
-### HTTP客户端（基于fluffos/testsuite/std/http.c）
+### HTTP客户端流程（参考驱动测试示例）
+
+以下仅演示响应累积，回调参数需使用函数闭包；未包含并发同主机请求、超时及 HTTP 分帧处理。业务开发可继承 `CORE_HTTP` 并重写 `response()`，其现有回调按数据块触发，并非完整 HTTP 响应解析器。
 ```lpc
 #define STATE_RESOLVING 0
 #define STATE_CONNECTING 1
@@ -244,8 +259,7 @@ int http_get(string host, int port, string path, int tls, mixed callback) {
 
 // 使用示例
 void test_http() {
-    http_get("httpbin.org", 80, "/json", 0, "handle_response");
-    http_get("httpbin.org", 443, "/json", 1, "handle_response");
+    http_get("example.invalid", 80, "/json", 0, (: handle_response :));
 }
 
 void handle_response(string result) {
@@ -267,7 +281,7 @@ void simple_http_get(string url) {
         write("URL格式错误\n"); return;
     }
 
-    http_get(host, port, path, tls, "print_response");
+    http_get(host, port, path, tls, (: handle_response :));
 }
 ```
 
@@ -294,7 +308,7 @@ socket_create → socket_bind → socket_write/read → socket_close
 
 ## 7. 最佳实践
 
-1. **错误处理**：检查所有函数返回值
+1. **错误处理**：按接口区分描述符、错误码与异常，处理部分写入和可写回调
 2. **资源管理**：及时关闭不需要的套接字
 3. **模式选择**：根据需求选择合适的模式
 4. **地址格式**：始终使用"IP 端口"格式
@@ -303,4 +317,4 @@ socket_create → socket_bind → socket_write/read → socket_close
 
 ---
 
-*本教程基于 FluffOS 官方实现验证，100% 准确可靠*
+实际运行依赖驱动可选包及宿主权限策略；编译测试不替代真实协议集成测试。

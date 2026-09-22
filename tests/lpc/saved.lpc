@@ -1,0 +1,6 @@
+inherit _DBASE;
+inherit _SAVE;
+
+string query_save_file() {
+    return "/data/regression/saved";
+}

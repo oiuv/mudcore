@@ -36,6 +36,8 @@ nomask mapping query_commands() {
 string default_alias(string verb) {
     string *word;
 
+    if (!stringp(verb) || verb == "")
+        return "";
     // verb = lower_case(verb);
 
     switch (verb[0]) {
@@ -66,36 +68,33 @@ void add_alias(mapping aliases) {
 
 // 缓存所有指令，增加文件别名功能
 void rehash() {
-    int i;
-    string *cmds, *path = CMD_PATH_STD + CMD_PATH_WIZ;
-    string alias;
+    string *entries, *path = CMD_PATH_STD + CMD_PATH_WIZ;
+    string dir, file, name, alias;
     mapping cmdlist;
 
-    foreach (string dir in path) {
-        if (dir[sizeof(dir) - 1] != '/')
+    commands = ([]);
+    foreach (dir in path) {
+        if (!stringp(dir) || dir == "")
+            continue;
+        if (dir[<1] != '/')
             dir += "/";
-
-        cmds = get_dir(dir);
-        i = sizeof(cmds);
-        cmdlist = allocate_mapping(i);
-        // 取所有命令
-        while (i--)
-            if (sscanf(cmds[i], "%s.c", cmds[i]))
-                cmdlist[cmds[i]] = dir + cmds[i] + ".c";
-        // 取所有命令的别名
-        i = sizeof(cmds);
-        while (i--)
-            if (sscanf(cmds[i], "%s.alias", cmds[i])) {
-                alias = read_file(dir + cmds[i] + ".alias", 1, 1);
-                alias = replace_string(alias, "\n", "");
-                alias = replace_string(alias, "\r", "");
-                sscanf(alias, "%s.c", alias);
-                if (member_array(alias, cmds) != -1)
-                    cmdlist[cmds[i]] = dir + alias + ".c";
-            }
-
-        if (sizeof(cmds))
-            commands[dir] = cmdlist;
+        cmdlist = ([]);
+        foreach (file in lpc_source_files(dir)) {
+            name = explode(lpc_object_path(file), "/")[<1];
+            cmdlist[name] = file;
+        }
+        entries = get_dir(dir + "*.alias");
+        if (!arrayp(entries))
+            entries = ({});
+        foreach (file in entries) {
+            alias = read_file(dir + file, 1, 1);
+            if (!stringp(alias))
+                continue;
+            alias = lpc_object_path(trim(alias));
+            if (!undefinedp(cmdlist[alias]))
+                cmdlist[file[0..<7]] = cmdlist[alias];
+        }
+        commands[dir] = cmdlist;
     }
 }
 
@@ -109,6 +108,10 @@ object find_command(string verb) {
     }
 
     foreach (string p in path) {
+        if (!stringp(p) || p == "")
+            continue;
+        if (p[<1] != '/')
+            p += "/";
         if (undefinedp(current = commands[p])) {
             rehash();
             if (undefinedp(current = commands[p]))

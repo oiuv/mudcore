@@ -22,9 +22,10 @@ mapping rewarder;
 
 void create() {
     seteuid(getuid());
-    if (!restore() && !mapp(assigner))
+    restore();
+    if (!mapp(assigner))
         assigner = ([]);
-    if (!restore() && !mapp(rewarder))
+    if (!mapp(rewarder))
         rewarder = ([]);
 }
 
@@ -41,7 +42,7 @@ protected string getItemFile(object item) {
         return "";
     file = base_name(item);
 
-    return file + ".c";
+    return lpc_file(file) || file;
 }
 
 protected void insertAssigner(string npc_file, string quest_file) {
@@ -66,12 +67,12 @@ protected void insertRewarder(string npc_file, string quest_file) {
 
 varargs void doScanQuest(string dir) {
     string file;
-    mixed *files, *dirent;
+    string *files;
 
     if (!stringp(dir))
         dir = QUEST_DIR;
 
-    files = get_dir(dir, -1);
+    files = lpc_source_files(dir);
 
     if (!sizeof(files)) {
         if (file_size(dir) == -2)
@@ -87,8 +88,7 @@ varargs void doScanQuest(string dir) {
 
     write("掃瞄任务中 " + dir + " ...\n\n");
 
-    foreach (dirent in files) {
-        file = dir + dirent[0];
+    foreach (file in files) {
         write(sprintf("%-60s", file));
 
         if (!file->isQuest()) {
