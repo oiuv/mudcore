@@ -10,74 +10,107 @@
 #define VERB_DIR CORE_DIR "verbs/"
 #endif
 
-private mapping Verbs;
+private mapping Verbs = ([]);
+private mapping VerbNames = ([]);
+private int reloadGeneration;
+private int reloadPending;
 
 mapping getVerbs() { return copy(Verbs); }
 mixed getVerb(string str) { return Verbs[str]; }
 
 string getErrorMessage(string verb) {
-    if (!Verbs[verb])
-        return 0;
-    else
-        return Verbs[verb]->getErrorMessage();
+    return Verbs[verb] ? Verbs[verb]->getErrorMessage() : 0;
 }
 
 int getValidVerb(string verb) {
-    if (stringp(verb) && !strsrch(verb, VERB_DIR) && strsrch(verb, "..") == -1)
-        return 1;
-    else
-        return 0;
+    return stringp(verb) && !strsrch(verb, VERB_DIR) && strsrch(verb, "..") == -1;
 }
 
-protected int scheduledVerbLoad(string *cache) {
-    foreach (string verb in cache) {
-        object ob;
-        string *verb_list;
-        if (ob = find_object(verb))
-            destruct(ob);
-        if (!catch(ob = load_object(verb)) && ob) {
-            if (!(verb_list = ob->getVerbs()))
-                verb_list = ({ explode(lpc_object_path(verb), "/")[<1] });
-            else if (verb_list && ob->getSynonyms()) {
-                verb_list += ob->getSynonyms();
-            }
-            Verbs += expand_keys(([ verb_list: verb ]));
-        }
+protected void scheduledVerbLoad(int generation, string *queue, mapping nextNames) {
+    string path, source, name;
+    string *names, *synonyms;
+    mapping nextVerbs;
+    object ob;
+    mixed err;
+    int count;
+
+    if (generation != reloadGeneration)
+        return;
+    count = sizeof(queue) > 10 ? 10 : sizeof(queue);
+    foreach (path in queue[0..count - 1]) {
+        path = lpc_object_path(path);
+        map_delete(nextNames, path);
+        source = lpc_file(path);
+        if (!source)
+            continue;
+        err = catch {
+            if (ob = find_object(path))
+                destruct(ob);
+            ob = load_object(source);
+            names = ob->getVerbs();
+            if (!arrayp(names))
+                names = ({ explode(path, "/")[<1] });
+            synonyms = ob->getSynonyms();
+            if (arrayp(synonyms))
+                names += synonyms;
+            names = filter(names, (: stringp($1) && $1 != "" :));
+            nextNames[path] = names;
+        };
+        if (err)
+            log_file("verbs", path + ": " + err);
     }
+    if (generation != reloadGeneration)
+        return;
+    if (sizeof(queue) > count) {
+        call_out("scheduledVerbLoad", 1, generation, queue[count..], nextNames);
+        return;
+    }
+    nextVerbs = ([]);
+    foreach (path in sort_array(keys(nextNames), 1)) {
+        foreach (name in nextNames[path])
+            nextVerbs[name] = path;
+    }
+    VerbNames = nextNames;
+    Verbs = nextVerbs;
+    reloadPending = 0;
 }
 
 varargs void eventReloadVerbs(mixed val) {
-    string *cache, *verbs = 0;
-    string verb;
+    string *verbs;
+    string dir;
+    mapping nextNames;
 
-    if (arrayp(val))
-        verbs = filter(val, (: getValidVerb($1) :));
-    else if (stringp(val)) {
-        val = lpc_object_path(val);
-        if (getValidVerb(val))
-            verbs = ({ val });
-        if (!verbs)
+    if (stringp(val)) {
+        if (!getValidVerb(val))
             return;
-    } else {
-        string dir;
+        verbs = ({ val });
+    } else if (arrayp(val)) {
+        verbs = filter(val, (: getValidVerb($1) :));
+        if (!sizeof(verbs))
+            return;
+    }
+    // 新请求覆盖尚未完成的重载时重新扫描，避免遗失前一批变更。
+    if (!arrayp(verbs) || reloadPending) {
         verbs = lpc_source_files(VERB_DIR);
-        Verbs = ([]);
         foreach (dir in get_dir(VERB_DIR) || ({})) {
             dir = VERB_DIR + dir;
             if (file_size(dir) == -2)
                 verbs += lpc_source_files(dir);
         }
+        nextNames = ([]);
+    } else {
+        nextNames = copy(VerbNames);
     }
-
-    cache = ({});
-    foreach (verb in verbs) {
-        cache += ({ verb });
-        verbs -= ({ verb });
-        if (sizeof(cache) > 9 || !sizeof(verbs)) {
-            call_out("scheduledVerbLoad", 1, copy(cache));
-            cache = ({});
-        }
+    reloadGeneration++;
+    reloadPending = 1;
+    remove_call_out("scheduledVerbLoad");
+    if (!sizeof(verbs)) {
+        VerbNames = ([]);
+        Verbs = ([]);
+        reloadPending = 0;
+        return;
     }
+    call_out("scheduledVerbLoad", 1, reloadGeneration, verbs, nextNames);
 }
 
 string short() {

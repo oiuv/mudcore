@@ -484,12 +484,17 @@ private mixed connect() {
     // 连接数据库
     if (!db_handle || stringp(db_handle)) {
         db_handle = db_connect(db_host, db_db, db_user, db_type);
+        if (!db_handle)
+            return db_error = "Database connection failed";
         /* error */
         if (stringp(db_handle))
             return db_error = db_handle;
         else {
-            // 默认mysql编码
-            db_exec(db_handle, "set names utf8mb4");
+            // 字符集初始化只适用于 MySQL，SQLite 等后端不能执行此语句。
+#ifdef __USE_MYSQL__
+            if (db_type == __USE_MYSQL__)
+                db_exec(db_handle, "set names utf8mb4");
+#endif
         }
     }
     return db_handle;

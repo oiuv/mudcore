@@ -1,0 +1,59 @@
+inherit CORE_SOCKET;
+
+int good;
+int bad;
+int received;
+int rejected;
+int unexpected;
+string payload = "";
+
+void ready(int fd) {
+    if (fd == bad) unexpected++;
+    send(fd, "hello");
+}
+void data(int fd, string text) {
+    if (fd == bad) unexpected++;
+    payload += text;
+    if (payload == "tls-ok") received++;
+}
+void closed(int fd) { if (fd == bad) rejected++; }
+void failed(int fd, string message) {
+    if (fd == bad) rejected++;
+    else MASTER_OB->check(0, "trusted socket TLS failed: " + message);
+}
+void run() {
+    mapping ports;
+
+    set_connect_timeout(3);
+    ports = json_decode(read_file("/network.json"));
+    good = tls_client(
+        "localhost",
+        ports["socketTlsPort"],
+        this_object(),
+        "ready",
+        "data",
+        "closed",
+        "failed"
+    );
+    bad = tls_client(
+        "localhost",
+        ports["untrustedPort"],
+        this_object(),
+        "ready",
+        "data",
+        "closed",
+        "failed"
+    );
+    MASTER_OB->check(good >= 0 && bad >= 0, "generic TLS clients created");
+}
+void finish() {
+    int fd;
+
+    MASTER_OB->check(received == 1, "generic TLS trusted chain round trip");
+    MASTER_OB->check(
+        rejected == 1 && !unexpected,
+        "generic TLS rejects untrusted chain before application callback"
+    );
+    foreach (fd in keys(get_connections())) close(fd);
+    MASTER_OB->check(!sizeof(get_connections()), "generic TLS cleanup");
+}

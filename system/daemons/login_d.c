@@ -29,6 +29,24 @@ nosave string *banned_name = ({
     "屌", "屄", "姦", "穴", "爸", "妈", "爷", "奶",
 });
 
+private nosave mapping loginIds = ([]);
+private nosave mapping authenticated = ([]);
+
+private int validPlayerId(string id) {
+    return stringp(id) && strlen(id) >= MIN_ID_LEN && sizeof(regexp(
+        ({ id }),
+        "^[a-z]+$"
+    )) == 1 && id != lower_case(ROOT_UID) && id != lower_case(BACKBONE_UID);
+}
+
+private int validLogin(object ob) {
+    return objectp(ob) && clonep(ob) && base_name(ob) == LOGIN_OB && interactive(ob) && validPlayerId(loginIds[ob]) && ob->query("id") == loginIds[ob];
+}
+
+private int mayEnter(object ob, object user) {
+    return validLogin(ob) && authenticated[ob] == loginIds[ob] && objectp(user) && clonep(user) && base_name(user) == USER_OB && getuid(user) == loginIds[ob] && user->query("id") == loginIds[ob];
+}
+
 // 内部调用的函数
 protected void welcome(object ob);
 protected void signin(object ob);
@@ -66,6 +84,11 @@ protected void add_banned_name(string *name) {
 
 // 登录入口
 void login(object ob) {
+    if (previous_object() != ob || !objectp(ob) || !clonep(ob) ||
+        base_name(ob) != LOGIN_OB || !interactive(ob))
+        return;
+    map_delete(authenticated, ob);
+    map_delete(loginIds, ob);
     welcome(ob);
 }
 
@@ -83,12 +106,13 @@ protected void signin(object ob) {
 protected void get_id(string arg, object ob) {
     arg = lower_case(trim(arg));
 
-    if (arg == "" || !is_english(arg) || strlen(arg) < MIN_ID_LEN) {
+    if (!validPlayerId(arg)) {
         write("\n请输入你的" HIY "英文" NOR "登录ID(至少 " + MIN_ID_LEN + " 位字母):");
         input_to("get_id", ob);
         return;
     }
 
+    loginIds[ob] = arg;
     if ((string)ob->set("id", arg) != arg) {
         write("Failed setting user name.\n");
         destruct(ob);
@@ -121,6 +145,8 @@ nomask int check_password(string str, string password) {
 protected void get_passwd(string pass, object ob) {
     string my_pass;
 
+    if (!validLogin(ob))
+        return;
     my_pass = ob->query("password");
     if (!stringp(my_pass) || !check_password(pass, my_pass)) {
         write(RED "密码错误！\n" NOR);
@@ -128,13 +154,26 @@ protected void get_passwd(string pass, object ob) {
         return;
     }
 
+    authenticated[ob] = loginIds[ob];
     check_ok(ob);
 }
 
 // 根据ID初始化玩家对象
 object make_body(object ob) {
     object user;
+    string savedEuid, playerId;
+    mixed err;
+    int offlineLookup;
 
+    // NAME_D 读取离线存档时也需要普通玩家 UID，但不能创建保留身份。
+    offlineLookup = objectp(previous_object()) && previous_object() == find_object(NAME_D) && getuid(previous_object()) == ROOT_UID && geteuid(previous_object()) == ROOT_UID;
+    if (!objectp(ob) || !clonep(ob) || base_name(ob) != LOGIN_OB)
+        return 0;
+    playerId = ob->query("id");
+    if (!validPlayerId(playerId))
+        return 0;
+    if (!offlineLookup && (origin() != "local" || !validLogin(ob) || authenticated[ob] != playerId))
+        return 0;
     user = new(USER_OB);
 
     if (!user) {
@@ -142,10 +181,17 @@ object make_body(object ob) {
         return 0;
     }
 
-    seteuid(ob->query("id"));  // 设置当前对象 euid 为玩家ID
-    export_uid(user);  // 设置玩家 uid
-    seteuid(getuid());  // 设置当前对象 euid 为对象uid
-    user->set("id", ob->query("id"));
+    savedEuid = geteuid();
+    err = catch {
+        if (!seteuid(playerId) || !export_uid(user))
+            error("Unable to assign player UID.\n");
+        user->set("id", playerId);
+    };
+    seteuid(savedEuid);
+    if (err) {
+        destruct(user);
+        return 0;
+    }
 
     return user;
 }
@@ -195,6 +241,10 @@ void enter_world(object ob, object user) {
 #else
     string start_room = VOID_OB;
 #endif
+    if (origin() != "local" || !mayEnter(ob, user))
+        error("Unauthorized login transition.\n");
+    map_delete(authenticated, ob);
+    map_delete(loginIds, ob);
     user->set_temp("login_ob", ob);
     ob->set_temp("user_ob", user);
     if (interactive(ob))
@@ -213,6 +263,10 @@ void enter_world(object ob, object user) {
 
 // 断线重连
 void reconnect(object ob, object user) {
+    if (origin() != "local" || !mayEnter(ob, user))
+        error("Unauthorized login transition.\n");
+    map_delete(authenticated, ob);
+    map_delete(loginIds, ob);
     user->set_temp("login_ob", ob);
     ob->set_temp("user_ob", user);
     exec(user, ob);
@@ -299,6 +353,8 @@ protected void confirm_password(string pass, object ob) {
     string old_pass;
 
     write("\n");
+    if (!validLogin(ob))
+        return;
     old_pass = ob->query_temp("password");
     if (crypt(pass, old_pass) != old_pass) {
         write(HIR "\n您两次输入的登录密码不同，请重新设定一次" HIY "登录密码" NOR HIR "：\n" NOR);
@@ -317,6 +373,7 @@ protected void confirm_password(string pass, object ob) {
         return;
     }
 
+    authenticated[ob] = loginIds[ob];
     // 角色注册流程
     register(ob);
 }

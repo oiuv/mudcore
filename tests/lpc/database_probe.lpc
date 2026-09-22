@@ -1,0 +1,35 @@
+inherit CORE_DB;
+
+void create() { seteuid(0); }
+void activate() { seteuid(getuid()); }
+void check(int value, string label) { MASTER_OB->check(value, "database: " + label); }
+
+void run() {
+#ifdef __USE_SQLITE3__
+    mixed result, denied;
+    int handle;
+
+    setConnection(([
+        "host": "",
+        "database": "/data/regression.sqlite",
+        "user": "",
+        "type": __USE_SQLITE3__
+    ]));
+    result = sql("CREATE TABLE sample (id INTEGER PRIMARY KEY, name TEXT)")->exec();
+    check(intp(result), "SQLite table created without MySQL initialization");
+    close(1);
+    check(table("sample")->insert(([ "id": 1, "name": "中文" ])) == 1, "insert");
+    result = table("sample")->where("id", 1)->first();
+    check(
+        arrayp(result) && result[0] == 1 && result[1] == "中文",
+        "read persists across connections"
+    );
+    check(table("sample")->where("id", 1)->update(([ "name": "更新" ])) == 1, "update");
+    check(table("sample")->where("id", 1)->value("name") == "更新", "updated value");
+    check(table("sample")->where("id", 1)->delete() == 1, "delete");
+    check(table("sample")->count() == 0, "empty after delete");
+    denied = catch(handle = db_connect("", "/data/not-authorized.sqlite", "", __USE_SQLITE3__));
+    check(denied != 0, "Root caller still needs approved database path");
+    if (!denied && handle > 0) db_close(handle);
+#endif
+}

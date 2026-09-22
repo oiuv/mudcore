@@ -27,6 +27,7 @@
 
 // 函数原型声明
 public void close(int fd);
+private void clearConnectTimer(int fd);
 
 // 基础连接类
 class socket_connection {
@@ -64,6 +65,8 @@ void set_debug(int flag) {
 // 创建基础socket
 protected varargs int create_socket(int type, string callback_read, string callback_close) {
     int fd;
+    mixed err;
+    class socket_connection oldConn;
 
     switch (type) {
         case PROTOCOL_TCP:
@@ -78,26 +81,78 @@ protected varargs int create_socket(int type, string callback_read, string callb
         default:
             return EEMODENOTSUPP;
     }
-
     if (fd < 0) {
         trace("创建socket失败", socket_error(fd));
         return fd;
     }
-
+    oldConn = SocketConnections[fd];
+    if (oldConn) {
+        clearConnectTimer(fd);
+        map_delete(SocketConnections, fd);
+        if (oldConn->callbacks["error"] && oldConn->callbacks["object"]) {
+            err = catch(call_other(oldConn->callbacks["object"], oldConn->callbacks["error"],
+                fd, "Connection closed by driver"));
+            if (err) {
+                socket_close(fd);
+                error(err);
+            }
+        }
+    }
+    if (type == PROTOCOL_TLS) {
+        err = catch(socket_set_option(fd, SO_TLS_VERIFY_PEER, 1));
+        if (err) {
+            socket_close(fd);
+            error("TLS initialization failed: " + err);
+        }
+    }
     return fd;
 }
 
+private nosave int connectTimeoutSeconds = 30;
+private nosave mapping connectTimers = ([]);
+
+void set_connect_timeout(int seconds) {
+    if (seconds < 1)
+        error("Socket connect timeout must be positive.\n");
+    connectTimeoutSeconds = seconds;
+}
+
+private void clearConnectTimer(int fd) {
+    if (!undefinedp(connectTimers[fd])) {
+        remove_call_out(connectTimers[fd]);
+        map_delete(connectTimers, fd);
+    }
+}
+
+protected void connect_timeout(int fd, class socket_connection expected) {
+    class socket_connection conn;
+
+    conn = SocketConnections[fd];
+    if (!conn || conn != expected || (conn->state != SOCKET_STATE_RESOLVING &&
+        conn->state != SOCKET_STATE_CONNECTING))
+        return;
+    close(fd);
+    if (conn->callbacks["error"] && conn->callbacks["object"])
+        call_other(conn->callbacks["object"], conn->callbacks["error"], fd, "Connection timed out");
+}
+
 // 创建TCP客户端连接
-public int tcp_client(
+public varargs int tcp_client(
     string host,
     int port,
     object callback_obj,
     string callback_connect,
     string callback_data,
     string callback_close,
-    string callback_error
+    string callback_error,
+    int useTLS
 ) {
-    int fd = create_socket(PROTOCOL_TCP, "handle_receive_callback", "handle_close_callback");
+    int fd = create_socket(
+        useTLS ? PROTOCOL_TLS : PROTOCOL_TCP,
+        "handle_receive_callback",
+        "handle_close_callback"
+    );
+    mixed err;
     class socket_connection conn;
 
     if (fd < 0) {
@@ -110,9 +165,16 @@ public int tcp_client(
         return fd;
     }
 
+    if (useTLS) {
+        err = catch(socket_set_option(fd, SO_TLS_SNI_HOSTNAME, host));
+        if (err) {
+            socket_close(fd);
+            error("TLS SNI initialization failed: " + err);
+        }
+    }
     conn = new(class socket_connection);
     conn->fd = fd;
-    conn->protocol = PROTOCOL_TCP;
+    conn->protocol = useTLS ? PROTOCOL_TLS : PROTOCOL_TCP;
     conn->state = SOCKET_STATE_RESOLVING;
     conn->host = host;
     conn->port = port;
@@ -126,6 +188,7 @@ public int tcp_client(
     conn->last_active = time();
 
     SocketConnections[fd] = conn;
+    connectTimers[fd] = call_out("connect_timeout", connectTimeoutSeconds, fd, conn);
 
     if (SocketDnsCache[host]) {
         int result;
@@ -159,6 +222,12 @@ public int tcp_client(
     }
 
     return fd;
+}
+
+// TLS 客户端使用与 TCP 相同的回调约定，默认验证证书链并设置 SNI。
+public int tls_client(string host, int port, object callbackObj, string onConnect,
+    string onData, string onClose, string onError) {
+    return tcp_client(host, port, callbackObj, onConnect, onData, onClose, onError, 1);
 }
 
 // 创建UDP客户端连接
@@ -382,6 +451,7 @@ public varargs int send(int fd, mixed data, string target_addr, int target_port)
 
 // 关闭连接
 public void close(int fd) {
+    clearConnectTimer(fd);
     if (SocketConnections[fd]) {
         socket_close(fd);
         map_delete(SocketConnections, fd);
@@ -502,7 +572,7 @@ protected void handle_dns_resolve(string host, string addr, int key) {
                 conn->remote_addr = addr;
                 trace("dns:处理连接", ([ "fd": fd, "protocol": conn->protocol ]));
 
-                if (conn->protocol == PROTOCOL_TCP) {
+                if (conn->protocol == PROTOCOL_TCP || conn->protocol == PROTOCOL_TLS) {
                     conn->state = SOCKET_STATE_CONNECTING;
                     trace("tcp:连接", ([ "fd": fd, "addr": addr, "port": conn->port ]));
                     result = socket_connect(
@@ -566,6 +636,7 @@ protected void handle_receive_callback(int fd, mixed data, string addr) {
 
     if (conn->state == SOCKET_STATE_CONNECTING) {
         conn->state = SOCKET_STATE_CONNECTED;
+        clearConnectTimer(fd);
         trace("connect:已建立", ([ "fd": fd ]));
         if (conn->callbacks["connect"] && conn->callbacks["object"]) {
             trace("callback:connect", ([ "fd": fd, "callback": conn->callbacks["connect"] ]));
@@ -599,6 +670,7 @@ protected void handle_write_callback(int fd) {
     trace("write:可写", ([ "fd": fd, "state": conn->state ]));
     if (conn->state == SOCKET_STATE_CONNECTING) {
         conn->state = SOCKET_STATE_CONNECTED;
+        clearConnectTimer(fd);
         trace("connect:已建立", ([ "fd": fd ]));
         if (conn->callbacks["connect"] && conn->callbacks["object"]) {
             trace("callback:connect", ([ "fd": fd, "callback": conn->callbacks["connect"] ]));

@@ -1,0 +1,41 @@
+void check(int value, string label) { MASTER_OB->check(value, "verb reload: " + label); }
+
+void second() {
+    int i;
+    string source;
+
+    check(VERB_D->getVerb("legacyverb") != 0, "initial index ready");
+    source = "string *getVerbs() { return ({ \"reloaded\" }); }\nstring *getSynonyms() { return ({ \"aliasverb\" }); }\n";
+    write_file("/fixtures/verbs/legacy.c", source, 1);
+    for (i = 0; i < 12; i++)
+        write_file(sprintf("/fixtures/verbs/bulk%d.c", i), "int marker() { return 1; }\n", 1);
+    write_file("/fixtures/verbs/broken.c", "deliberate syntax error for regression\n", 1);
+    VERB_D->rehash();
+    check(VERB_D->getVerb("legacyverb") != 0, "old index available during reload");
+    VERB_D->rehash();
+    check(VERB_D->getVerb("legacyverb") != 0, "overlapping reload keeps active index");
+    call_out("third", 3);
+}
+
+void third() {
+    check(VERB_D->getVerb("legacyverb") == 0, "removed names do not survive");
+    check(
+        VERB_D->getVerb("reloaded") != 0 && VERB_D->getVerb("aliasverb") != 0,
+        "new names and synonyms published together"
+    );
+    check(VERB_D->getVerb("bulk11") != 0, "all batches published");
+    check(VERB_D->getVerb("broken") == 0, "bad source cannot pollute new index");
+    rm("/fixtures/verbs/broken.c");
+    rm("/fixtures/verbs/legacy.c");
+    VERB_D->eventReloadVerbs("/fixtures/verbs/legacy.c");
+    check(VERB_D->getVerb("aliasverb") != 0, "partial reload also retains active index");
+}
+
+void run() { call_out("second", 2); }
+void finish() {
+    check(
+        !VERB_D->getVerb("reloaded") && !VERB_D->getVerb("aliasverb"),
+        "deleted source removes every alias"
+    );
+    check(VERB_D->getVerb("bulk11") != 0, "partial reload preserves other verbs");
+}

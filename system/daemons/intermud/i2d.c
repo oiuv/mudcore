@@ -22,6 +22,9 @@
 #define LOG_UDP
 #define LOG_TRAFFIC
 #define SAVE_MUDLIST
+#ifndef INTERMUD_RESOLVE_TIMEOUT
+#define INTERMUD_RESOLVE_TIMEOUT 30
+#endif
 
 inherit CORE_DBASE;
 #ifdef SAVE_MUDLIST
@@ -32,6 +35,61 @@ nosave int udp_port;
 nosave int udp_socket = -1;
 nosave string peerHost;
 nosave int peerPort;
+private nosave int startGeneration;
+private nosave string startupState = "stopped";
+private nosave string lastError;
+private nosave string peerAddress;
+
+protected void startup();
+private void resolve_callback(int generation, string addr, string resolved, int key);
+
+private void closeNetwork() {
+    startGeneration++;
+    remove_call_out("startup");
+    remove_call_out("update");
+    remove_call_out("resolveTimeout");
+    if (udp_socket >= 0)
+        socket_close(udp_socket);
+    udp_socket = -1;
+    peerAddress = 0;
+    peerHost = 0;
+    peerPort = 0;
+    startupState = "stopped";
+}
+
+private void failStartup(string message) {
+    closeNetwork();
+    startupState = "failed";
+    lastError = message;
+    log_file("intermud/error.log", message + "\n");
+}
+
+protected void resolveTimeout(int generation) {
+    if (generation == startGeneration && startupState == "resolving")
+        failStartup("Intermud peer DNS lookup timed out");
+}
+
+protected int resolve_peer(string host, function callback) {
+    return resolve(host, callback);
+}
+
+private void peerResolved(int generation, string host, string addr, int key) {
+    if (generation != startGeneration || udp_socket < 0)
+        return;
+    if (!addr) {
+        failStartup("Intermud peer DNS lookup failed");
+        return;
+    }
+    remove_call_out("resolveTimeout");
+    peerAddress = addr;
+    startupState = "running";
+    call_out("startup", 0);
+}
+
+mapping query_startup_status() {
+    return ([ "state": startupState, "host": peerHost, "address": peerAddress,
+        "port": peerPort, "error": lastError ]);
+}
 
 nosave string my_address;
 
@@ -66,39 +124,46 @@ private void create() {
 
 // 只有 MUDLIB 显式提供对端并调用此方法时才启用网络。
 varargs int start(string host, int port, int bindPort) {
-    int result;
+    int result, generation;
+    mixed err;
 
     SECURED_INTERMUD_API;
     if (!stringp(host) || host == "" || port < 1 || port > 65535 || bindPort < 0 || bindPort > 65535)
         return 0;
     if (udp_socket >= 0)
         return 1;
+    lastError = 0;
     udp_socket = socket_create(DATAGRAM, "read_callback");
-    if (udp_socket < 0)
+    if (udp_socket < 0) {
+        failStartup("Intermud socket creation failed: " + socket_error(udp_socket));
         return 0;
+    }
     udp_port = bindPort ? bindPort : INTERMUD_UDP_PORT;
     result = socket_bind(udp_socket, udp_port);
     if (result != EESUCCESS) {
-        socket_close(udp_socket);
-        udp_socket = -1;
+        failStartup("Intermud bind failed: " + socket_error(result));
         return 0;
     }
     peerHost = host;
     peerPort = port;
-    resolve(query_host_name(), "resolve_callback");
-    call_out("startup", 1);
+    my_address = 0;
+    generation = ++startGeneration;
+    startupState = "resolving";
+    call_out("resolveTimeout", INTERMUD_RESOLVE_TIMEOUT, generation);
+    err = catch(result = resolve_peer(host, (: peerResolved($(generation), $1, $2, $3) :)));
+    if (err || result < 0) {
+        failStartup("Intermud peer DNS lookup could not start");
+        return 0;
+    }
+    // 本机地址仅用于自发包过滤；失败不影响已配置对端的解析。
+    catch(resolve(query_host_name(), (: resolve_callback($(generation), $1, $2, $3) :)));
     return 1;
 }
 
 void stop() {
     SECURED_INTERMUD_API;
-    remove_call_out("startup");
-    remove_call_out("update");
-    if (udp_socket >= 0)
-        socket_close(udp_socket);
-    udp_socket = -1;
-    peerHost = 0;
-    peerPort = 0;
+    closeNetwork();
+    lastError = 0;
 }
 
 int is_started() {
@@ -111,7 +176,7 @@ string query_save_file() {
 }
 #endif /* SAVE_MUDLIST */
 
-private void update() {
+protected void update() {
     string mud;
     mapping m;
 
@@ -126,32 +191,28 @@ private void update() {
     call_out("update", MUDLIST_UPDATE_INTERVAL);
 }
 
-private void startup() {
+protected void startup() {
     if (udp_socket < 0)
         return;
     CHANNEL_D->do_channel(this_object(), "sys",
         "Intermud 網路服務準備就緒，使用 UDP 埠號 " + udp_port);
 
-    INTERMUD_SERVICE("ping")->send_request(peerHost, peerPort);
-    INTERMUD_SERVICE("mudlist")->send_request(peerHost, peerPort);
+    INTERMUD_SERVICE("ping")->send_request(peerAddress, peerPort);
+    INTERMUD_SERVICE("mudlist")->send_request(peerAddress, peerPort);
     update();
 }
 
 void remove() {
     if (file_name(previous_object()) != SIMUL_EFUN_OB)
         error("Permission denied\n");
-    remove_call_out("startup");
-    remove_call_out("update");
-    if (udp_socket >= 0)
-        socket_close(udp_socket);
-    udp_socket = -1;
+    closeNetwork();
 
 #ifdef SAVE_MUDLIST
     save();
 #endif /* SAVE_MUDLIST */
 }
 
-private void read_callback(int socket, mixed msg, string addr) {
+protected void read_callback(int socket, mixed msg, string addr) {
     string *info, p, v;
     mixed *handler;
     mapping args;
@@ -188,8 +249,9 @@ private void read_callback(int socket, mixed msg, string addr) {
     call_other(handler[0], handler[1], args);
 }
 
-private void resolve_callback(string addr, string resolved, int key) {
-    my_address = resolved;
+private void resolve_callback(int generation, string addr, string resolved, int key) {
+    if (generation == startGeneration && udp_socket >= 0)
+        my_address = resolved;
 }
 
 // --------------------------------------------------------------------------
@@ -262,7 +324,7 @@ void set_mud_alias(string alias, string name) {
 }
 
 void send_event(string dest, int port, string event, mapping args) {
-    int sock;
+    int sock, result;
     string msg, p, v;
 
     SECURED_INTERMUD_API;
@@ -274,7 +336,7 @@ void send_event(string dest, int port, string event, mapping args) {
         error("Invalid intermud event.\n");
 
     // 不要傳送資料給自己，但這並不是錯誤。
-    if (dest == my_address)
+    if (dest == my_address && port == udp_port)
         return;
 
     sock = socket_create(DATAGRAM, "read_callback");
@@ -297,6 +359,10 @@ void send_event(string dest, int port, string event, mapping args) {
         ctime(time()), event, dest + " " + port, strlen(msg) + 6));
 #endif
 
-    socket_write(sock, "@@@" + msg + "@@@", dest + " " + port);
+    result = socket_write(sock, "@@@" + msg + "@@@", dest + " " + port);
     socket_close(sock);
+    if (result != EESUCCESS) {
+        lastError = "Intermud send failed: " + socket_error(result);
+        log_file("intermud/error.log", lastError + "\n");
+    }
 }

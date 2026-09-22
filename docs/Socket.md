@@ -177,7 +177,7 @@ void udp_response(int fd, mixed data, string addr) {
 
 ## 5. TLS配置与HTTP客户端
 
-以下为按需调用示例，不是启动依赖。框架的 `CORE_SOCKET`、`CORE_HTTP` 加载时不联网；实际地址与调用时机由 MUDLIB 决定，TLS 默认验证对端证书。
+以下为按需调用示例，不是启动依赖。框架的 `CORE_SOCKET`、`CORE_HTTP` 加载时不联网；实际地址与调用时机由 MUDLIB 决定，`CORE_HTTP` 和 `CORE_SOCKET` 的 TLS 封装默认开启证书链验证；原始 `socket_create()` efun 不由框架设置默认选项。
 
 `CORE_SOCKET->tcp_server(port, callbackObject, onAccept, onError, onData, onClose)` 的后两个参数可省略；接受的连接继承这些回调。UDP 客户端绑定成功后才通知就绪。
 
@@ -198,94 +198,37 @@ int create_tls_connection(string host, int port) {
 }
 ```
 
-### HTTP客户端流程（参考驱动测试示例）
+### 框架 TLS 客户端
 
-以下仅演示响应累积，回调参数需使用函数闭包；未包含并发同主机请求、超时及 HTTP 分帧处理。业务开发可继承 `CORE_HTTP` 并重写 `response()`，其现有回调按数据块触发，并非完整 HTTP 响应解析器。
+`tls_client(host, port, callbackObject, onConnect, onData, onClose, onError)` 与 `tcp_client()` 使用相同回调，自动设置证书链验证及 SNI。DNS、TCP 建连和 TLS 握手共用 30 秒期限；`set_connect_timeout(seconds)` 调整后续连接的期限。到期会先释放状态，再通知 `onError`。加载组件本身不联网。
+
+旧代码若依赖未受信任的自签名证书，应将自己的 CA 配置到驱动使用的信任库。原始 efun 示例仍需显式设置选项，不建议关闭验证。
+
+**SNI 不等于证书主机名校验。** 当前验证的驱动只将 `SO_TLS_VERIFY_PEER` 用于验证证书链，并未将 `SO_TLS_SNI_HOSTNAME` 用于检查证书名称。隔离测试中的受信任错误主机名证书仍能握手成功；不能据此承诺完整的 HTTPS 身份验证。需要该保证的宿主必须使用提供主机名验证的驱动或传输实现。测试还覆盖了不可信证书被拒绝，且握手失败没有关闭回调时能按超时回收状态。
+
+### 框架 HTTP 客户端
+
+业务代码继承 `CORE_HTTP`，使用 `get/post/head/ws`；详见 [HTTP 客户端接口](Http.md)。原有 `response(mixed data)` 仍逐块收到原始 HTTP 数据；需要并发关联时重写 `response_data(requestId, data)`，用 `response_complete(requestId)` 判断完整成功，`request_failed(requestId, message)` 处理失败。
+
 ```lpc
-#define STATE_RESOLVING 0
-#define STATE_CONNECTING 1
-#define STATE_CLOSED 2
-#define STATE_CONNECTED 3
+inherit CORE_HTTP;
 
-nosave mapping hostname_to_fd = ([]);
-nosave mapping status = ([]);
+private mapping replies = ([]);
 
-void socket_shutdown(int fd) {
-    status[fd]["status"] = STATE_CLOSED;
-    evaluate(status[fd]["callback"], status[fd]["result"]);
+protected void response_data(int requestId, mixed data) {
+    replies[requestId] = (replies[requestId] || "") + data;
 }
 
-void receive_data(int fd, mixed result) {
-    status[fd]["result"] += result;
+protected void response_complete(int requestId) {
+    debug_message(replies[requestId]);
+    map_delete(replies, requestId);
 }
 
-void write_data(int fd) {
-    status[fd]["status"] = STATE_CONNECTED;
-    socket_write(fd,
-        "GET " + status[fd]["path"] + " HTTP/1.0\r\n" +
-        "Host: " + status[fd]["host"] + "\r\n\r\n");
-}
-
-void on_resolve(string host, string addr, int key) {
-    int fd = hostname_to_fd[host];
-    if (addr) {
-        socket_connect(fd, addr + " " + status[fd]["port"],
-                     "receive_data", "write_data");
-    }
-}
-
-int http_get(string host, int port, string path, int tls, mixed callback) {
-    int fd = socket_create(tls ? STREAM_TLS : STREAM,
-                         "receive_data", "socket_shutdown");
-
-    if (tls) {
-        socket_set_option(fd, SO_TLS_VERIFY_PEER, 1);
-        socket_set_option(fd, SO_TLS_SNI_HOSTNAME, host);
-    }
-
-    status[fd] = ([
-        "status": STATE_RESOLVING,
-        "host": host,
-        "port": port,
-        "path": path,
-        "result": "",
-        "callback": callback
-    ]);
-
-    hostname_to_fd[host] = fd;
-    resolve(host, "on_resolve");
-    return fd;
-}
-
-// 使用示例
-void test_http() {
-    http_get("example.invalid", 80, "/json", 0, (: handle_response :));
-}
-
-void handle_response(string result) {
-    write("收到HTTP响应:\n" + result);
+protected void request_failed(int requestId, string message) {
+    map_delete(replies, requestId);
+    debug_message(message);
 }
 ```
-
-### 简化HTTP调用
-```lpc
-void simple_http_get(string url) {
-    string host, path;
-    int port, tls;
-
-    if (sscanf(url, "https://%s/%s", host, path) == 2) {
-        tls = 1; port = 443;
-    } else if (sscanf(url, "http://%s/%s", host, path) == 2) {
-        tls = 0; port = 80;
-    } else {
-        write("URL格式错误\n"); return;
-    }
-
-    http_get(host, port, path, tls, (: handle_response :));
-}
-```
-
----
 
 ## 6. 工作流程
 

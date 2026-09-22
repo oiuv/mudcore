@@ -8,9 +8,12 @@ protected int open_http_socket(int isTLS, string host) {
     return nextFd++;
 }
 
-protected void connect(string host, string addr) {
+protected void connect(int fd, string addr) {
     // 请求内容测试不建立连接。
 }
+
+protected void close_http_socket(int fd) {}
+protected void request_failed(int id, string message) {}
 
 void run() {
     string packet;
@@ -24,6 +27,11 @@ void run() {
         strsrch(packet, "?first=1&q=%E4%B8%AD%E6%96%87%20%26%2B") != -1,
         "HTTP query encoding"
     );
+    head("http://example.invalid/", ([ "q": "中文" ]));
+    MASTER_OB->check(
+        strsrch(Status[nextFd - 1]["http"], "HEAD /?q=%E4%B8%AD%E6%96%87 ") == 0,
+        "HEAD query encoding"
+    );
     post("http://example.invalid/json", ([ "message": "中文\"\n", "n": 3 ]), ([]));
     packet = Status[nextFd - 1]["http"];
     body = json_decode(explode(packet, "\r\n\r\n")[1]);
@@ -32,4 +40,5 @@ void run() {
         strsrch(packet, "Host: example.invalid\r\nContent-Length:") != -1,
         "empty HTTP header mapping"
     );
+    cancel_all_requests();
 }

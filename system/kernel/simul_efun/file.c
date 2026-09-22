@@ -20,8 +20,8 @@ string *read_lines(string file) {
         if (!stringp(content))
             return ({});
         return filter_array(
-            map(explode(content, "\n"), (: trim($1) :)),
-            (: $1 != "" && $1[0] != '#' && $1[0] != ';' :)
+            map(explode(content, "\n"), (: sizeof($1) && $1[<1] == '\r' ? $1[0..<2] : $1 :)),
+            (: trim($1) != "" && trim($1)[0] != '#' && trim($1)[0] != ';' :)
         );
     } else
         error("文件 " + file + " 不存在！");

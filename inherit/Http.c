@@ -1,90 +1,316 @@
-/*
- * @Author: 雪风@mud.ren
- * @Date: 2025-07-1 11:42:27
- * @LastEditTime: 2022-05-18 13:55:32
- * @LastEditors: 雪风
- * @Description: HTTP客户端
- *  https://bbs.mud.ren
- */
-
+/* 通用 HTTP/1.1 客户端；保留原始分段 response() 回调。 */
 #include <socket.h>
 #include <socket_err.h>
 
-#define STATE_RESOLVING 0
-#define STATE_CONNECTING 1
-#define STATE_CLOSED 2
-#define STATE_CONNECTED 3
+#define HTTP_HEADER_LIMIT 65536
+#define HTTP_CHUNK_LIMIT 16777216
 
 nosave mapping Host = ([]);
-nosave mapping Host_fd = ([]);
 nosave mapping Status = ([]);
+private nosave mapping requestFds = ([]);
+private nosave int nextRequest;
+private nosave int requestTimeoutSeconds = 30;
 nosave int Debug;
 
-protected void receive_callback(mixed *data...) {
-    Debug && debug_message(sprintf("receive_callback: %O", data));
+protected void response(mixed result) { debug_message(result); }
+protected void response_data(int requestId, mixed result) { response(result); }
+protected void response_complete(int requestId) {}
+protected void request_failed(int requestId, string message) {
+    debug_message(sprintf("HTTP request %d failed: %s", requestId, message));
+}
+
+// 传输钩子允许宿主替换传输和离线测试，状态仍按每个请求独立管理。
+protected void close_http_socket(int fd) { socket_close(fd); }
+protected int write_http_socket(int fd, string packet) {
+    return socket_write(fd, string_encode(packet, "utf-8"));
+}
+protected int resolve_http_host(string host, function callback) { return resolve(host, callback); }
+
+private varargs void finishRequest(int requestId, string failure, int descriptorReused) {
+    int fd;
+    mapping state;
+
+    if (undefinedp(requestFds[requestId]))
+        return;
+    fd = requestFds[requestId];
+    state = Status[fd];
+    map_delete(requestFds, requestId);
+    map_delete(Status, fd);
+    remove_call_out(state["timer"]);
+    if (!descriptorReused)
+        close_http_socket(fd);
+    if (failure)
+        request_failed(requestId, failure);
+    else
+        response_complete(requestId);
+}
+
+protected void request_timeout(int requestId) {
+    finishRequest(requestId, "request timed out");
+}
+
+void set_request_timeout(int seconds) {
+    if (seconds < 1)
+        error("HTTP timeout must be positive.\n");
+    requestTimeoutSeconds = seconds;
+}
+
+int query_last_request() { return nextRequest; }
+int *query_requests() { return keys(requestFds); }
+int cancel_request(int requestId) {
+    if (undefinedp(requestFds[requestId]))
+        return 0;
+    finishRequest(requestId, "request cancelled");
+    return 1;
+}
+void cancel_all_requests() {
+    int requestId;
+
+    foreach (requestId in keys(requestFds))
+        cancel_request(requestId);
+}
+
+// 字节偏移不可用 LPC 字符数替代，Content-Length 和 chunk-size 都按字节计算。
+private int lineEnd(buffer data) {
+    int i;
+
+    for (i = 0; i + 1 < sizeof(data); i++) {
+        if (data[i] == 13 && data[i + 1] == 10)
+            return i;
+    }
+    return -1;
+}
+
+private int headerEnd(buffer data) {
+    int i;
+
+    for (i = 0; i + 3 < sizeof(data); i++) {
+        if (data[i] == 13 && data[i + 1] == 10 && data[i + 2] == 13 && data[i + 3] == 10)
+            return i;
+    }
+    return -1;
+}
+
+// 返回 1 表示完整，0 表示等待后续字节；非法或截断报文不报告成功。
+private int consumeResponse(mapping state, buffer incoming) {
+    buffer pending;
+    string text, line, key, value, transfer;
+    string *lines;
+    mapping headers;
+    int end, code, length, pos, consumed;
+
+    state["pending"] += incoming;
+    while (1) {
+        pending = state["pending"];
+        switch (state["mode"]) {
+            case "headers":
+                end = headerEnd(pending);
+                if (end < 0) {
+                    if (sizeof(pending) > HTTP_HEADER_LIMIT)
+                        error("HTTP headers too large.\n");
+                    return 0;
+                }
+                if (end > HTTP_HEADER_LIMIT)
+                    error("HTTP headers too large.\n");
+                text = read_buffer(pending, 0, end);
+                lines = explode(text, "\r\n");
+                if (!sizeof(lines) || sscanf(
+                    lines[0],
+                    "HTTP/%*s %d%*s",
+                    code
+                ) < 2 || code < 100 || code > 599)
+                    error("Invalid HTTP status line.\n");
+                headers = ([]);
+                foreach (line in lines[1..]) {
+                    pos = strsrch(line, ':');
+                    if (pos < 1)
+                        error("Invalid HTTP header.\n");
+                    key = lower_case(trim(line[0..pos - 1]));
+                    value = trim(line[pos + 1..]);
+                    if (!undefinedp(headers[key]) && member_array(
+                        key,
+                        ({ "content-length", "transfer-encoding" })
+                    ) != -1)
+                        error("Duplicate HTTP framing header.\n");
+                    headers[key] = value;
+                }
+                state["pending"] = pending[end + 4..];
+                if (code < 200 && code != 101)
+                    continue;
+                if (code == 101) {
+                    state["mode"] = "upgrade";
+                    remove_call_out(state["timer"]);
+                    state["timer"] = -1;
+                    continue;
+                }
+                if (state["method"] == "HEAD" || code == 204 || code == 304)
+                    return 1;
+                transfer = headers["transfer-encoding"];
+                if (transfer) {
+                    if (lower_case(transfer) != "chunked" || headers["content-length"])
+                        error("Unsupported HTTP framing.\n");
+                    state["mode"] = "chunk-size";
+                } else if (!undefinedp(headers["content-length"])) {
+                    value = headers["content-length"];
+                    if (sizeof(value) > 9 || !sizeof(regexp(({ value }), "^[0-9]+$")))
+                        error("Invalid Content-Length.\n");
+                    state["remaining"] = to_int(value);
+                    state["mode"] = "length";
+                } else {
+                    state["mode"] = "eof";
+                }
+                break;
+            case "length":
+                length = sizeof(pending);
+                if (length > state["remaining"])
+                    error("Unexpected bytes after HTTP response.\n");
+                state["remaining"] -= length;
+                state["pending"] = allocate_buffer(0);
+                return state["remaining"] == 0;
+            case "chunk-size":
+                end = lineEnd(pending);
+                if (end < 0) {
+                    if (sizeof(pending) > HTTP_HEADER_LIMIT)
+                        error("HTTP chunk header too large.\n");
+                    return 0;
+                }
+                line = read_buffer(pending, 0, end);
+                pos = strsrch(line, ';');
+                if (pos >= 0)
+                    line = line[0..pos - 1];
+                if (sizeof(line) > 8 || !sizeof(regexp(({ line }), "^[0-9a-fA-F]+$")) ||
+                    sscanf(line, "%x", length) != 1 || length < 0 || length > HTTP_CHUNK_LIMIT)
+                    error("Invalid HTTP chunk size.\n");
+                state["pending"] = pending[end + 2..];
+                state["remaining"] = length;
+                state["mode"] = length ? "chunk-data" : "trailers";
+                break;
+            case "chunk-data":
+                consumed = sizeof(pending) < state["remaining"] ? sizeof(pending) : state["remaining"];
+                state["remaining"] -= consumed;
+                state["pending"] = pending[consumed..];
+                if (state["remaining"])
+                    return 0;
+                state["mode"] = "chunk-end";
+                break;
+            case "chunk-end":
+                if (sizeof(pending) < 2)
+                    return 0;
+                if (pending[0] != 13 || pending[1] != 10)
+                    error("Invalid HTTP chunk terminator.\n");
+                state["pending"] = pending[2..];
+                state["mode"] = "chunk-size";
+                break;
+            case "trailers":
+                end = lineEnd(pending);
+                if (end < 0) {
+                    if (sizeof(pending) + state["trailerBytes"] > HTTP_HEADER_LIMIT)
+                        error("HTTP trailers too large.\n");
+                    return 0;
+                }
+                state["trailerBytes"] += end + 2;
+                if (state["trailerBytes"] > HTTP_HEADER_LIMIT)
+                    error("HTTP trailers too large.\n");
+                state["pending"] = pending[end + 2..];
+                if (!end) {
+                    if (sizeof(state["pending"]))
+                        error("Unexpected bytes after HTTP trailers.\n");
+                    return 1;
+                }
+                break;
+            default:
+                state["pending"] = allocate_buffer(0);
+                return 0;
+        }
+    }
 }
 
 protected void socket_shutdown(int fd) {
-    Status[fd]["status"] = STATE_CLOSED;
-    socket_close(fd);
-}
+    mapping state;
 
-// 客户端响应，请重写此接口处理响应
-protected void response(mixed result) {
-    // mixed *status = allocate(3);
-
-    // sscanf(result, "%s %d %s\r\n", status[0], status[1], status[2]);
-
-    debug_message(result);
+    state = Status[fd];
+    if (!mapp(state))
+        return;
+    finishRequest(state["id"], member_array(state["mode"], ({ "eof", "upgrade" })) == -1 ?
+        "connection closed before response completed" : 0);
 }
 
 protected void receive_data(int fd, mixed result) {
-    response(result);
+    mapping state;
+    buffer bytes;
+    mixed err;
+    int complete;
 
-    if (!stringp(Status[fd]["header"]["Connection"]) || lower_case(Status[fd]["header"]["Connection"]) == "close") {
-        // 释放连接
-        socket_shutdown(fd);
-    }
+    state = Status[fd];
+    if (!mapp(state))
+        return;
+    bytes = bufferp(result) ? result : string_encode(result, "utf-8");
+    err = catch {
+        complete = consumeResponse(state, bytes);
+        response_data(
+            state["id"],
+            bufferp(result) ? read_buffer(result, 0, sizeof(result)) : result
+        );
+    };
+    if (err)
+        finishRequest(state["id"], "response processing failed: " + err);
+    else if (complete)
+        finishRequest(state["id"], 0);
 }
 
 protected void write_data(int fd) {
-    Status[fd]["status"] = STATE_CONNECTED;
-    Debug && debug_message("write_data: " + Status[fd]["http"]);
-    socket_write(fd, Status[fd]["http"]);
+    mapping state;
+    int result;
+    mixed err;
+
+    state = Status[fd];
+    if (!mapp(state) || state["sent"])
+        return;
+    err = catch(result = write_http_socket(fd, state["http"]));
+    if (err) {
+        finishRequest(state["id"], "request write failed: " + err);
+    } else if (result == EESUCCESS || result == EECALLBACK) {
+        state["sent"] = 1;
+    } else {
+        finishRequest(state["id"], "request write failed: " + socket_error(result));
+    }
 }
 
-protected void connect(string host, string addr) {
-    int fd;
-    int ret;
+protected void connect(int fd, string addr) {
+    int result, requestId;
 
-    fd = Host_fd[host];
-    ret = socket_connect(fd, addr + " " + Status[fd]["port"], "receive_data", "write_data");
-    if (ret != EESUCCESS) {
-        Debug && debug_message("socket_error : " + socket_error(ret));
-        socket_shutdown(fd);
+    requestId = Status[fd]["id"];
+    result = socket_connect(fd, addr + " " + Status[fd]["port"], "receive_data", "write_data");
+    if (result != EESUCCESS)
+        finishRequest(requestId, "connect failed: " + socket_error(result));
+}
+
+protected void on_resolve(int requestId, string host, string addr, int key) {
+    int fd;
+    mixed err;
+
+    if (undefinedp(requestFds[requestId]))
+        return;
+    fd = requestFds[requestId];
+    if (!addr) {
+        finishRequest(requestId, "DNS lookup failed");
         return;
     }
-
-    Status[fd]["status"] = STATE_CONNECTING;
-    Debug && debug_message(sprintf("socket_status : %O", socket_status(fd)));
+    Host[Status[fd]["host"]] = addr;
+    err = catch(connect(fd, addr));
+    if (err)
+        finishRequest(requestId, "connect failed: " + err);
 }
 
-protected void on_resolve(string host, string addr, int key) {
-
-    Debug && debug_message(sprintf("%s: %s %d", host, addr, key));
-
-    if (addr) {
-        Host[host] = addr;
-        connect(host, addr);
-    }
-}
-
-// 独立封装传输初始化，便于使用方替换传输以及离线测试请求构造。
 protected int open_http_socket(int isTLS, string host) {
     int fd;
     mixed err;
 
-    fd = socket_create(isTLS ? STREAM_TLS : STREAM, "receive_callback", "socket_shutdown");
+    fd = socket_create(
+        isTLS ? STREAM_TLS_BINARY : STREAM_BINARY,
+        "receive_data",
+        "socket_shutdown"
+    );
     if (fd < 0)
         error("HTTP socket_create: " + socket_error(fd));
     if (isTLS) {
@@ -119,83 +345,97 @@ protected string encodeQueryPart(mixed value) {
 }
 
 nomask protected object request(string method, string url, mixed data, mapping header) {
-    int fd, is_tls = 0;
-    string host, path;
-    int port;
-    mixed key, value;
-    string params, headers = "", body = "";
+    int fd, isTLS, port, split, requestId, dnsKey;
+    string host, authority, path, params, key, value, portText;
+    string headers = "", body = "";
+    mapping state;
+    mixed item, err;
+    int hasConnection;
 
-    if (strsrch(url, "https://") == 0) {
-        is_tls = 1;
-        if (!(sscanf(url, "https://%s:%d%s", host, port, path) == 3 ||
-            sscanf(url, "https://%s/%s", host, path) == 2 ||
-            sscanf(url, "https://%s", host))) {
-            error("https url格式不正确");
-            return 0;
-        }
-    } else if (strsrch(url, "http://") == 0) {
-        if (!(sscanf(url, "http://%s:%d%s", host, port, path) == 3 ||
-            sscanf(url, "http://%s/%s", host, path) == 2 ||
-            sscanf(url, "http://%s", host))) {
-            error("http url格式不正确");
-            return 0;
-        }
-    } else {
-        error("url格式或协议不正确");
-        return 0;
-    }
-
-    if (!port)
-        port = is_tls ? 443 : 80;
-    if (!path)
-        path = "/";
-    else if (path[0] != '/')
+    isTLS = strsrch(url, "https://") == 0;
+    if (!isTLS && strsrch(url, "http://") != 0)
+        error("Invalid HTTP URL scheme.\n");
+    url = url[isTLS ? 8 : 7..];
+    if (strsrch(url, '\r') >= 0 || strsrch(url, '\n') >= 0 || strsrch(url, '#') >= 0)
+        error("Invalid HTTP URL.\n");
+    split = strsrch(url, '/');
+    if (split < 0 || (strsrch(url, '?') >= 0 && strsrch(url, '?') < split))
+        split = strsrch(url, '?');
+    authority = split < 0 ? url : url[0..split - 1];
+    path = split < 0 ? "/" : url[split..];
+    if (path[0] != '/')
         path = "/" + path;
-
+    host = authority;
+    port = isTLS ? 443 : 80;
+    split = strsrch(authority, ':', -1);
+    if (split >= 0) {
+        host = authority[0..split - 1];
+        portText = authority[split + 1..];
+        if (!sizeof(regexp(({ portText }), "^[0-9]+$")))
+            error("Invalid HTTP port.\n");
+        port = to_int(portText);
+    }
+    if (host == "" || port < 1 || port > 65535 || strsrch(
+        host,
+        '@'
+    ) >= 0 || strsrch(host, ' ') >= 0)
+        error("Invalid HTTP host or port.\n");
     if (mapp(header)) {
         foreach (key, value in header) {
-            headers = (headers ? headers + "\r\n" : "\r\n") + key + ": " + value;
+            if (!stringp(key) || !stringp(value) || strsrch(
+                key + value,
+                '\r'
+            ) >= 0 || strsrch(key + value, '\n') >= 0)
+                error("Invalid HTTP request header.\n");
+            if (member_array(
+                lower_case(key),
+                ({ "host", "content-length", "transfer-encoding" })
+            ) != -1)
+                error("HTTP framing headers are managed by the client.\n");
+            if (lower_case(key) == "connection")
+                hasConnection = 1;
+            headers += "\r\n" + key + ": " + value;
         }
-    } else {
-        headers = "";
     }
-
-    if (method == "GET" && mapp(data)) {
-        foreach (key, value in data) {
-            params = (params ? params + "&" : "") + encodeQueryPart(key) + "=" + encodeQueryPart(value);
-        }
+    if ((method == "GET" || method == "HEAD") && mapp(data)) {
+        foreach (item, value in data)
+            params = (params ? params + "&" : "") + encodeQueryPart(item) + "=" + encodeQueryPart(value);
         if (params)
-            path += (strsrch(path, '?') == -1 ? "?" : "&") + params;
+            path += (strsrch(path, '?') < 0 ? "?" : "&") + params;
     }
-
     if (method == "POST") {
-        if (mapp(data)) {
-            body = json_encode(data);
-        } else if (stringp(data)) {
-            body = data;
-        }
-
+        body = mapp(data) ? json_encode(data) : (stringp(data) ? data : "");
         headers += "\r\nContent-Length: " + sizeof(string_encode(body, "utf-8"));
     }
-
-    fd = open_http_socket(is_tls, host);
-    Host_fd[host] = fd;
-    Status[fd] = ([]);
-    Status[fd]["status"] = STATE_RESOLVING;
-    Status[fd]["host"] = host;
-    Status[fd]["port"] = port;
-    Status[fd]["path"] = path;
-    Status[fd]["http"] = method + " " + path + " HTTP/1.1\r\nHost: " + host + (port == 80 || port == 443 ? "" : ":" + port) + headers + "\r\n\r\n" + body;
-    Status[fd]["header"] = header || ([]);
-
-    Debug && debug_message(sprintf("Status : %O", Status));
-
-    if (Host[host]) {
-        connect(host, Host[host]);
-    } else {
-        resolve(host, "on_resolve");
+    if (!hasConnection)
+        headers += "\r\nConnection: close";
+    fd = open_http_socket(isTLS, host);
+    // 有些驱动在 TLS 握手失败时释放 fd，却不通知关闭；旧请求不能误关复用的 fd。
+    if (mapp(Status[fd])) {
+        err = catch(finishRequest(Status[fd]["id"], "connection closed by driver", 1));
+        if (err) {
+            close_http_socket(fd);
+            error(err);
+        }
     }
-
+    requestId = ++nextRequest;
+    state = ([ "id": requestId, "host": host, "port": port, "path": path,
+        "method": method, "mode": "headers", "pending": allocate_buffer(0),
+        "http": method + " " + path + " HTTP/1.1\r\nHost: " + authority + headers + "\r\n\r\n" + body ]);
+    Status[fd] = state;
+    requestFds[requestId] = fd;
+    state["timer"] = call_out("request_timeout", requestTimeoutSeconds, requestId);
+    err = catch {
+        if (Host[host]) {
+            connect(fd, Host[host]);
+        } else {
+            dnsKey = resolve_http_host(host, (: on_resolve($(requestId), $1, $2, $3) :));
+            if (dnsKey < 0)
+                finishRequest(requestId, "DNS lookup could not start");
+        }
+    };
+    if (err)
+        finishRequest(requestId, "request initialization failed: " + err);
     return this_object();
 }
 

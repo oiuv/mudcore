@@ -36,6 +36,11 @@ void run() {
         MASTER_OB->check(!skipLoadDir(dir), "loadall preserves host directory: " + dir);
     }
     MASTER_OB->check(skipLoadDir("mudcore//tests/nested"), "loadall normalizes filter path");
+    loadall("/fixtures/commands");
+    MASTER_OB->check(
+        load_object("/fixtures/commands/duplicate")->marker() == 2,
+        "loadall prefers .lpc over .c"
+    );
     loadall("/");
 }
 

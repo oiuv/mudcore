@@ -1,0 +1,28 @@
+void run() {
+    object login, user;
+    string id;
+    mixed err;
+
+    login = new(LOGIN_OB);
+    foreach (id in ({ ROOT_UID, "root", BACKBONE_UID, "../Root", "innocent" })) {
+        login->set("id", id);
+        user = LOGIN_D->make_body(login);
+        MASTER_OB->check(!objectp(user), "untrusted make_body rejected: " + id);
+        if (objectp(user)) destruct(user);
+    }
+    user = new(USER_OB);
+    err = catch(LOGIN_D->enter_world(login, user));
+    MASTER_OB->check(err != 0 && geteuid(user) == 0, "untrusted enter_world cannot activate user");
+    err = catch(LOGIN_D->reconnect(login, user));
+    MASTER_OB->check(err != 0, "untrusted reconnect rejected");
+    MASTER_OB->check(
+        geteuid(load_object(LOGIN_D)) == ROOT_UID,
+        "denied login calls preserve daemon identity"
+    );
+#ifdef __USE_SQLITE3__
+    err = catch(db_connect("", "/data/regression.sqlite", "", __USE_SQLITE3__));
+    MASTER_OB->check(err != 0, "non-Root caller cannot open even configured SQLite database");
+#endif
+    destruct(login);
+    destruct(user);
+}

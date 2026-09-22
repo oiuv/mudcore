@@ -1,0 +1,52 @@
+inherit CORE_INTERMUD_D;
+function *pending = ({});
+int timeoutStarted;
+
+protected int resolve_peer(string host, function callback) {
+    pending += ({ callback });
+    return sizeof(pending);
+}
+void run(int bindPort, int occupiedPort) {
+    MASTER_OB->check(!start("pending.test", 12345, occupiedPort) &&
+        query_startup_status()["state"] == "failed", "Intermud bind failure is observable");
+    timeoutStarted = start("pending.test", 12345, bindPort);
+    MASTER_OB->check(timeoutStarted, "Intermud starts pending DNS");
+    if (!timeoutStarted)
+        return;
+    stop();
+    MASTER_OB->check(!is_started(), "Intermud stop while resolving");
+    start("pending.test", 12345, bindPort);
+    evaluate(pending[0], "pending.test", "127.0.0.1", 1);
+    MASTER_OB->check(
+        query_startup_status()["state"] == "resolving",
+        "Intermud ignores late DNS after restart"
+    );
+    evaluate(pending[1], "pending.test", 0, 2);
+    MASTER_OB->check(
+        !is_started() && query_startup_status()["state"] == "failed",
+        "Intermud DNS failure closes socket"
+    );
+    start("pending.test", 12345, bindPort);
+    evaluate(pending[2], "pending.test", "127.0.0.1", 3);
+    MASTER_OB->check(
+        query_startup_status()["state"] == "running",
+        "Intermud successful DNS recorded"
+    );
+    send_event("invalid-numeric-address", 12345, "ping_q", ([]));
+    MASTER_OB->check(
+        stringp(query_startup_status()["error"]),
+        "Intermud send failure is observable"
+    );
+    stop();
+    timeoutStarted = start("pending.test", 12345, bindPort);
+}
+void finish() {
+    MASTER_OB->check(
+        timeoutStarted && !is_started() && query_startup_status()["state"] == "failed",
+        "Intermud DNS timeout releases socket"
+    );
+    if (sizeof(pending) < 4)
+        return;
+    evaluate(pending[3], "pending.test", "127.0.0.1", 4);
+    MASTER_OB->check(!is_started(), "Intermud late DNS after timeout ignored");
+}

@@ -2,6 +2,16 @@ inherit CORE_MASTER_OB;
 
 int failures;
 int checks;
+#ifdef HOST_UID_POLICY
+int deniedExports;
+int valid_seteuid(object caller, string euid) {
+    if (euid == "blockedbyhost") {
+        deniedExports++;
+        return 0;
+    }
+    return ::valid_seteuid(caller, euid);
+}
+#endif
 
 void check(int condition, string label) {
     checks++;
@@ -13,7 +23,9 @@ void check(int condition, string label) {
 
 // Tests never contact external services, even if a future create() regresses.
 int valid_socket(object caller, string action, mixed *info) {
-    if (file_name(caller) == "/tests/socket_probe" || file_name(caller) == "/tests/http_transport")
+    if (file_name(caller) == "/tests/socket_probe" || file_name(caller) == "/tests/http_transport" ||
+        file_name(caller) == "/tests/tls_probe" || file_name(caller) == CORE_INTERMUD_D ||
+        file_name(caller) == "/tests/intermud_probe")
         return 1;
     check(0, "unexpected socket operation from " + file_name(caller));
     return 0;
@@ -30,6 +42,7 @@ void log_error(string file, string message) {
 
 void finish() {
     mixed err;
+    object player;
 
     err = catch(load_object("/tests/regression")->deferred());
     if (err)
@@ -40,6 +53,39 @@ void finish() {
     err = catch(load_object("/tests/loadall_probe")->finish());
     if (err)
         check(0, "loadall regression: " + err);
+    foreach (string probe in ({
+        "http_lifecycle",
+        "verb_probe",
+        "http_transport",
+        "tls_probe",
+        "intermud_probe"
+    })) {
+        err = catch(load_object("/tests/" + probe)->finish());
+        if (err) check(0, probe + ": " + err);
+    }
+    check(
+        INTERMUD_D->query_startup_status()["state"] == "running",
+        "Intermud numeric peer resolved after restart"
+    );
+    INTERMUD_D->stop();
+    check(!INTERMUD_D->is_started(), "real Intermud stop");
+    player = find_player("regression");
+    check(
+        objectp(player) && getuid(player) == "regression" && geteuid(player) == "regression",
+        "real registration assigns player identity"
+    );
+    check(
+        geteuid(load_object(LOGIN_D)) == ROOT_UID,
+        "login daemon identity restored after real login"
+    );
+    if (objectp(player)) {
+        player->save();
+        destruct(player);
+        check(
+            stringp(NAME_D->invalid_new_name("回归玩家")),
+            "offline name lookup retains UID export access"
+        );
+    }
     debug_message(sprintf("CHECKS: %d, FAILURES: %d", checks, failures));
     debug_message(failures ? "MUDCORE TESTS FAIL" : "MUDCORE TESTS PASS");
     shutdown(failures ? 1 : 0);
@@ -49,7 +95,10 @@ void run() {
     string file;
     mixed err;
     int count;
+    object database;
+    mapping ports;
 
+    call_out("finish", 12);
     foreach (file in read_lines("/manifest.txt")) {
         reset_eval_cost();
         err = catch(load_object(file));
@@ -66,7 +115,27 @@ void run() {
     err = catch(load_object("/tests/loadall_probe")->run());
     if (err)
         check(0, "loadall startup: " + err);
-    call_out("finish", 5);
+    env("DB_SQLITE_DATABASE", "/data/regression.sqlite");
+    database = new("/tests/database_probe");
+    export_uid(database);
+    database->activate();
+    err = catch(database->run());
+    if (err) check(0, "SQLite round trip: " + err);
+    load_object("/tests/http_lifecycle")->run();
+    load_object("/tests/security_probe")->run();
+#ifdef HOST_UID_POLICY
+    NAME_D->map_name("禁止身份", "blockedbyhost");
+    NAME_D->invalid_new_name("禁止身份");
+    check(deniedExports > 0, "login UID export honors host master policy");
+    check(geteuid(load_object(LOGIN_D)) == ROOT_UID, "failed UID export restores daemon identity");
+#endif
+    load_object("/tests/verb_probe")->run();
+    load_object("/tests/tls_probe")->run();
+    ports = json_decode(read_file("/network.json"));
+    load_object("/tests/intermud_probe")->run(ports["intermudPort"], ports["udpPort"]);
+    call_out("startIntermud", 2);
+    call_out("restartIntermud", 4);
+    debug_message("LOGIN TEST READY");
 }
 
 string *epilog(int flag) {
@@ -76,4 +145,29 @@ string *epilog(int flag) {
     check(sizeof(files) == 2, "preload directory accepts .c and .lpc");
     call_out("run", 0);
     return ({});
+}
+
+void startIntermud() {
+    mapping ports;
+
+    ports = json_decode(read_file("/network.json"));
+    check(
+        INTERMUD_D->start("localhost", ports["udpPort"], ports["intermudPort"]),
+        "real Intermud start accepted"
+    );
+}
+
+void restartIntermud() {
+    mapping ports;
+
+    ports = json_decode(read_file("/network.json"));
+    check(
+        INTERMUD_D->start("localhost", ports["udpPort"], ports["intermudPort"]),
+        "repeated Intermud start is idempotent"
+    );
+    INTERMUD_D->stop();
+    check(
+        INTERMUD_D->start("127.0.0.1", ports["udpPort"], ports["intermudPort"]),
+        "Intermud restart with numeric peer"
+    );
 }

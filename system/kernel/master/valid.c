@@ -22,10 +22,22 @@ mixed valid_database(object caller, string func, mixed *info) {
         debug_message("[CORE_MASTER_OB]->valid_database():");
         debug_message("([caller : " + caller + ", func : " + func + "])");
     }
-    // 凭据来自 MUDLIB 配置；此钩子本身不建立连接。
-    if (func == "connect")
+    // 默认仅允许 Root 服务对象；宿主可覆盖本 apply 实现自己的 DAO 白名单。
+    if (!objectp(caller) || getuid(caller) != ROOT_UID || geteuid(caller) != ROOT_UID)
+        return 0;
+    if (func != "connect")
+        return 1;
+    if (!arrayp(info) || sizeof(info) != 3)
+        return 0;
+    // 驱动 info 是 ({ database, host, user })，不包含数据库后端类型。
+    // SQLite 只允许显式配置的文件及空 host/user，不以密码缺省代表授权。
+    if (stringp(env("DB_SQLITE_DATABASE")) && env("DB_SQLITE_DATABASE") != "" &&
+        info[0] == env("DB_SQLITE_DATABASE") && !info[1] && info[2] == "")
+        return 1;
+    if (stringp(DB_DATABASE) && DB_DATABASE != "" && info[0] == DB_DATABASE &&
+        info[1] == DB_HOST && info[2] == DB_USERNAME && stringp(DB_PASSWORD))
         return DB_PASSWORD;
-    return 1;
+    return 0;
 }
 
 int valid_hide(object ob) {

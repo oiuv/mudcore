@@ -53,21 +53,13 @@ int loadall(string dir) {
         return 1;
 
     foreach (file in dirs) {
+        if (file_size(dir + file) == -2 && !skipLoadDir(dir + file + "/"))
+            call_out("loadall", 1, dir + file + "/");
+    }
+    foreach (file in lpc_source_files(dir)) {
         reset_eval_cost();
-        switch (file_size(dir + file)) {
-            case -1:
-                //无法读取该目录，跳过
-                break;
-            case -2:
-                if (!skipLoadDir(dir + file + "/"))
-                    call_out("loadall", 1, dir + file + "/");
-                break;
-            default:
-                if (lpc_object_path(file) != file) {
-                    if (err = catch(load_object(dir + file)))
-                        log_file("loadall", "\n\tcheck : " + dir + file + "\n" + err);
-                }
-        }
+        if (err = catch(load_object(file)))
+            log_file("loadall", "\n\tcheck : " + file + "\n" + err);
     }
     write("check dir " + dir + " is ok.\n");
     return 1;

@@ -1,0 +1,157 @@
+#include <socket_err.h>
+inherit CORE_HTTP;
+
+int fakeFd = 1000;
+int closes;
+int writes;
+int writeResult = EESUCCESS;
+int done;
+int failed;
+int timeoutId;
+int connected;
+int throwResponse;
+mapping callbacks = ([]);
+string raw = "";
+
+protected int open_http_socket(int secure, string host) { return fakeFd++; }
+protected void close_http_socket(int fd) { closes++; }
+protected int write_http_socket(int fd, string packet) { writes++; return writeResult; }
+protected int resolve_http_host(string host, function callback) {
+    callbacks[query_last_request()] = callback;
+    return query_last_request();
+}
+protected void connect(int fd, string addr) { connected++; }
+protected void response(mixed data) { if (throwResponse) error("consumer failure\n"); raw += data; }
+protected void response_complete(int id) { done++; }
+protected void request_failed(int id, string message) { failed++; }
+void check(int value, string label) { MASTER_OB->check(value, "HTTP lifecycle: " + label); }
+
+int begin(string method) {
+    if (method == "HEAD") head("http://example.invalid/");
+    else get("http://example.invalid/");
+    return fakeFd - 1;
+}
+
+void run() {
+    int fd, id, oldId, before, prior;
+    function late;
+
+    Host["example.invalid"] = "127.0.0.1";
+    fd = begin("GET");
+    receive_data(fd, "HTTP/1.1 200 OK\r\nContent-Len");
+    receive_data(fd, "gth: 6\r\n\r\nabc");
+    check(done == 0 && sizeof(query_requests()) == 1, "split header and body stay open");
+    receive_data(fd, "def");
+    check(done == 1 && closes == 1 && !sizeof(query_requests()), "length completion cleans state");
+    check(strsrch(raw, "abcdef") >= 0, "raw response callback keeps every part");
+    fd = begin("HEAD");
+    receive_data(fd, "HTTP/1.1 200 OK\r\nContent-Length: 500\r\n\r\n");
+    check(done == 2, "HEAD does not wait for an advertised body");
+    fd = begin("GET");
+    receive_data(
+        fd,
+        "HTTP/1.1 100 Continue\r\n\r\nHTTP/1.1 200 OK\r\nTransfer-Encoding: chunked\r\n\r\n3;x=y\r\na"
+    );
+    receive_data(fd, "bc\r\n0\r\nX-Test: yes\r\n");
+    check(done == 2, "chunk trailer must finish");
+    receive_data(fd, "\r\n");
+    check(done == 3, "chunked and interim responses complete");
+    fd = begin("GET");
+    receive_data(fd, "HTTP/1.1 200 OK\r\n\r\nfirst");
+    receive_data(fd, "last");
+    check(done == 3, "EOF body stays open");
+    socket_shutdown(fd);
+    check(done == 4, "EOF body completes on close");
+    fd = begin("GET");
+    receive_data(fd, "HTTP/1.1 200 OK\r\nContent-Length: 9\r\n\r\nshort");
+    socket_shutdown(fd);
+    check(failed == 1 && done == 4, "truncated length is an error");
+    fd = begin("GET");
+    receive_data(fd, "HTTP/1.1 200 OK\r\nTransfer-Encoding: chunked\r\n\r\n2\r\na");
+    socket_shutdown(fd);
+    check(failed == 2, "truncated chunk is an error");
+    fd = begin("GET");
+    receive_data(fd, "HTTP/1.1 200 OK\r\nContent-Length: 2\r\nTransfer-Encoding: chunked\r\n\r\n");
+    check(failed == 3, "ambiguous response framing rejected");
+    fd = begin("GET");
+    receive_data(fd, "HTTP/1.1 200 OK\r\nContent-Length: xyz\r\n\r\n");
+    check(failed == 4, "invalid response length rejected");
+    fd = begin("GET");
+    writeResult = EECALLBACK;
+    write_data(fd);
+    write_data(fd);
+    check(writes == 1, "buffer-drained callback does not resend request");
+    cancel_request(query_last_request());
+    fd = begin("GET");
+    writeResult = EEWOULDBLOCK;
+    write_data(fd);
+    check(!sizeof(query_requests()), "write failure cleans state");
+    fd = begin("GET");
+    prior = failed;
+    before = done;
+    throwResponse = 1;
+    receive_data(fd, "HTTP/1.1 200 OK\r\nContent-Length: 0\r\n\r\n");
+    throwResponse = 0;
+    check(
+        failed == prior + 1 && done == before && !sizeof(query_requests()),
+        "consumer callback exception fails and cleans request"
+    );
+    map_delete(Host, "example.invalid");
+    before = connected;
+    get("http://example.invalid:81/a");
+    oldId = query_last_request();
+    get("http://example.invalid:82/b");
+    id = query_last_request();
+    evaluate(callbacks[id], "example.invalid", "127.0.0.1", id);
+    evaluate(callbacks[oldId], "example.invalid", "127.0.0.1", oldId);
+    check(
+        connected == before + 2 && sizeof(query_requests()) == 2,
+        "same host concurrent lookups are independent"
+    );
+    cancel_all_requests();
+    map_delete(Host, "example.invalid");
+    fd = begin("GET");
+    oldId = query_last_request();
+    late = callbacks[oldId];
+    cancel_request(oldId);
+    fakeFd = fd;
+    begin("GET");
+    id = query_last_request();
+    before = connected;
+    evaluate(late, "example.invalid", "127.0.0.1", oldId);
+    check(
+        connected == before && sizeof(query_requests()) == 1,
+        "late DNS cannot connect reused descriptor"
+    );
+    prior = failed;
+    evaluate(callbacks[id], "example.invalid", 0, id);
+    check(failed == prior + 1 && !sizeof(query_requests()), "DNS failure closes request");
+    Host["example.invalid"] = "127.0.0.1";
+    fd = begin("GET");
+    oldId = query_last_request();
+    prior = failed;
+    before = closes;
+    fakeFd = fd;
+    begin("GET");
+    check(
+        failed == prior + 1 && closes == before,
+        "driver-reused descriptor retires old request without closing new socket"
+    );
+    request_timeout(oldId);
+    check(sizeof(query_requests()) == 1, "old timeout cannot close replacement request");
+    cancel_all_requests();
+    map_delete(Host, "example.invalid");
+    set_request_timeout(1);
+    begin("GET");
+    timeoutId = query_last_request();
+}
+
+void finish() {
+    int prior;
+
+    check(!sizeof(query_requests()), "DNS timeout releases request");
+    prior = connected;
+    evaluate(callbacks[timeoutId], "example.invalid", "127.0.0.1", timeoutId);
+    check(prior == connected, "late DNS after timeout is ignored");
+    check(!sizeof(Status), "all descriptor state released");
+}

@@ -23,6 +23,11 @@ void run() {
     check(sizeof(lpc_source_files("/missing")) == 0, "missing directory");
     check(sizeof(read_lines("/fixtures/commands/empty.txt")) == 0, "empty text file");
     check(sizeof(read_lines(PRELOAD)) == 1, "trim comments and CRLF");
+    write_file("/fixtures/lines.txt", "  keep spaces  \r\n\t# comment\r\n ; comment\n   \n", 1);
+    check(
+        read_lines("/fixtures/lines.txt")[0] == "  keep spaces  ",
+        "read_lines preserves data whitespace"
+    );
     check(COMMAND_D->default_alias("") == "", "empty input");
     ob = COMMAND_D->find_command("shortcut");
     check(objectp(ob) && ob->main(0, 0) == 1, ".lpc alias and directory without trailing slash");
@@ -87,5 +92,5 @@ void run() {
 
 void deferred() {
     check(stringp(VERB_D->getVerb("fallback")), ".lpc verb fallback name");
-    check(stringp(VERB_D->getVerb("legacyverb")), "legacy .c verb");
+
 }

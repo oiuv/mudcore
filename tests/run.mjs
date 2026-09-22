@@ -2,7 +2,8 @@ import { mkdtempSync, cpSync, mkdirSync, readFileSync, readdirSync, writeFileSyn
 import { tmpdir } from 'node:os';
 import { dirname, join, resolve, relative, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { spawnSync } from 'node:child_process';
+import { spawn } from 'node:child_process';
+import { startNetworkFixtures, exerciseLogin } from './network-fixtures.mjs';
 import assert from 'node:assert/strict';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
@@ -39,7 +40,7 @@ for (const mode of ['default', 'overrides']) {
     }
     const put = (path, text) => writeFileSync(join(sandbox, path), text, 'utf8');
     put('tests/overrides.h', mode === 'overrides'
-        ? '#define _DBASE "/tests/override_dbase"\n#define ENV_D "/tests/override_env"\n' : '');
+        ? '#define _DBASE "/tests/override_dbase"\n#define ENV_D "/tests/override_env"\n#define HOST_UID_POLICY 1\n' : '');
     put('manifest.txt', programs.join('\n') + '\n');
     put('fixtures/commands/modern.lpc', 'int main(object me, string arg) { return 1; }\n');
     put('fixtures/commands/legacy.c', 'int main(object me, string arg) { return 1; }\n');
@@ -69,22 +70,47 @@ for (const mode of ['default', 'overrides']) {
         mkdirSync(dirname(join(sandbox, file)), { recursive: true });
         put(file, 'int marker() { return 1; }\n');
     }
+    const network = await startNetworkFixtures(root);
+    put('network.json', JSON.stringify(network.config));
+    put('test-ca.pem', ['localhost', 'mismatch'].map(name => readFileSync(join(root, `tests/fixtures/${name}-cert.pem`), 'utf8')).join('\n'));
     put('driver.cfg', [
-        'name : Mudcore Regression', 'mud ip : 127.0.0.1', 'port number : 0',
+        'name : Mudcore Regression', 'mud ip : 127.0.0.1', 'port number : ' + network.config.loginPort,
         'mudlib directory : ' + sandbox.replaceAll('\\', '/'),
         'log directory : /log', 'debug log file : debug.log',
         'include directories : /tests:/mudcore/include', 'global include file : <globals.h>',
         'master file : /tests/master', 'simulated efun file : /mudcore/system/kernel/simul_efun',
         'maximum evaluation cost : 100000000', 'gametick msec : 100',
     ].join('\n') + '\n');
-    const result = spawnSync(resolve(driver), ['driver.cfg'], {
-        cwd: sandbox, encoding: 'utf8', timeout: 60000, maxBuffer: 16 * 1024 * 1024,
-    });
+    let result, loginError, loginTask;
+    try {
+        result = await new Promise((resolveResult, reject) => {
+            const child = spawn(resolve(driver), ['driver.cfg'], {
+                cwd: sandbox, windowsHide: true,
+                env: { ...process.env, SSL_CERT_FILE: join(sandbox, 'test-ca.pem') },
+            });
+            let stdout = '', stderr = '';
+            let timeoutError;
+            const timer = setTimeout(() => { timeoutError = new Error('Driver test timed out'); child.kill(); }, 60000);
+            child.stdout.on('data', data => {
+                stdout += data.toString('utf8');
+                if (!loginTask && stdout.includes('LOGIN TEST READY'))
+                    loginTask = exerciseLogin(network.config.loginPort).catch(error => { loginError = error; });
+            });
+            child.stderr.on('data', data => { stderr += data.toString('utf8'); });
+            child.on('error', error => { clearTimeout(timer); reject(error); });
+            child.on('close', status => { clearTimeout(timer); resolveResult({ status, stdout, stderr, error: timeoutError }); });
+        });
+        await loginTask;
+    } finally {
+        await network.close();
+    }
     put('driver-output.txt', (result.stdout || '') + (result.stderr || ''));
-    console.log((result.stdout || '').split('\n').filter(line => /PASS|FAIL|CHECKS|COMPILED/.test(line)).join('\n'));
-    if (result.error || result.status !== 0 || !result.stdout?.includes('MUDCORE TESTS PASS')) {
+    console.log((result.stdout || '').split('\n').filter(line => /PASS|FAIL|CHECKS|COMPILED|TLS HOSTNAME/.test(line)).join('\n'));
+    if (loginError) console.error(loginError.message);
+    if (loginError || result.error || result.status !== 0 || !result.stdout?.includes('MUDCORE TESTS PASS')) {
         console.error(result.stderr || '');
         throw new Error(`Regression failed (${result.status}): ${sandbox}/driver-output.txt`);
     }
+    network.verify();
 }
 console.log('Dependency audit and both isolated driver suites passed. Test artifacts remain in the printed temporary directories.');

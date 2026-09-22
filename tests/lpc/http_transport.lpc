@@ -1,12 +1,70 @@
-#include <socket.h>
-
 inherit CORE_HTTP;
 
-void run() {
-    int fd;
+mapping labels = ([]);
+mapping received = ([]);
+mapping completed = ([]);
+mapping errors = ([]);
 
-    // 初始化真实 TLS 套接字及选项，不建立连接、不查询 DNS。
-    fd = open_http_socket(1, "example.invalid");
-    MASTER_OB->check(fd >= 0, "HTTP transport creates TLS socket");
-    socket_close(fd);
+protected void response_data(int id, mixed data) {
+    string label;
+
+    label = labels[id];
+    received[label] = (received[label] || "") + data;
+}
+protected void response_complete(int id) { completed[labels[id]]++; }
+protected void request_failed(int id, string message) { errors[labels[id]]++; }
+
+void run() {
+    mapping ports;
+    string path;
+
+    set_request_timeout(3);
+    ports = json_decode(read_file("/network.json"));
+    foreach (path in ({ "length", "chunked", "eof", "truncated" })) {
+        get(sprintf("http://localhost:%d/%s", ports["httpPort"], path));
+        labels[query_last_request()] = path;
+    }
+    get(sprintf("http://localhost:%d/other", ports["otherHttpPort"]));
+    labels[query_last_request()] = "other";
+    head(sprintf("http://localhost:%d/head", ports["httpPort"]), ([ "q": "中文" ]));
+    labels[query_last_request()] = "head";
+    get(sprintf("https://localhost:%d/tls", ports["tlsPort"]));
+    labels[query_last_request()] = "tls";
+    get(sprintf("https://localhost:%d/tls", ports["untrustedPort"]));
+    labels[query_last_request()] = "untrusted";
+    get(sprintf("https://localhost:%d/tls", ports["mismatchPort"]));
+    labels[query_last_request()] = "mismatch";
+    set_request_timeout(1);
+    get(sprintf("http://localhost:%d/stall", ports["httpPort"]));
+    labels[query_last_request()] = "timeout";
+}
+
+void finish() {
+    string label;
+
+    foreach (label in ({ "length", "chunked", "eof", "other", "head", "tls" }))
+        MASTER_OB->check(completed[label] == 1 && !errors[label], "real HTTP completion: " + label);
+    foreach (label in ({ "truncated", "untrusted", "timeout" }))
+        MASTER_OB->check(errors[label] == 1 && !completed[label], "real HTTP failure: " + label);
+    MASTER_OB->check(
+        strsrch(received["length"] || "", "hello 中文 world") >= 0,
+        "fragmented UTF-8 length response intact"
+    );
+    MASTER_OB->check(
+        strsrch(received["chunked"] || "", "中文") >= 0,
+        "fragmented UTF-8 chunked response intact"
+    );
+    MASTER_OB->check(strsrch(received["eof"] || "", "first-last") >= 0, "EOF body fully received");
+    MASTER_OB->check(
+        strsrch(received["tls"] || "", "tls-ok") >= 0,
+        "trusted TLS response received"
+    );
+    MASTER_OB->check(
+        completed["mismatch"] + errors["mismatch"] == 1,
+        "hostname mismatch test resolved"
+    );
+    debug_message(completed["mismatch"] ? "TLS HOSTNAME CHECK: driver accepts trusted certificate with mismatched hostname" :
+        "TLS HOSTNAME CHECK: driver rejects mismatched hostname");
+    MASTER_OB->check(!sizeof(query_requests()), "real HTTP requests all cleaned up");
+    cancel_all_requests();
 }
