@@ -1,0 +1,3 @@
+inherit CORE_USER_BASE;
+
+int composition_marker() { return 73; }

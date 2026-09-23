@@ -1,0 +1,4 @@
+inherit CORE_DBASE;
+
+#define query_verb() "missingserviceprobe"
+#include "/mudcore/inherit/command.c"

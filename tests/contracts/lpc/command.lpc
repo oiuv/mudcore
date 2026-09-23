@@ -1,0 +1,3 @@
+inherit CORE_COMMAND;
+
+protected string *query_command_handlers() { return ({ "exit", "command" }); }

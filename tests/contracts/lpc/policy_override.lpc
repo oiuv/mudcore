@@ -1,0 +1,8 @@
+inherit CORE_MASTER_OB;
+
+int calls;
+int valid_read(string file, mixed user, string func) {
+    calls++;
+    return 1;
+}
+int query_calls() { return calls; }

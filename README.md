@@ -29,6 +29,8 @@ LPMUD游戏开发框架核心代码，仅仅包括核心代码，可以在此基
 
 开发验证和兼容调整见 [测试说明](tests/README.md) 与 [依赖边界迁移说明](docs/dependency-boundary.md)。
 
+默认完整玩家组合保持不变，也可显式选择 `CORE_USER_BASE` 最小组合，配套命令阶段、parser 开关和角色策略；不能只改一个宏就假定所有游戏命令都兼容。选用模块前查阅 [架构规范](docs/architecture.md)、[组件依赖与接口契约](docs/module-contracts.md) 和 [最小组合接入](docs/integration.md#显式选择最小玩家组合)。
+
 ## 框架使用说明
 
 新项目推荐从 [minimud 基础模板](https://github.com/mudcore/mud) 开始：

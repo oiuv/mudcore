@@ -1,0 +1,1 @@
+int marker() { return 1; }

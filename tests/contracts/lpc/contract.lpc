@@ -1,0 +1,51 @@
+int main(object actor, string arg) {
+    mapping state;
+    string destination;
+    mixed err;
+
+    if (query_verb() == "look") {
+        tell_object(actor, "ROOM: " + file_name(environment(actor)) + "\n");
+        return 1;
+    }
+    if (query_verb() == "go") {
+        destination = environment(actor)->query("exits/" + arg);
+        if (!destination) return 0;
+        actor->move(destination);
+        return 1;
+    }
+    if (arg == "state") {
+        state = actor->query_entire_dbase();
+        tell_object(actor, "STATE " + json_encode(([
+            "id": state["id"], "name": state["name"], "gender": state["gender"],
+            "has_gender": !undefinedp(state["gender"]), "init_count": state["init_count"],
+            "setup_count": state["setup_count"], "host_attribute": state["host_attribute"],
+            "has_rpg": !undefinedp(state["exp"]) || !undefinedp(state["lv"]) || !undefinedp(state["hp"]),
+            "dbase_marker": actor->host_marker(), "base_marker": actor->composition_marker(),
+            "gmcp_calls": actor->query_temp("gmcp_calls") || 0
+        ])) + "\n");
+        return 1;
+    }
+    if (arg == "savequit") {
+        actor->save();
+        tell_object(actor, "SAVED\n");
+        actor->remove();
+        return 1;
+    }
+    if (arg == "gmcpfail") {
+        actor->set_temp("throw_gmcp", 1);
+        err = catch(actor->move(START_ROOM));
+        actor->delete_temp("throw_gmcp");
+        MASTER_OB->check(
+            stringp(err) && strsrch(err, "expected GMCP") != -1,
+            "enabled GMCP failure propagates"
+        );
+        tell_object(actor, "GMCP FAILURE CHECKED\n");
+        return 1;
+    }
+    if (arg == "done") {
+        MASTER_OB->finish(actor);
+        return 1;
+    }
+    tell_object(actor, "ARG=" + (arg || "") + ";ACTOR=" + actor->query("id") + "\n");
+    return 1;
+}

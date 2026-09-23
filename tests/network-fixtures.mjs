@@ -146,8 +146,10 @@ export async function exerciseLogin(port) {
         await expect(/确定吗/); send('y');
         await expect(/登录密码/); send('local-test-only');
         await expect(/请再输入/); send('local-test-only');
-        await expect(/名字/); send('回归玩家');
-        await expect(/男性/); send('m');
+        await expect(/名字/); send('PlainName');
+        await expect(/纯中文/); send('回归玩家');
+        await expect(/男性/); send('x');
+        await expect(/只能扮演/); send('m');
         // The driver test checks the resulting UID and persisted body as well.
         await new Promise(resolve => setTimeout(resolve, 500));
         socket.destroy();

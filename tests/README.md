@@ -14,11 +14,11 @@ node tests/run.mjs /absolute/path/to/driver
 node mudcore/tests/run.mjs bin/driver.exe
 ```
 
-运行器复制框架到系统临时目录，生成独立 master、配置与数据，分别测试默认实现和宿主 `_DBASE`、`ENV_D`、UID 策略覆盖。不会读取宿主 `.env`、玩家存档或运行配置。本机 HTTP/TLS/UDP 和隔离登录端口绑定 `127.0.0.1`；对端使用 localhost 或数字回环地址，Intermud 的本机名称解析也仅在测试显式启动后发生。
+运行器复制框架到系统临时目录，生成独立 master、配置与数据，先测试 default 与 overrides（宿主 `_DBASE`、`ENV_D`、UID 策略覆盖），再执行 minimal/custom 组合套件。不会读取宿主 `.env`、玩家存档或运行配置。本机 HTTP/TLS/UDP 和隔离登录端口绑定 `127.0.0.1`；对端使用 localhost 或数字回环地址，Intermud 的本机名称解析也仅在测试显式启动后发生。
 
 ## 检查范围
 
-- 编译全部 157 个独立框架程序，检查固定业务地址没有重新引入。
+- 编译全部独立框架程序（数量随源码变化，由运行器打印），检查固定业务地址没有重新引入。
 - `.c`/`.lpc` 扫描、命令别名、预加载、虚拟对象、存档清理和 `loadall` 去重优先级；隐藏目录、框架测试/文档/源码片段过滤。
 - TUI 上游状态机/渲染/控件测试；缺少交互能力时的编译与拒绝调用、玩家继承组合，以及真实本机 Telnet 中文分包、控制键、菜单、回调串联/异常、窗口缩放、退出恢复和断线清理。TUI 移植测试的来源授权见 [组件说明](../inherit/tui/README.md)。
 - 百分比的整数/浮点返回类型；Base64 标准向量、中文、填充及非法输入；JSON 转义、Unicode、buffer、数字、循环引用及大数组/长字符串；`present_clone` 的参数组合、序号、来源路径和不加载来源行为。
@@ -31,7 +31,23 @@ node mudcore/tests/run.mjs bin/driver.exe
 - SQLite 的建表、增删改查、关闭后重新读取、未授权调用者及路径拒绝；增加引号/反斜杠/中文/注入样式值、框架层占位参数、空值与数值、数组条件组合、空 IN 集合、GROUP BY/HAVING/排序分页，以及非法结构输入、读取失败重试、查询对象复用、失败写入残留、首行限制与零行分页回归。
 - 非可信身份导出/进入世界/重连被拒绝，宿主 UID 策略被尊重；真实本机注册、登录、断线重连、玩家 UID/EUID、存档和离线姓名查重。
 
-两组都输出 `MUDCORE TESTS PASS`、进程退出码为 `0`，且 Node 端确认收到预期网络报文后才算通过。失败时查看输出目录的 `driver-output.txt` 和 `log/debug.log`。临时目录保留用于诊断，不加入仓库。
+default/overrides 均输出 `MUDCORE TESTS PASS`，minimal/custom 均输出 `MUDCORE CONTRACTS PASS`，各驱动及总入口退出码为 `0`，且 Node 端确认通信和状态断言后才算通过。任一套件失败会使总入口非零退出；单有 PASS 文本不算成功。失败时查看输出目录的 `driver-output.txt` 和 `log/debug.log`。临时目录保留用于诊断，不加入仓库。
+
+## 独立组合套件
+
+单独运行（独立检出去掉 `mudcore/`）：
+
+```powershell
+node mudcore/tests/contracts.mjs bin/driver.exe
+```
+
+`contracts.mjs` 与 `contracts/lpc/` 组装自己的最小 master，不执行全量 master 的网络/TUI/Intermud 收尾。临时副本物理排除战斗、状态、队伍、任务、表情/频道/谓词等未选文件；minimal 另排除 GMCP，custom 保留它以验证移动通知。两组使用 `_USER_BASE`、宿主 `_DBASE/_COMMAND/CHAR_D/LOGIN_D`，编译关闭 parser。
+
+- LPC 检查阶段顺序、短路、参数、无效配置和错误传播；可选存档缺席/正常/抛错；六项权限诊断来源分类与无副作用；畸形性别配置、未经认证调用及 UID 拒绝。实际注册中的初始化钩子抛错会被确认传播，并检查失败连接关闭、无残留玩家克隆、姓名映射清理和服务身份恢复。
+- Node 通过真实 Telnet 检查非法名称/选项、非中文名称、无性别/自定义性别、无 RPG 初始字段、命令/移动、保存恢复和重连；验证新角色只初始化一次，重新加载执行 setup，在线重连不重复 setup。
+- 仅在完整驱动上关闭 parser 编译选项，不代表已经测试无 parser 的实际裁剪构建。该套件不访问运营服务，不覆盖任意模块组合的笛卡尔积。
+
+默认分派基线 `lpc/command_baseline.lpc` 包含实际生产 `command.c` 并替换 efun/service 边界以记录顺序；真实输入、认证和持久化另由 Telnet 测试验证。夹具中的宽松 master、测试状态命令和 shutdown 不得用于生产。
 
 ## TLS 验证边界
 

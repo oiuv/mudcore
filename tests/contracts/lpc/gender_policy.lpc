@@ -1,0 +1,19 @@
+inherit CORE_LOGIN_D;
+
+private int mode;
+void configure(int value) { mode = value; }
+protected mapping *query_gender_options() {
+    switch (mode) {
+        case 1: return ({ ([ "key": "x", "label": "X" ]) });
+        case 2: return ({
+            ([ "key": "x", "label": "X", "value": "x" ]),
+            ([ "key": "X", "label": "Other", "value": "other" ])
+        });
+        case 3: return ({
+            ([ "key": "p", "label": "P", "value": "p" ]),
+            ([ "key": "pilot", "label": "Pilot", "value": "pilot" ])
+        });
+        default: return ::query_gender_options();
+    }
+}
+string prompt() { return query_gender_prompt(); }

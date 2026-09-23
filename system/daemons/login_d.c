@@ -71,7 +71,13 @@ void reconnect(object ob, object user);
 
 protected void create() {
     // 自动加载谓词指令列表
+#if MUDCORE_ENABLE_PARSER
+#if MUDCORE_HAS_PARSER
     VERB_D->rehash();
+#else
+    error("LOGIN: parser is enabled but unavailable in this driver.\n");
+#endif
+#endif
 }
 
 string short() {
@@ -381,87 +387,166 @@ protected void confirm_password(string pass, object ob) {
 /**
  * 角色注册流程
  */
-protected void register(object ob) {
-    write("\n请输入您游戏角色的" HIY "名字" NOR "(不要超过" HIY + chinese_number(MAX_NAME_LEN) + NOR "个汉字)：");
-    input_to("get_name", ob);
+protected string query_name_prompt() {
+    return "\n请输入您游戏角色的" HIY "名字" NOR "(不要超过" HIY + chinese_number(MAX_NAME_LEN) + NOR "个汉字)：";
 }
 
-protected void get_name(string arg, object ob) {
-    string result;
+// Return 0 on acceptance, otherwise the message displayed before retrying.
+protected string validate_character_name(string name) {
+    string banned, result;
 
-    if (!is_chinese(arg)) {
-        write("\n对不起，只能给自己取纯中文的名字！");
-        write("\n请重新输入您" HIY "名字" NOR "：");
-        input_to("get_name", ob);
-        return;
-    }
-    if (strlen(arg) < MIN_NAME_LEN || strlen(arg) > MAX_NAME_LEN) {
-        write("\n对不起，你的名字只能为" + MIN_NAME_LEN + "～" + MAX_NAME_LEN + "个字符长度");
-        write("\n请重新输入您" HIY "名字" NOR "：");
-        input_to("get_name", ob);
-        return;
-    }
-    foreach (string name in banned_name)
-        if (strsrch(arg, name) > -1) {
-            write("\n对不起，这个名字会引起不必要的误会。");
-            write("\n请重新输入您的" HIY "名字" NOR "：");
-            input_to("get_name", ob);
-            return;
+    if (!is_chinese(name)) return "\n对不起，只能给自己取纯中文的名字！";
+    if (strlen(name) < MIN_NAME_LEN || strlen(name) > MAX_NAME_LEN)
+        return "\n对不起，你的名字只能为" + MIN_NAME_LEN + "～" + MAX_NAME_LEN + "个字符长度";
+    foreach (banned in banned_name)
+        if (strsrch(name, banned) > -1) return "\n对不起，这个名字会引起不必要的误会。";
+    result = NAME_D->invalid_new_name(name);
+    return result ? "\n对不起，" + result : 0;
+}
+
+protected mapping *query_gender_options() {
+    return ({
+        ([ "key": "m", "label": "男性", "value": "男性" ]),
+        ([ "key": "f", "label": "女性", "value": "女性" ])
+    });
+}
+
+private mapping *validatedGenderOptions() {
+    mixed options, option;
+    mapping *result;
+    string key, previous;
+    string *keysSeen;
+
+    options = query_gender_options();
+    if (!arrayp(options)) error("LOGIN: gender options must be an array.\n");
+    result = ({});
+    keysSeen = ({});
+    foreach (option in options) {
+        if (!mapp(option) || !stringp(option["key"]) || option["key"] == "" ||
+            !stringp(option["label"]) || option["label"] == "" ||
+            !stringp(option["value"]) || option["value"] == "")
+            error("LOGIN: gender options require nonempty key, label and value strings.\n");
+        key = lower_case(option["key"]);
+        if (trim(key) != key) error("LOGIN: gender keys must not contain surrounding whitespace.\n");
+        foreach (previous in keysSeen) {
+            if (key == previous || (sizeof(key) == 1 && previous[0..0] == key) ||
+                (sizeof(previous) == 1 && key[0..0] == previous))
+                error("LOGIN: conflicting gender option keys.\n");
         }
-
-    if (result = NAME_D->invalid_new_name(arg)) {
-        write("\n对不起，" + result);
-        write("\n请重新输入您的" HIY "名字" NOR "：");
-        input_to("get_name", ob);
-        return;
+        keysSeen += ({ key });
+        result += ({ ([ "key": key, "label": option["label"], "value": option["value"] ]) });
     }
-
-    ob->set_temp("name", arg);
-
-    write(WHT "您要扮演男性(" HIY "m" NOR + WHT ")的角色或女性(" HIY "f" NOR + WHT ")的角色？" NOR);
-    input_to("get_gender", ob);
+    return result;
 }
 
-protected void get_gender(string gender, object ob) {
+private string genderChoices(mapping *options) {
+    string *labels;
+    mapping option;
+
+    labels = ({});
+    foreach (option in options)
+        labels += ({ option["label"] + "(" HIY + option["key"] + NOR WHT ")" });
+    return implode(labels, "的角色或");
+}
+
+protected string query_gender_prompt() {
+    mapping *options;
+
+    options = validatedGenderOptions();
+    return sizeof(options) ? WHT "您要扮演" + genderChoices(options) + "的角色？" NOR : "";
+}
+
+private void completeCharacter(object ob, string gender) {
     object user;
+    string playerId, name;
+    mixed err;
 
-    write("\n");
-    if (gender == "") {
-        input_to("get_gender", ob, user);
-        return;
-    }
-
-    if (gender[0] == 'm' || gender[0] == 'M')
-        ob->set_temp("gender", "男性");
-
-    else if (gender[0] == 'f' || gender[0] == 'F')
-        ob->set_temp("gender", "女性");
-    else {
-        write(WHT "您只能扮演男性(" HIY "m" NOR + WHT ")的角色或女性(" HIY "f" NOR + WHT ")的角色。" NOR);
-        input_to("get_gender", ob, user);
-        return;
-    }
-
-    if (find_player(ob->query("id"))) {
-        write(HIR "这个玩家现在已经登录到这个世界上了，请"
-            "退出重新连接。\n" NOR);
+    if (!validLogin(ob) || authenticated[ob] != loginIds[ob])
+        error("Unauthorized character creation.\n");
+    playerId = loginIds[ob];
+    name = ob->query_temp("name");
+    if (!stringp(name) || name == "") error("LOGIN: character name is missing.\n");
+    if (find_player(playerId)) {
+        write(HIR "这个玩家现在已经登录到这个世界上了，请退出重新连接。\n" NOR);
         destruct(ob);
         return;
     }
-
     if (!objectp(user = make_body(ob))) {
         write(HIR "\n你无法登录这个新的人物，请重新选择。\n" NOR);
         destruct(ob);
         return;
     }
-
-    user->set("name", ob->query_temp("name"));
-    user->set("gender", ob->query_temp("gender"));
-    // 记录名字
-    NAME_D->map_name(user->query("name"), user->query("id"));
-    init_new_player(user, ob);
-    enter_world(ob, user);
+    err = catch {
+        user->set("name", name);
+        if (stringp(gender)) user->set("gender", gender);
+        NAME_D->map_name(name, playerId);
+        init_new_player(user, ob);
+        enter_world(ob, user);
+    };
+    if (err) {
+        map_delete(authenticated, ob);
+        map_delete(loginIds, ob);
+        if (objectp(user)) destruct(user);
+        if (objectp(ob)) destruct(ob);
+        catch(NAME_D->remove_name(name, playerId));
+        error(err);
+    }
     write("\n");
+}
+
+protected void register(object ob) {
+    if (!validLogin(ob) || authenticated[ob] != loginIds[ob]) return;
+    write(query_name_prompt());
+    input_to("get_name", ob);
+}
+
+protected void get_name(string arg, object ob) {
+    string result;
+    mapping *options;
+
+    if (!validLogin(ob) || authenticated[ob] != loginIds[ob]) return;
+    result = validate_character_name(arg);
+    if (result) {
+        write(result);
+        write(query_name_prompt());
+        input_to("get_name", ob);
+        return;
+    }
+    options = validatedGenderOptions();
+    ob->set_temp("name", arg);
+    ob->delete_temp("gender");
+    if (!sizeof(options)) {
+        completeCharacter(ob, 0);
+        return;
+    }
+    write(query_gender_prompt());
+    input_to("get_gender", ob);
+}
+
+protected void get_gender(string gender, object ob) {
+    mapping *options;
+    mapping option;
+    string key;
+
+    if (!validLogin(ob) || authenticated[ob] != loginIds[ob]) return;
+    options = validatedGenderOptions();
+    write("\n");
+    if (!sizeof(options)) {
+        completeCharacter(ob, 0);
+        return;
+    }
+    if (gender != "") {
+        foreach (option in options) {
+            key = option["key"];
+            if (lower_case(gender) == key || (sizeof(key) == 1 && lower_case(gender[0..0]) == key)) {
+                ob->set_temp("gender", option["value"]);
+                completeCharacter(ob, option["value"]);
+                return;
+            }
+        }
+        write(WHT "您只能扮演" + genderChoices(options) + "的角色。" NOR);
+    }
+    input_to("get_gender", ob);
 }
 
 // 初始化新玩家必要属性

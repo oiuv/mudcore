@@ -15,7 +15,7 @@ int move_or_destruct(object dest) {
     if (userp(this_object())) {
         tell_object(this_object(), HIW "\n突然一阵时空扭曲，你被传送到虚空。\n" NOR);
         move(VOID_OB);
-    } else if (this_object()->is_db_saved()) {
+    } else if (function_exists("is_db_saved", this_object()) && this_object()->is_db_saved()) {
         this_object()->save();
     }
 
@@ -48,7 +48,7 @@ varargs int move(mixed dest, int raw) {
         me->set("area_info/y_axis", random(dest->query("y_axis_size")));
     }
     // GMCP
-    if (interactive(me)) {
+    if (interactive(me) && function_exists("gmcp", me)) {
         me->gmcp("Room.Info.Get");
     }
     // 玩家对象自动look
@@ -64,7 +64,7 @@ varargs void remove(string euid) {
     object env;
     object me = this_object();
 
-    if (me->is_db_saved())
+    if (function_exists("is_db_saved", me) && me->is_db_saved())
         me->save();
 
     // Leave environment

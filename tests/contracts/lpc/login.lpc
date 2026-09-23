@@ -1,0 +1,22 @@
+inherit CORE_LOGIN_D;
+
+protected string query_name_prompt() { return "Character name: "; }
+
+protected string validate_character_name(string name) {
+    if (!stringp(name) || !sizeof(regexp(({ name }), "^[A-Z][A-Za-z]+$")))
+        return "REJECT_NAME\n";
+    return NAME_D->invalid_new_name(name);
+}
+
+protected mapping *query_gender_options() {
+#if CONTRACT_CUSTOM
+    return ({ ([ "key": "pilot", "label": "驾驶员", "value": "pilot-role" ]) });
+#else
+    return ({});
+#endif
+}
+
+// Test-only wrappers: even calls from a subclass cannot manufacture authentication.
+void attempt_registration(object login) { register(login); }
+void attempt_name(object login) { get_name("Intruder", login); }
+void attempt_gender(object login) { get_gender("pilot", login); }

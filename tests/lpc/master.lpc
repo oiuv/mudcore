@@ -122,6 +122,8 @@ void run() {
     }
     err = catch(load_object("/tests/sefun_probe")->run());
     if (err) check(0, "simul efun regression: " + err);
+    err = catch(load_object("/tests/command_baseline")->run());
+    if (err) check(0, "command baseline: " + err);
     err = catch(load_object("/tests/regression")->run());
     if (err)
         check(0, "regression: " + err);

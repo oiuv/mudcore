@@ -76,4 +76,10 @@ string parser_error_message(int type, object ob, mixed arg, int flag) {
     }
 }
 
-void parseRefresh() { parse_refresh(); }
+void parseRefresh() {
+#if MUDCORE_HAS_PARSER
+    parse_refresh();
+#else
+    error("MASTER: parser is disabled or unavailable.\n");
+#endif
+}

@@ -11,6 +11,16 @@
 #define ROOT_UID      "Root"
 #define BACKBONE_UID  "Backbone"
 
+// Compile-time host choice; defaults preserve the complete command pipeline.
+#ifndef MUDCORE_ENABLE_PARSER
+#define MUDCORE_ENABLE_PARSER 1
+#endif
+#if MUDCORE_ENABLE_PARSER && efun_defined(parse_init) && efun_defined(parse_sentence) && efun_defined(parse_refresh)
+#define MUDCORE_HAS_PARSER 1
+#else
+#define MUDCORE_HAS_PARSER 0
+#endif
+
 /* 系统目录 */
 // 如果核心框架目录不是默认，需要在 <globals.h> 中定义
 #ifndef CORE_DIR
@@ -82,6 +92,7 @@
 #define CORE_DB             CORE_DIR "inherit/DB"
 #define CORE_DBASE          CORE_DIR "inherit/dbase"
 #define CORE_HTTP           CORE_DIR "inherit/Http"
+#define CORE_HOST_POLICY    CORE_DIR "inherit/host_policy"
 #define CORE_LIVING         CORE_DIR "inherit/living"
 #define CORE_MESSAGE        CORE_DIR "inherit/message"
 #define CORE_MOVE           CORE_DIR "inherit/move"
@@ -100,6 +111,7 @@
 #define CORE_USER_GMCP          CORE_DIR "inherit/user_gmcp"
 #define CORE_USER_QUEST         CORE_DIR "inherit/user_quest"
 #define CORE_USER               CORE_DIR "inherit/user"
+#define CORE_USER_BASE          CORE_DIR "inherit/user_base"
 
 /* 其他 */
 // 游戏管理员账号
@@ -164,6 +176,9 @@
 #ifndef _HTTP
 #define _HTTP           CORE_HTTP
 #endif
+#ifndef _HOST_POLICY
+#define _HOST_POLICY    CORE_HOST_POLICY
+#endif
 #ifndef _LIVING
 #define _LIVING         CORE_LIVING
 #endif
@@ -214,6 +229,9 @@
 #endif
 #ifndef _USER
 #define _USER               CORE_USER
+#endif
+#ifndef _USER_BASE
+#define _USER_BASE          CORE_USER_BASE
 #endif
 
 /* 守护进程 (覆盖用)*/

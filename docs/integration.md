@@ -104,6 +104,60 @@ string query_project_name() {
 
 框架的玩法示例可供参考，具体战斗、成长、剧情与业务适配由宿主实现。
 
+## 显式选择最小玩家组合
+
+默认 `_USER` 仍使用完整玩家组合，已有宿主不必更改。非战斗或非 RPG 游戏可选择 `_USER_BASE`，保留默认 `USER_OB` 的登录、文件存档与重连生命周期。它不继承战斗、状态、组队、任务、战斗记录或 GMCP，但仍需要基础组件、登录/命令服务与宿主配置；依赖见 [模块契约](module-contracts.md)。
+
+```c
+// 宿主 include/globals.h；在 <mudcore.h> 之前定义。
+#define _USER _USER_BASE
+#define _COMMAND "/inherit/project_command"
+#define MUDCORE_ENABLE_PARSER 0
+#define CHAR_D "/system/project_char"
+#define START_ROOM "/world/start"
+#define CMD_PATH_STD ({ "/cmds/basic/" })
+#define CMD_PATH_WIZ ({ "/cmds/admin/" })
+#include <mudcore.h>
+```
+
+`/inherit/project_command.c` 只选择方向和 action：
+
+```c
+inherit CORE_COMMAND;
+
+protected string *query_command_handlers() {
+    return ({ "exit", "command" });
+}
+```
+
+`/system/project_char.c` 继承 `CORE_CHAR_D`，覆盖 `init_player(object user, mixed *data...)`，仅设置自己的属性；不调用父初始化即可不写入经验、等级、HP，见 [属性示例](daemons/char_d.md#非-rpg-属性与调用时序)。名称/性别可保持默认，或让 `LOGIN_D` 指向继承 `CORE_LOGIN_D` 的宿主策略，见 [登录示例](daemons/login_d.md#角色创建策略钩子)。宿主 daemon 路径还须满足自己的 master UID 规则。
+
+准备真实 `/world/start` 房间，提供 `/cmds/basic/` 中的 `look`、`go` 等命令，接口为 `main(object me, string arg)`。不要不加检查地复制依赖战斗/队伍的整套游戏命令。默认移动对交互 living 玩家会执行 `look`，方向阶段会调用 `go`；虽然关闭了表情/频道/parser，`COMMAND_D` 别名与命令索引仍保留。
+
+最小宿主不预加载 `VERB_D`、谓词或未选组件；`MUDCORE_ENABLE_PARSER 0` 同时阻止默认登录 daemon 重载谓词。仍使用 parser 的游戏保持默认 `1` 并提供驱动及谓词能力。编译选项变动后重新编译受影响对象或重启；不要在活跃玩家上临时改继承组合。
+
+完整可运行示例由 [contracts.mjs](../tests/contracts.mjs) 在临时目录组装；[globals](../tests/contracts/lpc/globals.h)、[command](../tests/contracts/lpc/command.lpc)、[char](../tests/contracts/lpc/char.lpc)、[room](../tests/contracts/lpc/room.lpc) 与 [命令实现](../tests/contracts/lpc/contract.lpc) 展示配套接口。测试版 master、宽松权限、状态输出和关闭驱动命令只用于隔离测试，不得直接部署。运行：
+
+```sh
+node mudcore/tests/contracts.mjs /absolute/path/to/driver
+```
+
+独立检出去掉命令中的 `mudcore/` 前缀。测试实际省略未选组件，再进行本机注册、登录、命令、移动、保存恢复和重连，不需要当前游戏的数据。
+
+## 检查宿主权限来源
+
+管理对象可继承 `_HOST_POLICY`，显式检查已加载 master：
+
+```c
+inherit _HOST_POLICY;
+
+mapping inspect_current_policy() {
+    return inspect_host_policy(find_object(MASTER_OB));
+}
+```
+
+返回逐项 `source/status`、`warnings` 与 `notice`，详见 [诊断契约](module-contracts.md#只读宿主策略诊断)。`host-defined` 只表示来自宿主实现，哪怕放行全部也会得到此状态；`unknown` 不是通过。组件不主动调用权限 apply、写文件、联网或切换身份，不更改原有授权。宿主仍须设计文件/网络/数据库 ACL 并测试实际拒绝路径。
+
 ## 区分三类配置
 
 | 配置 | 使用者 | 作用 |

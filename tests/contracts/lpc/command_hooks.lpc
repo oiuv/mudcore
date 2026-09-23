@@ -1,0 +1,41 @@
+inherit "/tests/command_baseline";
+
+private string *stages;
+private mapping answers;
+private string *trace = ({});
+private object received;
+private string receivedVerb, receivedArgument;
+
+void configure(string *selected, mapping results) {
+    stages = selected;
+    answers = results;
+}
+
+protected string *query_command_handlers() { return stages; }
+
+private mixed record(string stage, object actor, string verb, string arg) {
+    trace += ({ stage });
+    received = actor;
+    receivedVerb = verb;
+    receivedArgument = arg;
+    if (answers[stage] == "throw") error("expected handler exception\n");
+    return answers[stage];
+}
+
+protected mixed handle_exit(object actor, string verb, string arg) {
+    return record("exit", actor, verb, arg);
+}
+protected mixed handle_action_command(object actor, string verb, string arg) {
+    return record("command", actor, verb, arg);
+}
+protected mixed handle_emote(object actor, string verb, string arg) {
+    return record("emote", actor, verb, arg);
+}
+protected mixed handle_channel(object actor, string verb, string arg) {
+    return record("channel", actor, verb, arg);
+}
+
+string *query_trace() { return trace; }
+int correct_arguments() {
+    return received == this_object() && receivedVerb == "baseline" && receivedArgument == "two words";
+}

@@ -1,0 +1,228 @@
+inherit CORE_MASTER_OB;
+
+private int failures, checks, deniedExports, policyCalls, failedCreations;
+
+void check(int condition, string label) {
+    checks++;
+    if (!condition) {
+        failures++;
+        debug_message("FAIL: " + label);
+    }
+}
+
+object connect(int port) { return new(LOGIN_OB); }
+
+int valid_socket(object caller, string action, mixed *info) {
+    check(0, "composition suite attempted an LPC socket operation");
+    return 0;
+}
+int valid_seteuid(object caller, string euid) {
+    policyCalls++;
+    if (euid == "blockedbyhost") {
+        deniedExports++;
+        return 0;
+    }
+    return ::valid_seteuid(caller, euid);
+}
+int valid_read(string file, mixed user, string func) { policyCalls++; return 1; }
+int valid_write(string file, mixed user, string func) { policyCalls++; return 1; }
+
+void error_handler(mapping details, int caught) {
+    if (!caught && strsrch(details["error"], "expected character hook exception") != -1) {
+        failedCreations++;
+        return;
+    }
+    if (!caught) check(0, "uncaught: " + details["error"]);
+}
+void log_error(string file, string message) { debug_message(file + ": " + message); }
+
+private void commandTests() {
+    object actor;
+    string *selection;
+    mixed err;
+
+    actor = new("/tests/command_hooks");
+    actor->configure(({ "channel", "command", "emote" }), ([ "command": 1 ]));
+    check(actor->command_hook("two words") == 1, "selected handler accepts");
+    check(implode(actor->query_trace(), ",") == "channel,command", "host order and short circuit");
+    check(actor->correct_arguments(), "hook receives actor, verb and arguments");
+    destruct(actor);
+    actor = new("/tests/command_hooks");
+    actor->configure(({ "emote", "command" }), ([ "emote": "declined\n", "command": 1 ]));
+    check(actor->command_hook("two words") == 0 && sizeof(actor->query_trace()) == 1,
+        "error text stops later handlers");
+    destruct(actor);
+    actor = new("/tests/command_hooks");
+    actor->configure(({ "emote", "command" }), ([ "emote": "throw", "command": 1 ]));
+    err = catch(actor->command_hook("two words"));
+    check(stringp(err) && strsrch(
+        err,
+        "expected handler"
+    ) != -1 && sizeof(actor->query_trace()) == 1,
+        "enabled handler error propagates");
+    destruct(actor);
+    foreach (selection in ({ ({ "unknown" }), ({ "command", "command" }), ({ "parser" }) })) {
+        actor = new("/tests/command_hooks");
+        actor->configure(selection, ([]));
+        err = catch(actor->enable_living());
+        check(stringp(err) && strsrch(err, "COMMAND:") != -1 && !living(actor) &&
+            !actor->query_temp("living"), "invalid configuration rejected before activation");
+        destruct(actor);
+    }
+    actor = new("/tests/service_command");
+    err = catch(actor->command_hook(0));
+    check(err != 0, "selected absent service is not silently skipped");
+    destruct(actor);
+}
+
+private void moveTests() {
+    object actor;
+    mixed err;
+
+    actor = new("/tests/move_plain");
+    check(actor->move(START_ROOM, 1) == 1, "plain object moves without optional protocols");
+    check(actor->move_or_destruct(0) == 1, "absent persistence collaborator is optional");
+    err = catch(actor->remove());
+    check(!err, "plain remove requires no database saving component");
+    destruct(actor);
+    actor = new("/tests/move_saved");
+    actor->move_or_destruct(0);
+    actor->remove();
+    check(actor->query_temp("saves") == 2, "present persistence collaborator still called");
+    actor->set("throw_save", 1);
+    err = catch(actor->remove());
+    check(
+        stringp(err) && strsrch(err, "expected save") != -1,
+        "save collaborator error propagates"
+    );
+    destruct(actor);
+}
+
+private void policyTests() {
+    object inspector, core, custom, empty;
+    mapping result;
+    string method;
+    int beforeCalls;
+    mixed err;
+
+    inspector = new(CORE_HOST_POLICY);
+    core = load_object(CORE_MASTER_OB);
+    custom = new("/tests/policy_override");
+    empty = new("/tests/empty");
+    beforeCalls = policyCalls;
+    result = inspector->inspect_host_policy(core);
+    foreach (method in ({ "valid_read", "valid_write", "valid_socket", "valid_seteuid",
+        "valid_bind", "valid_database" }))
+        check(result["checks"][method]["status"] == "framework-default" &&
+            result["checks"][method]["source"] == CORE_MASTER_OB, "default origin: " + method);
+    check(result["checks"]["valid_read"]["status"] == "framework-default" &&
+        sizeof(result["warnings"]) == 3, "permissive defaults reported");
+    result = inspector->inspect_host_policy(custom);
+    check(result["checks"]["valid_read"]["status"] == "host-defined" &&
+        result["checks"]["valid_write"]["status"] == "framework-default",
+        "partial override distinguished per method");
+    check(
+        custom->query_calls() == 0 && policyCalls == beforeCalls,
+        "diagnostics do not invoke policy applies"
+    );
+    check(
+        strsrch(result["notice"], "not a security audit") != -1,
+        "host override is not a safety certificate"
+    );
+    result = inspector->inspect_host_policy(empty);
+    check(result["checks"]["valid_read"]["status"] == "unknown" && sizeof(result["warnings"]) == 6,
+        "missing methods remain unknown");
+    err = catch(inspector->inspect_host_policy(0));
+    check(err != 0, "invalid diagnostic target rejected");
+    destruct(inspector);
+    destruct(custom);
+    destruct(empty);
+}
+
+private void loginTests() {
+    object login, policy, user;
+    int mode;
+    mixed err;
+
+    policy = new("/tests/gender_policy");
+    check(strsrch(policy->prompt(), "男性") != -1 && strsrch(policy->prompt(), "女性") != -1,
+        "default gender choices remain available");
+    for (mode = 1; mode <= 3; mode++) {
+        policy->configure(mode);
+        err = catch(policy->prompt());
+        check(
+            stringp(err) && strsrch(err, "LOGIN:") != -1,
+            "malformed/conflicting choices rejected"
+        );
+    }
+    destruct(policy);
+    login = new(LOGIN_OB);
+    login->set("id", "intruder");
+    LOGIN_D->attempt_registration(login);
+    LOGIN_D->attempt_name(login);
+    LOGIN_D->attempt_gender(login);
+    check(
+        !find_player("intruder") && !login->query_temp("name"),
+        "subclass wrappers cannot grant authentication"
+    );
+    check(!LOGIN_D->make_body(login), "unauthorized body creation refused");
+    user = new(USER_OB);
+    err = catch(LOGIN_D->enter_world(login, user));
+    check(err != 0 && !geteuid(user), "unauthorized entry refused");
+    err = catch(LOGIN_D->reconnect(login, user));
+    check(err != 0, "unauthorized reconnection refused");
+    destruct(user);
+    destruct(login);
+}
+
+void run() {
+    mixed err;
+
+    err = catch {
+        commandTests();
+        moveTests();
+        policyTests();
+        loginTests();
+    };
+    if (err) check(0, "contract probe: " + err);
+    debug_message("CONTRACT LOGIN READY");
+}
+
+void finish(object player) {
+    string path;
+
+    check(deniedExports > 0, "real registration honors host UID denial");
+    check(!find_player("blockedbyhost"), "denied registration leaves no active body");
+    check(failedCreations == 1 && !find_player("failedbyhook"),
+        "creation hook exception propagates without a living body");
+    check(sizeof(filter(children(USER_OB), (: clonep($1) :))) == 1,
+        "failed registration leaves no inactive player clones");
+    check(!NAME_D->query("I/Interrupted"), "failed creation removes its name mapping");
+    check(geteuid(load_object(LOGIN_D)) == ROOT_UID, "login daemon identity restored");
+    check(!find_object(VERB_D) && !find_object(EMOTE_D) && !find_object(CHANNEL_D),
+        "disabled services were never loaded");
+    foreach (path in ({
+        CORE_ATTACK,
+        CORE_CONDITION,
+        CORE_TEAM,
+        CORE_USER_QUEST,
+        CORE_USER_COMBAT_RECORD
+    }))
+        check(!inherits(path, player), "minimal player excludes " + path);
+#if CONTRACT_CUSTOM
+    check(
+        player->query_temp("gmcp_calls") > 0,
+        "selected GMCP receives real movement notifications"
+    );
+#else
+    check(!function_exists("gmcp", player), "minimal player has no GMCP method");
+#endif
+    debug_message(sprintf("CONTRACT CHECKS: %d, FAILURES: %d", checks, failures));
+    debug_message(failures ? "MUDCORE CONTRACTS FAIL" : "MUDCORE CONTRACTS PASS");
+    shutdown(failures ? 1 : 0);
+}
+
+string *epilog(int flag) {
+    call_out("run", 0);
+    return ({});
+}

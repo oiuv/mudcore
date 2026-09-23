@@ -14,9 +14,19 @@ Socket、HTTP、TLS、数据库、外部命令和 Intermud 协议属于合理的
 
 维护 `include/mudcore.h` 的扩展约定：`CORE_*` 指向框架实现，已有 `_MODULE`、daemon 和对象别名允许使用方预先覆盖；`<mudcore.h>` 应在使用方 `globals.h` 最后包含。游戏定制优先通过继承、覆盖或配置完成；通用修复在本仓库实现，并保持公共签名、存档结构和默认行为兼容。
 
+## 组件契约与选择性接入
+
+以 `docs/architecture.md` 与 `docs/module-contracts.md` 为架构和公共组件规范。新增/修改组件时同步依赖矩阵，明确必需组件、daemon/simul efun、宿主方法、可选协作、驱动包、输入/返回/错误及初始化和清理责任。仍有组合依赖的实现不得宣称完全独立。
+
+机制与宿主策略分离：命令定制使用受控阶段及 protected 钩子，名称/性别策略不改认证状态所有权，初始属性使用 `CHAR_D`。保留默认完整 `_USER`；最小组合由宿主显式选择 `_USER_BASE` 并配套命令/parser/属性策略，不自动迁移玩家存档或热切换组合。权限来源诊断不是安全认证，也不自动修改 master 权限。
+
+可选依赖必须分别验证缺席、正常存在、存在但抛错；未选组件不得被加载，已选组件故障不得通过吞异常伪装成功。组合测试应实际省略未选文件，以真实连接、移动、存档往返及重连验证，并覆盖默认实现和宿主别名/钩子覆盖。编译选项关闭不等于已验证真实裁剪驱动。
+
 ## 开发与验证
 
 本仓库不自带 FluffOS 驱动。独立检出运行 `node tests/run.mjs <driver路径>`；作为子模块，从宿主根目录运行 `node mudcore/tests/run.mjs fluffos/build/bin/driver.exe`。需要 Node.js 18+ 和支持 `.lpc` 的 FluffOS；测试在临时 mudlib 中检查默认实现、宿主覆盖和本机 Socket 收发，不读取实际玩家数据或访问外部服务，详见 `tests/README.md`。
+
+总入口包含 default/overrides 与 minimal/custom 四组；组合套件也可单独运行 `node tests/contracts.mjs <driver路径>`。以各驱动退出码、LPC 检查和 Node 通信断言共同判定，不能仅根据 PASS 文本宣称成功。临时测试宿主不代表当前老 MUD/minimud/MyMud 已验收。
 
 游戏集成使用 minimud 等测试宿主或当前 MUDLIB。参考 `config.mini.ini`、`config.example.ini` 配置实际 mudlib、include、master 和 simul efun 路径，不能假定模板可直接启动任意检出。
 

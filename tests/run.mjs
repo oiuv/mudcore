@@ -117,3 +117,6 @@ for (const mode of ['default', 'overrides']) {
     network.verify();
 }
 console.log('Dependency audit and both isolated driver suites passed. Test artifacts remain in the printed temporary directories.');
+// Imported only after both original suites pass; any contract failure rejects this entrypoint too.
+await import('./contracts.mjs');
+console.log('All four mudcore suites passed (default, overrides, minimal, custom).');

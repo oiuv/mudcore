@@ -1,0 +1,3 @@
+inherit CORE_DBASE;
+
+int host_marker() { return 42; }

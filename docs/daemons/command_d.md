@@ -31,3 +31,31 @@
 ## 与谓词重载的区别
 
 `VERB_D->rehash()` 按批次构建新索引，完成后替换；构建期间旧索引仍可用，过期重载任务失效。加载失败的谓词记录错误并从新索引排除，其他有效谓词继续保留。宿主应分别验证 action 命令和实际启用的 parser 谓词。
+
+## 可选择的处理阶段
+
+`COMMAND_D` 负责查找；继承组件 `_COMMAND` 负责调度。保留 `nomask command_hook(string arg)`、`enable_living()`、`disable_living(string type)`，宿主通过 protected 钩子定制，无需复制整个入口：
+
+| 阶段 | 钩子（返回 `mixed`，参数均为 `object actor, string verb, string arg`） | 默认依赖 |
+| --- | --- | --- |
+| `exit` | `handle_exit` | 环境的出口属性及 `go` 命令 |
+| `command` | `handle_action_command` | `COMMAND_D->find_command()` 和命令 `main()` |
+| `emote` | `handle_emote` | `EMOTE_D` |
+| `channel` | `handle_channel` | `CHANNEL_D` |
+| `parser` | `handle_parser` | `parse_sentence()` 与谓词规则 |
+
+`protected string *query_command_handlers()` 默认按表格顺序返回五阶段；返回子集可关闭阶段，调整顺序可改变优先级。激活前拒绝未知、重复阶段及不可用 parser。钩子返回 `0` 继续，`1` 成功短路，错误字符串通过 `notify_fail()` 停止；其他返回值报错。异常传播，不当成普通未处理。默认钩子归一化旧 service/parser 返回值，保持默认分派行为。
+
+仅保留方向与 action 的宿主组件：
+
+```c
+inherit CORE_COMMAND;
+
+protected string *query_command_handlers() {
+    return ({ "exit", "command" });
+}
+```
+
+用 `_COMMAND` 指向该文件。未选择表情/频道不访问对应 daemon；选择后缺失或出错会暴露错误。`process_input()` 仍依赖 `COMMAND_D` 的别名处理。阶段列表在激活时保存，不承诺运行中热切换。
+
+在宿主 `<mudcore.h>` 之前定义 `MUDCORE_ENABLE_PARSER 0`，命令与登录才会整体跳过 parser 初始化和 `VERB_D` 重载；仅删掉阶段不等于关闭登录的谓词加载。选项默认 `1`，关闭后不要在预加载/命令中主动使用谓词服务；显式选择 parser 将报错。完整配置见 [最小组合](../integration.md#显式选择最小玩家组合)。

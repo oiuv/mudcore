@@ -1,0 +1,92 @@
+// Exercise the production dispatcher with deterministic service/efun boundaries.
+// Real driver command input is covered separately by the Telnet composition suite.
+inherit CORE_DBASE;
+
+private string *seen = ({});
+private string accepted, failureText, parsedText;
+private mixed parserResult;
+private object receivedActor;
+private string receivedArg;
+
+string testVerb() { return "baseline"; }
+object testRoom() { return this_object(); }
+int testMovement(string line) {
+    seen += ({ "exit" });
+    return line == "go baseline" && accepted == "exit";
+}
+mixed testParser(string line, int flags) {
+    seen += ({ "parser" });
+    parsedText = line;
+    return parserResult;
+}
+int testFailure(string text) {
+    failureText = text;
+    return 0;
+}
+object find_command(string verb) {
+    seen += ({ "command" });
+    return this_object();
+}
+int main(object actor, string arg) {
+    receivedActor = actor;
+    receivedArg = arg;
+    return accepted == "command";
+}
+int do_emote(object actor, string verb, string arg) {
+    seen += ({ "emote" });
+    return accepted == "emote";
+}
+int do_channel(object actor, string verb, string arg) {
+    seen += ({ "channel" });
+    return accepted == "channel";
+}
+string default_alias(string arg) { return "alias:" + arg; }
+
+#undef COMMAND_D
+#undef EMOTE_D
+#undef CHANNEL_D
+#define COMMAND_D this_object()
+#define EMOTE_D this_object()
+#define CHANNEL_D this_object()
+#define query_verb() testVerb()
+#define environment() testRoom()
+#define command(line) testMovement(line)
+#define parse_sentence(line, flags) testParser(line, flags)
+#define notify_fail(text) testFailure(text)
+#include "/mudcore/inherit/command.c"
+
+private void check(int condition, string label) {
+    MASTER_OB->check(condition, "command baseline: " + label);
+}
+
+void run() {
+    string stage;
+    int result, index;
+    string *stages;
+
+    stages = ({ "command", "emote", "channel", "parser" });
+    check(process_input("hello") == "alias:hello", "alias delegates to configured service");
+    for (index = 0; index < sizeof(stages); index++) {
+        stage = stages[index];
+        accepted = stage;
+        seen = ({});
+        parserResult = 1;
+        result = command_hook("two words");
+        check(result == 1, stage + " accepted");
+        check(implode(seen, ",") == implode(stages[0..index], ","), stage + " short circuits");
+        check(receivedActor == this_object() && receivedArg == "two words", "actor and arguments");
+    }
+    check(parsedText == "baseline two words", "parser sentence retains verb and arguments");
+    accepted = "exit";
+    seen = ({});
+    set("exits/baseline", "/unused");
+    check(command_hook(0) == 1 && implode(seen, ",") == "exit", "movement precedes action");
+    delete("exits/baseline");
+    accepted = "none";
+    parserResult = "parser declined\n";
+    failureText = 0;
+    check(command_hook(0) == 0 && failureText == parserResult, "parser failure text preserved");
+    check(parsedText == "baseline", "argument-free parser input");
+    parserResult = 0;
+    check(command_hook(0) == 0, "unhandled integer result");
+}

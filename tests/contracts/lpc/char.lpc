@@ -1,0 +1,12 @@
+inherit CORE_CHAR_D;
+
+void init_player(object user, mixed *data...) {
+    if (user->query("id") == "failedbyhook") error("expected character hook exception\n");
+    user->add("init_count", 1);
+    user->set("host_attribute", "kept");
+}
+
+void setup(object user) {
+    user->add("setup_count", 1);
+    tell_object(user, "CONTRACT READY\n");
+}

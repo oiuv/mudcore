@@ -1,0 +1,10 @@
+inherit CORE_USER_OB;
+#if CONTRACT_CUSTOM
+inherit CORE_USER_GMCP;
+
+void gmcp(string request) {
+    if (query_temp("throw_gmcp")) error("expected GMCP collaborator failure\n");
+    add_temp("gmcp_calls", 1);
+    ::gmcp(request);
+}
+#endif

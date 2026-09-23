@@ -1,0 +1,8 @@
+inherit CORE_ROOM;
+
+void create() {
+    set("short", "Contract room");
+    set("void", 1);
+    set("exits/north", file_name(this_object()) == "/world/contract_start" ?
+        "/world/contract_other" : "/world/contract_start");
+}

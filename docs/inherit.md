@@ -8,6 +8,8 @@
 -->
 mudcore 框架提供的功能模块，游戏LIB可选择性的继承使用。下表路径相对框架目录，默认实际前缀为 `/mudcore/`。组件组合与别名覆盖见 [接入指南](integration.md#用别名扩展框架)。
 
+选用前阅读 [架构规范](architecture.md) 和 [模块契约](module-contracts.md)：后者列明本表各组件的必需/可选依赖、驱动能力和生命周期，不保证任一文件都能独立运行。
+
 名称|文件|说明
 -|-|-
 CORE_ACTION|/inherit/action.c|角色行动接口，实现限制行为功能
@@ -15,6 +17,7 @@ CORE_AREA|/inherit/area/area.c|游戏区域环境标准接口，实现区域模�
 CORE_ATTACK|/inherit/attack.c|角色攻击接口，实现战斗行为功能，需自己实现具体战斗方式
 CORE_CAMP|/inherit/camp.c|游戏阵营接口，实现阵营声望相关功能
 CORE_CLEAN_UP|/inherit/clean_up.c|自动清理接口，实现 clean_up() 方法的垃圾回收功能
+CORE_CMD|/inherit/CMD.c|通用外部命令接口，由宿主配置 executable 和授权
 CORE_COMMAND|/inherit/command.c|角色指令系统接口，实现生物对象特征功能
 CORE_CONDITION_MOD|/inherit/condition_mod.c|角色增益功能接口，提供增益相关方法
 CORE_CONDITION|/inherit/condition.c|角色增益状态控制接口，实现游戏BUFF功能
@@ -22,6 +25,7 @@ CORE_DB|/inherit/DB.c|数据库接口，按驱动支持选择 MySQL、SQLite 等
 CORE_DBASE|/inherit/dbase.c|数据存取功能接口，实现对象参数的增删改查功能
 CORE_DBSAVE|/inherit/dbsave.c|系统数据存取接口，配合 DBASE_D 使用
 CORE_HTTP|/inherit/Http.c|HTTP客户端，方便发起http请求
+CORE_HOST_POLICY|/inherit/host_policy.c|按需只读检查 master 权限方法来源，不认证安全
 CORE_LIVING|/inherit/living.c|生物对象功能接口，所有生物对接可直接继承使用
 CORE_MESSAGE|/inherit/message.c|玩家信息处理功能接口，实现分页显示
 CORE_MOVE|/inherit/move.c|对象移动接口，由角色、物品对象继承，方便移动
@@ -36,6 +40,7 @@ CORE_USER_COMBAT_RECORD|/inherit/user_combat_record.c|玩家战斗记录功能�
 CORE_USER_GMCP|/inherit/user_gmcp.c|玩家GMCP功能接口，可配合mudlet客户端使用
 CORE_USER_QUEST|/inherit/user_quest.c|玩家任务功能接口，实现玩家任务记录与管理
 CORE_USER|/inherit/user.c|玩家对象功能接口
+CORE_USER_BASE|/inherit/user_base.c|显式最小玩家组合，不继承战斗、状态、组队、任务、战斗记录和 GMCP
 CORE_VERB|/inherit/verb.c|自然语法分析指令功能接口
 CORE_VRM|/inherit/vrm.c|随机迷宫功能接口，实现随机迷宫功能
 

@@ -62,7 +62,9 @@ Windows 示例：
 node mudcore/tests/run.mjs bin/driver.exe
 ```
 
-两组均通过且运行器退出码为 `0` 才算成功；要求、产物位置和已知边界见 [测试说明](../tests/README.md)。不要把两组检查数之和当作独立业务场景数量。
+总入口依次运行 default、overrides、minimal、custom，四组均通过且运行器退出码为 `0` 才算成功；要求、产物位置和已知边界见 [测试说明](../tests/README.md)。不要把各组检查数之和当作独立业务场景数量。组合套件可用 `node mudcore/tests/contracts.mjs <driver路径>` 单独复测。
+
+组件变更同步 [架构规范](architecture.md)、[模块契约](module-contracts.md) 及接口手册。最小组合需检查未选文件缺席、宿主覆盖、已选协作者错误、登录/保存/重连；启用 parser 的默认组合继续回归。仅关闭编译选项的测试不能宣称裁剪驱动已通过；权限来源诊断不能代替宿主授权拒绝测试。
 
 再按实际启用能力完成宿主验证：
 

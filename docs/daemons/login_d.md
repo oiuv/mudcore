@@ -52,3 +52,44 @@ protected void init_new_player(object user, object ob);
 ## 集成验证
 
 使用测试账号检查注册、错误密码、正常登录、退出再登录、断线重连及姓名查重，同时核对 UID/EUID 和存档路径。隔离测试已包含默认与宿主 UID 策略覆盖场景；实际游戏的自定义登录仍需单独验证，见 [测试说明](../../tests/README.md)。
+
+## 角色创建策略钩子
+
+继承 `CORE_LOGIN_D` 并通过 `LOGIN_D` 别名选择，可覆盖以下 protected 方法。它们只控制角色策略，不改变账号 ID、密码、保留身份和连接交接检查：
+
+```c
+protected string query_name_prompt();
+protected string validate_character_name(string name);
+protected mapping *query_gender_options();
+protected string query_gender_prompt();
+```
+
+名称合法返回 `0`，不合法返回可显示的错误文本（包含需要的换行）。默认仍要求中文、既有长度和禁用词规则，并由 `NAME_D` 查重；覆盖验证后不会再额外执行默认规则，需要查重时自行保留 `NAME_D->invalid_new_name(name)`。
+
+性别返回有序 mapping 数组，每项为 `([ "key": "m", "label": "男性", "value": "男性" ])`。默认保持 m/f 和男性/女性。key/label/value 必须是非空字符串；拒绝重复（不区分大小写）、key 前后空白和单字符前缀冲突。单字符 key 保留旧的首字符匹配方式，多字符 key 精确匹配，均忽略大小写。默认提示由选项生成；宿主可独立改提示。
+
+返回 `({})` 表示省略性别步骤，不设置默认 `gender` 字段。空输入继续等待，无效输入重试；畸形配置抛出 `LOGIN:` 错误，未经过内部收尾不会建体。策略应在一次登录中保持稳定。
+
+最小覆盖示例（非中文名称和自定义选项）：
+
+```c
+inherit CORE_LOGIN_D;
+
+protected string query_name_prompt() { return "Character name: "; }
+
+protected string validate_character_name(string name) {
+    if (!stringp(name) || !sizeof(regexp(({ name }), "^[A-Z][A-Za-z]+$")))
+        return "REJECT_NAME\n";
+    return NAME_D->invalid_new_name(name);
+}
+
+protected mapping *query_gender_options() {
+    return ({ ([ "key": "pilot", "label": "驾驶员", "value": "pilot-role" ]) });
+}
+```
+
+这是机制示例，不是推荐游戏的性别分类；不用该字段时返回空数组即可。对应可执行覆盖见 [组合登录夹具](../../tests/contracts/lpc/login.lpc)。
+
+内部创建收尾再次验证登录对象及私有认证状态，再调用 `make_body()`、`init_new_player()`、`enter_world()`；不能从外部调用策略或伪造临时属性获得身份。失败清理连接/玩家对象、恢复 daemon 身份；这不是跨多个存档和姓名索引的原子事务。初始属性仍交给 `CHAR_D`；保存/重连时不重复调用新角色初始化。
+
+`MUDCORE_ENABLE_PARSER` 默认为 `1`，登录 daemon 创建时会重载 `VERB_D`；宿主在全局头文件设为 `0` 可关闭该依赖。编译选项或 daemon 别名改变后按宿主流程重编译/重启，不支持登录中途热切换认证策略。
