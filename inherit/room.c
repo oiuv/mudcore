@@ -29,6 +29,8 @@ inherit _NAME;
 
 nosave mapping doors;
 
+#include <function_compat.h>
+
 object make_inventory(string file);
 
 // void create(){}
@@ -98,17 +100,24 @@ object make_inventory(string file) {
 }
 
 // 设置环境区域和坐标
+private varargs void _mudcore_impl_set_area(mixed area, int x, int y, int z);
+varargs void setArea(mixed area, int x, int y, int z);
+varargs void set_area(mixed area, int x, int y, int z) {
+    if (_mudcore_forward_name("set_area", "setArea", __FILE__)) { setArea(area, x, y, z); return; }
+    _mudcore_impl_set_area(area, x, y, z);
+}
+// Legacy alias; retain host overrides and ::parent calls during migration.
 varargs void setArea(mixed area, int x, int y, int z) {
+    if (_mudcore_forward_name("setArea", "set_area", __FILE__)) { set_area(area, x, y, z); return; }
+    _mudcore_impl_set_area(area, x, y, z);
+}
+private varargs void _mudcore_impl_set_area(mixed area, int x, int y, int z) {
     set("area", area);
     set("zone", ([
         "x": x,
         "y": y,
         "z": z,
     ]));
-}
-
-varargs void set_area(mixed area, int x, int y, int z) {
-    setArea(area, x, y, z);
 }
 
 // 获取区域坐标
@@ -126,30 +135,59 @@ string coordinate() {
 }
 
 // 移除一个出口
+private void _mudcore_impl_remove_exit(string dir);
+void removeExit(string dir);
+void remove_exit(string dir) {
+    if (_mudcore_forward_name("remove_exit", "removeExit", __FILE__)) { removeExit(dir); return; }
+    _mudcore_impl_remove_exit(dir);
+}
+// Legacy alias; retain host overrides and ::parent calls during migration.
 void removeExit(string dir) {
+    if (_mudcore_forward_name("removeExit", "remove_exit", __FILE__)) { remove_exit(dir); return; }
+    _mudcore_impl_remove_exit(dir);
+}
+private void _mudcore_impl_remove_exit(string dir) {
     mapping exits = query("exits");
     if (mapp(exits) && exits[dir])
         map_delete(exits, dir);
 }
 
-void remove_exit(string dir) {
-    removeExit(dir);
-}
-
 // 移除随机出口
+private void _mudcore_impl_remove_random_exit();
+void removeRandomExit();
+void remove_random_exit() {
+    if (_mudcore_forward_name("remove_random_exit", "removeRandomExit", __FILE__)) {
+        removeRandomExit(); return;
+    }
+    _mudcore_impl_remove_random_exit();
+}
+// Legacy alias; retain host overrides and ::parent calls during migration.
 void removeRandomExit() {
+    if (_mudcore_forward_name("removeRandomExit", "remove_random_exit", __FILE__)) {
+        remove_random_exit(); return;
+    }
+    _mudcore_impl_remove_random_exit();
+}
+private void _mudcore_impl_remove_random_exit() {
     mapping exits = query("exits");
     if (mapp(exits) && sizeof(exits) > 1) {
-        removeExit(element_of(keys(exits)));
+        remove_exit(element_of(keys(exits)));
     }
 }
 
-void remove_random_exit() {
-    removeRandomExit();
-}
-
 // 增加一个出口
+private void _mudcore_impl_add_exit(string dir, mixed dest);
+void addExit(string dir, mixed dest);
+void add_exit(string dir, mixed dest) {
+    if (_mudcore_forward_name("add_exit", "addExit", __FILE__)) { addExit(dir, dest); return; }
+    _mudcore_impl_add_exit(dir, dest);
+}
+// Legacy alias; retain host overrides and ::parent calls during migration.
 void addExit(string dir, mixed dest) {
+    if (_mudcore_forward_name("addExit", "add_exit", __FILE__)) { add_exit(dir, dest); return; }
+    _mudcore_impl_add_exit(dir, dest);
+}
+private void _mudcore_impl_add_exit(string dir, mixed dest) {
     mapping exits = query("exits");
     if (!mapp(exits))
         exits = ([]);
@@ -157,51 +195,152 @@ void addExit(string dir, mixed dest) {
         exits[dir] = dest;
 }
 
-void add_exit(string dir, mixed dest) {
-    addExit(dir, dest);
-}
-
 // 移除出口
+private void _mudcore_impl_remove_north_boundary_exit(int y, int x1, int x2);
+void removeExitN(int y, int x1, int x2);
+void remove_north_boundary_exit(int y, int x1, int x2) {
+    if (_mudcore_forward_name("remove_north_boundary_exit", "removeExitN", __FILE__)) {
+        removeExitN(y, x1, x2); return;
+    }
+    _mudcore_impl_remove_north_boundary_exit(y, x1, x2);
+}
+// Legacy alias; retain host overrides and ::parent calls during migration.
 void removeExitN(int y, int x1, int x2) {
+    if (_mudcore_forward_name("removeExitN", "remove_north_boundary_exit", __FILE__)) {
+        remove_north_boundary_exit(y, x1, x2); return;
+    }
+    _mudcore_impl_remove_north_boundary_exit(y, x1, x2);
+}
+private void _mudcore_impl_remove_north_boundary_exit(int y, int x1, int x2) {
     if (query("zone/y") == y && query("zone/x") >= x1 && query("zone/x") <= x2) {
-        removeExit("north");
+        remove_exit("north");
     }
 }
+private void _mudcore_impl_remove_south_boundary_exit(int y, int x1, int x2);
+void removeExitS(int y, int x1, int x2);
+void remove_south_boundary_exit(int y, int x1, int x2) {
+    if (_mudcore_forward_name("remove_south_boundary_exit", "removeExitS", __FILE__)) {
+        removeExitS(y, x1, x2); return;
+    }
+    _mudcore_impl_remove_south_boundary_exit(y, x1, x2);
+}
+// Legacy alias; retain host overrides and ::parent calls during migration.
 void removeExitS(int y, int x1, int x2) {
+    if (_mudcore_forward_name("removeExitS", "remove_south_boundary_exit", __FILE__)) {
+        remove_south_boundary_exit(y, x1, x2); return;
+    }
+    _mudcore_impl_remove_south_boundary_exit(y, x1, x2);
+}
+private void _mudcore_impl_remove_south_boundary_exit(int y, int x1, int x2) {
     if (query("zone/y") == y && query("zone/x") >= x1 && query("zone/x") <= x2) {
-        removeExit("south");
+        remove_exit("south");
     }
 }
+private void _mudcore_impl_remove_west_boundary_exit(int x, int y1, int y2);
+void removeExitW(int x, int y1, int y2);
+void remove_west_boundary_exit(int x, int y1, int y2) {
+    if (_mudcore_forward_name("remove_west_boundary_exit", "removeExitW", __FILE__)) {
+        removeExitW(x, y1, y2); return;
+    }
+    _mudcore_impl_remove_west_boundary_exit(x, y1, y2);
+}
+// Legacy alias; retain host overrides and ::parent calls during migration.
 void removeExitW(int x, int y1, int y2) {
+    if (_mudcore_forward_name("removeExitW", "remove_west_boundary_exit", __FILE__)) {
+        remove_west_boundary_exit(x, y1, y2); return;
+    }
+    _mudcore_impl_remove_west_boundary_exit(x, y1, y2);
+}
+private void _mudcore_impl_remove_west_boundary_exit(int x, int y1, int y2) {
     if (query("zone/x") == x && query("zone/y") >= y1 && query("zone/y") <= y2) {
-        removeExit("west");
+        remove_exit("west");
     }
 }
+private void _mudcore_impl_remove_east_boundary_exit(int x, int y1, int y2);
+void removeExitE(int x, int y1, int y2);
+void remove_east_boundary_exit(int x, int y1, int y2) {
+    if (_mudcore_forward_name("remove_east_boundary_exit", "removeExitE", __FILE__)) {
+        removeExitE(x, y1, y2); return;
+    }
+    _mudcore_impl_remove_east_boundary_exit(x, y1, y2);
+}
+// Legacy alias; retain host overrides and ::parent calls during migration.
 void removeExitE(int x, int y1, int y2) {
+    if (_mudcore_forward_name("removeExitE", "remove_east_boundary_exit", __FILE__)) {
+        remove_east_boundary_exit(x, y1, y2); return;
+    }
+    _mudcore_impl_remove_east_boundary_exit(x, y1, y2);
+}
+private void _mudcore_impl_remove_east_boundary_exit(int x, int y1, int y2) {
     if (query("zone/x") == x && query("zone/y") >= y1 && query("zone/y") <= y2) {
-        removeExit("east");
+        remove_exit("east");
     }
 }
 // 上
+private void _mudcore_impl_remove_horizontal_boundary_exits(int y, int x1, int x2);
+void removeExitX(int y, int x1, int x2);
+void remove_horizontal_boundary_exits(int y, int x1, int x2) {
+    if (_mudcore_forward_name("remove_horizontal_boundary_exits", "removeExitX", __FILE__)) {
+        removeExitX(y, x1, x2); return;
+    }
+    _mudcore_impl_remove_horizontal_boundary_exits(y, x1, x2);
+}
+// Legacy alias; retain host overrides and ::parent calls during migration.
 void removeExitX(int y, int x1, int x2) {
-    removeExitN(y, x1, x2);
-    removeExitS(y + 1, x1, x2);
+    if (_mudcore_forward_name("removeExitX", "remove_horizontal_boundary_exits", __FILE__)) {
+        remove_horizontal_boundary_exits(y, x1, x2); return;
+    }
+    _mudcore_impl_remove_horizontal_boundary_exits(y, x1, x2);
+}
+private void _mudcore_impl_remove_horizontal_boundary_exits(int y, int x1, int x2) {
+    remove_north_boundary_exit(y, x1, x2);
+    remove_south_boundary_exit(y + 1, x1, x2);
 }
 // 左
+private void _mudcore_impl_remove_vertical_boundary_exits(int x, int y1, int y2);
+void removeExitY(int x, int y1, int y2);
+void remove_vertical_boundary_exits(int x, int y1, int y2) {
+    if (_mudcore_forward_name("remove_vertical_boundary_exits", "removeExitY", __FILE__)) {
+        removeExitY(x, y1, y2); return;
+    }
+    _mudcore_impl_remove_vertical_boundary_exits(x, y1, y2);
+}
+// Legacy alias; retain host overrides and ::parent calls during migration.
 void removeExitY(int x, int y1, int y2) {
-    removeExitW(x, y1, y2);
-    removeExitE(x - 1, y1, y2);
+    if (_mudcore_forward_name("removeExitY", "remove_vertical_boundary_exits", __FILE__)) {
+        remove_vertical_boundary_exits(x, y1, y2); return;
+    }
+    _mudcore_impl_remove_vertical_boundary_exits(x, y1, y2);
+}
+private void _mudcore_impl_remove_vertical_boundary_exits(int x, int y1, int y2) {
+    remove_west_boundary_exit(x, y1, y2);
+    remove_east_boundary_exit(x - 1, y1, y2);
 }
 // 设置房间区域(参数:任意对角线的二个坐标)
+private void _mudcore_impl_restrict_exits_to_bounds(int x1, int y1, int x2, int y2);
+void setRoomArea(int x1, int y1, int x2, int y2);
+void restrict_exits_to_bounds(int x1, int y1, int x2, int y2) {
+    if (_mudcore_forward_name("restrict_exits_to_bounds", "setRoomArea", __FILE__)) {
+        setRoomArea(x1, y1, x2, y2); return;
+    }
+    _mudcore_impl_restrict_exits_to_bounds(x1, y1, x2, y2);
+}
+// Legacy alias; retain host overrides and ::parent calls during migration.
 void setRoomArea(int x1, int y1, int x2, int y2) {
+    if (_mudcore_forward_name("setRoomArea", "restrict_exits_to_bounds", __FILE__)) {
+        restrict_exits_to_bounds(x1, y1, x2, y2); return;
+    }
+    _mudcore_impl_restrict_exits_to_bounds(x1, y1, x2, y2);
+}
+private void _mudcore_impl_restrict_exits_to_bounds(int x1, int y1, int x2, int y2) {
     int tx1 = min(({ x1, x2 }));
     int ty1 = min(({ y1, y2 }));
     int tx2 = max(({ x1, x2 }));
     int ty2 = max(({ y1, y2 }));
-    removeExitX(ty2, tx1, tx2);
-    removeExitX(ty1 - 1, tx1, tx2);
-    removeExitY(x1, y1, y2);
-    removeExitY(x2 + 1, y1, y2);
+    remove_horizontal_boundary_exits(ty2, tx1, tx2);
+    remove_horizontal_boundary_exits(ty1 - 1, tx1, tx2);
+    remove_vertical_boundary_exits(x1, y1, y2);
+    remove_vertical_boundary_exits(x2 + 1, y1, y2);
 }
 
 // 查询光亮级别

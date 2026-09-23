@@ -179,7 +179,7 @@ void udp_response(int fd, mixed data, string addr) {
 
 以下为按需调用示例，不是启动依赖。框架的 `CORE_SOCKET`、`CORE_HTTP` 加载时不联网；实际地址与调用时机由 MUDLIB 决定，`CORE_HTTP` 和 `CORE_SOCKET` 的 TLS 封装默认开启证书链验证；原始 `socket_create()` efun 不由框架设置默认选项。
 
-`CORE_SOCKET->tcp_server(port, callbackObject, onAccept, onError, onData, onClose)` 的后两个参数可省略；接受的连接继承这些回调。UDP 客户端绑定成功后才通知就绪。
+`CORE_SOCKET->tcp_server(port, callbackObject, onAccept, onError, onData, onClose)` 的后两个参数可省略；接受的连接继承这些回调。这些参数是方法名称字符串，新代码例如传入 `"on_accept"`、`"on_error"`，框架不改写宿主提供的字符串。UDP 客户端绑定成功后才通知就绪。
 
 ### TLS配置示例
 
@@ -200,7 +200,7 @@ int create_tls_connection(string host, int port) {
 
 ### 框架 TLS 客户端
 
-`tls_client(host, port, callbackObject, onConnect, onData, onClose, onError)` 与 `tcp_client()` 使用相同回调，自动设置证书链验证及 SNI。DNS、TCP 建连和 TLS 握手共用 30 秒期限；`set_connect_timeout(seconds)` 调整后续连接的期限。到期会先释放状态，再通知 `onError`。加载组件本身不联网。
+`tls_client(host, port, callbackObject, onConnect, onData, onClose, onError)` 与 `tcp_client()` 使用相同回调，自动设置证书链验证及 SNI。DNS、TCP 建连和 TLS 握手共用 30 秒期限；`set_connect_timeout(seconds)` 调整后续连接的期限。到期会先释放状态，再调用 `onError` 参数指定的方法。加载组件本身不联网。
 
 旧代码若依赖未受信任的自签名证书，应将自己的 CA 配置到驱动使用的信任库。原始 efun 示例仍需显式设置选项，不建议关闭验证。
 

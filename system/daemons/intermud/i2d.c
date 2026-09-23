@@ -40,14 +40,16 @@ private nosave string startupState = "stopped";
 private nosave string lastError;
 private nosave string peerAddress;
 
+#include <function_compat.h>
+
 protected void startup();
 private void resolve_callback(int generation, string addr, string resolved, int key);
 
-private void closeNetwork() {
+private void close_network() {
     startGeneration++;
     remove_call_out("startup");
     remove_call_out("update");
-    remove_call_out("resolveTimeout");
+    remove_call_out("handle_resolve_timeout");
     if (udp_socket >= 0)
         socket_close(udp_socket);
     udp_socket = -1;
@@ -57,30 +59,45 @@ private void closeNetwork() {
     startupState = "stopped";
 }
 
-private void failStartup(string message) {
-    closeNetwork();
+private void fail_startup(string message) {
+    close_network();
     startupState = "failed";
     lastError = message;
     log_file("intermud/error.log", message + "\n");
 }
 
+private void _mudcore_impl_handle_resolve_timeout(int generation);
+protected void resolveTimeout(int generation);
+protected void handle_resolve_timeout(int generation) {
+    if (_mudcore_forward_name("handle_resolve_timeout", "resolveTimeout", __FILE__)) {
+        resolveTimeout(generation); return;
+    }
+    _mudcore_impl_handle_resolve_timeout(generation);
+}
+// Legacy alias; retain host overrides and ::parent calls during migration.
 protected void resolveTimeout(int generation) {
+    if (_mudcore_forward_name("resolveTimeout", "handle_resolve_timeout", __FILE__)) {
+        handle_resolve_timeout(generation); return;
+    }
+    _mudcore_impl_handle_resolve_timeout(generation);
+}
+private void _mudcore_impl_handle_resolve_timeout(int generation) {
     if (generation == startGeneration && startupState == "resolving")
-        failStartup("Intermud peer DNS lookup timed out");
+        fail_startup("Intermud peer DNS lookup timed out");
 }
 
 protected int resolve_peer(string host, function callback) {
     return resolve(host, callback);
 }
 
-private void peerResolved(int generation, string host, string addr, int key) {
+private void peer_resolved(int generation, string host, string addr, int key) {
     if (generation != startGeneration || udp_socket < 0)
         return;
     if (!addr) {
-        failStartup("Intermud peer DNS lookup failed");
+        fail_startup("Intermud peer DNS lookup failed");
         return;
     }
-    remove_call_out("resolveTimeout");
+    remove_call_out("handle_resolve_timeout");
     peerAddress = addr;
     startupState = "running";
     call_out("startup", 0);
@@ -135,13 +152,13 @@ varargs int start(string host, int port, int bindPort) {
     lastError = 0;
     udp_socket = socket_create(DATAGRAM, "read_callback");
     if (udp_socket < 0) {
-        failStartup("Intermud socket creation failed: " + socket_error(udp_socket));
+        fail_startup("Intermud socket creation failed: " + socket_error(udp_socket));
         return 0;
     }
     udp_port = bindPort ? bindPort : INTERMUD_UDP_PORT;
     result = socket_bind(udp_socket, udp_port);
     if (result != EESUCCESS) {
-        failStartup("Intermud bind failed: " + socket_error(result));
+        fail_startup("Intermud bind failed: " + socket_error(result));
         return 0;
     }
     peerHost = host;
@@ -149,10 +166,10 @@ varargs int start(string host, int port, int bindPort) {
     my_address = 0;
     generation = ++startGeneration;
     startupState = "resolving";
-    call_out("resolveTimeout", INTERMUD_RESOLVE_TIMEOUT, generation);
-    err = catch(result = resolve_peer(host, (: peerResolved($(generation), $1, $2, $3) :)));
+    call_out("handle_resolve_timeout", INTERMUD_RESOLVE_TIMEOUT, generation);
+    err = catch(result = resolve_peer(host, (: peer_resolved($(generation), $1, $2, $3) :)));
     if (err || result < 0) {
-        failStartup("Intermud peer DNS lookup could not start");
+        fail_startup("Intermud peer DNS lookup could not start");
         return 0;
     }
     // 本机地址仅用于自发包过滤；失败不影响已配置对端的解析。
@@ -162,7 +179,7 @@ varargs int start(string host, int port, int bindPort) {
 
 void stop() {
     SECURED_INTERMUD_API;
-    closeNetwork();
+    close_network();
     lastError = 0;
 }
 
@@ -205,7 +222,7 @@ protected void startup() {
 void remove() {
     if (file_name(previous_object()) != SIMUL_EFUN_OB)
         error("Permission denied\n");
-    closeNetwork();
+    close_network();
 
 #ifdef SAVE_MUDLIST
     save();

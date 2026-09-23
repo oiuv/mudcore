@@ -269,7 +269,11 @@ protected void collect_all_quest_information() {
         set("information", total);
     }
 
-    obs = filter_array(objects(), (: $1->is_quest() :));
+    // 普通领取型任务也使用 is_quest()；只有消息任务实现此注册协议。
+    obs = filter_array(
+        objects(),
+        (: function_exists("register_information", $1) && $1->is_quest() :)
+    );
 
     // 扫描所有的QUEST对象，登记信息
     foreach (qob in obs) {

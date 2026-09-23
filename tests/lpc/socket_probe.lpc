@@ -10,27 +10,27 @@ int accepted;
 int closed;
 string tcpBuffer = "";
 
-void onError(int fd, string message) {
+void on_error(int fd, string message) {
     MASTER_OB->check(0, "socket callback: " + message);
 }
 
-void onAccept(int fd) {
+void on_accept(int fd) {
     accepted++;
 }
 
-void onClose(int fd) {
+void on_close(int fd) {
     closed++;
 }
 
-void onConnect(int fd) {
+void on_connect(int fd) {
     MASTER_OB->check(send(fd, "tcp-ping") == EESUCCESS, "TCP client sends");
 }
 
-void onServerData(int fd, string message) {
+void on_server_data(int fd, string message) {
     send(fd, message);
 }
 
-void onClientData(int fd, string message) {
+void on_client_data(int fd, string message) {
     tcpBuffer += message;
     if (tcpBuffer == "tcp-ping") {
         tcpReceived++;
@@ -38,7 +38,7 @@ void onClientData(int fd, string message) {
     }
 }
 
-void onUdpServer(int fd, string message, string addr) {
+void on_udp_server(int fd, string message, string addr) {
     string host;
     int port;
 
@@ -46,7 +46,7 @@ void onUdpServer(int fd, string message, string addr) {
     send(fd, message, host, port);
 }
 
-varargs void onUdpClient(int fd, string message, string addr) {
+varargs void on_udp_client(int fd, string message, string addr) {
     if (!addr) {
         // 就绪回调里立即发送，验证绑定早于通知。
         MASTER_OB->check(
@@ -63,7 +63,7 @@ void run() {
     string host;
 
     SocketDnsCache["127.0.0.1"] = "127.0.0.1";
-    listener = tcp_server(0, this_object(), "onAccept", "onError", "onServerData", "onClose");
+    listener = tcp_server(0, this_object(), "on_accept", "on_error", "on_server_data", "on_close");
     MASTER_OB->check(listener >= 0, "TCP listen");
     if (listener >= 0) {
         sscanf(socket_address(listener, 1), "%s %d", host, tcpPort);
@@ -72,17 +72,17 @@ void run() {
             "127.0.0.1",
             tcpPort,
             this_object(),
-            "onConnect",
-            "onClientData",
-            "onClose",
-            "onError"
+            "on_connect",
+            "on_client_data",
+            "on_close",
+            "on_error"
         );
     }
-    udpListener = udp_server(0, this_object(), "onUdpServer", "onError");
+    udpListener = udp_server(0, this_object(), "on_udp_server", "on_error");
     MASTER_OB->check(udpListener >= 0, "UDP listen");
     if (udpListener >= 0) {
         sscanf(socket_address(udpListener, 1), "%s %d", host, udpPort);
-        udp_client("127.0.0.1", udpPort, this_object(), "onUdpClient", "onError");
+        udp_client("127.0.0.1", udpPort, this_object(), "on_udp_client", "on_error");
     }
     tlsFd = create_socket(STREAM_TLS, "handle_receive_callback", "handle_close_callback");
     MASTER_OB->check(tlsFd >= 0, "generic TLS remains available");

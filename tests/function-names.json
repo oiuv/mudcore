@@ -1,0 +1,331 @@
+{
+  "inherit/area/area.c": {
+    "query_LOLO": "query_load_locations",
+    "add_LOLO": "add_load_location",
+    "del_LOLO": "remove_load_location"
+  },
+  "inherit/area/map.c": {
+    "query_LOO": "query_object_locations",
+    "add_LOO": "add_object_location",
+    "del_LOO": "remove_object_location",
+    "moveObject": "move_area_object"
+  },
+  "inherit/camp.c": {
+    "getCamps": "get_camp_reputations",
+    "getCampRank": "get_camp_rank_name",
+    "getCampScore": "get_camp_rank",
+    "addCamp": "add_camp",
+    "removeCamp": "remove_camp",
+    "updateCamp": "adjust_camp_reputations",
+    "setCamp": "adjust_camp_reputation",
+    "getCamp": "get_camp_reputation",
+    "hasCamp": "has_camp"
+  },
+  "inherit/DB.c": {
+    "setConnection": "set_connection",
+    "setAutoClose": "set_auto_close",
+    "resetSql": "reset_sql",
+    "implodeX": "join_sql_values",
+    "addArrayOfWheres": "append_where_group",
+    "orWhere": "or_where",
+    "whereBetween": "where_between",
+    "whereNotBetween": "where_not_between",
+    "orWhereBetween": "or_where_between",
+    "orWhereNotBetween": "or_where_not_between",
+    "whereNull": "where_null",
+    "whereNotNull": "where_not_null",
+    "orWhereNull": "or_where_null",
+    "orWhereNotNull": "or_where_not_null",
+    "whereIn": "where_in",
+    "whereNotIn": "where_not_in",
+    "orWhereIn": "or_where_in",
+    "orWhereNotIn": "or_where_not_in",
+    "groupBy": "group_by",
+    "orHaving": "or_having",
+    "orderBy": "order_by",
+    "inRandomOrder": "in_random_order"
+  },
+  "inherit/Http.c": {
+    "encodeQueryPart": "encode_query_part"
+  },
+  "inherit/room.c": {
+    "setArea": "set_area",
+    "removeExit": "remove_exit",
+    "removeRandomExit": "remove_random_exit",
+    "addExit": "add_exit",
+    "removeExitN": "remove_north_boundary_exit",
+    "removeExitS": "remove_south_boundary_exit",
+    "removeExitW": "remove_west_boundary_exit",
+    "removeExitE": "remove_east_boundary_exit",
+    "removeExitX": "remove_horizontal_boundary_exits",
+    "removeExitY": "remove_vertical_boundary_exits",
+    "setRoomArea": "restrict_exits_to_bounds"
+  },
+  "inherit/tui/terminal.c": {
+    "tuiInput": "handle_tui_input"
+  },
+  "inherit/user_gmcp.c": {
+    "sendGMCP": "send_gmcp_data"
+  },
+  "inherit/user_quest.c": {
+    "getToDoList": "get_todo_list",
+    "getSolved": "get_solved_quests",
+    "getToDoListSize": "get_todo_list_size",
+    "setToDo": "set_todo",
+    "setSolved": "mark_solved",
+    "addKilled": "add_kill_count",
+    "getKilled": "get_kill_count",
+    "addItem": "add_item_count",
+    "getItem": "get_item_count",
+    "getToDo": "get_todo",
+    "isSolved": "is_solved",
+    "delToDo": "del_todo",
+    "delSolved": "remove_solved"
+  },
+  "inherit/verb.c": {
+    "setErrorMessage": "set_error_message",
+    "getErrorMessage": "get_error_message",
+    "setRules": "set_rules",
+    "getRules": "get_rules",
+    "setSynonyms": "set_synonyms",
+    "getSynonyms": "get_synonyms",
+    "setVerb": "set_verb",
+    "getVerb": "get_verb",
+    "getVerbs": "get_verbs"
+  },
+  "system/daemons/area_pattern_d.c": {
+    "scanPattern": "scan_patterns",
+    "getPatterns": "get_patterns",
+    "listPatterns": "list_patterns",
+    "patternInfo": "show_pattern_info",
+    "setPattern": "apply_pattern"
+  },
+  "system/daemons/camp_d.c": {
+    "getCampFile": "get_camp_file",
+    "getCampName": "get_camp_name",
+    "getFriendly": "get_friendly_camps",
+    "getAdversely": "get_hostile_camps",
+    "getHate": "get_attack_rank_threshold",
+    "getHateMsg": "get_attack_message",
+    "getAdvHate": "get_rival_attack_rank_threshold",
+    "getAdvHateMsg": "get_rival_attack_message"
+  },
+  "system/daemons/intermud/i2d.c": {
+    "resolveTimeout": "handle_resolve_timeout"
+  },
+  "system/daemons/quest_d.c": {
+    "getAssigner": "get_assigner_index",
+    "getRewarder": "get_rewarder_index",
+    "getItemFile": "get_item_file",
+    "insertAssigner": "insert_assigner",
+    "insertRewarder": "insert_rewarder",
+    "doScanQuest": "scan_quests",
+    "confirmAssign": "confirm_quest_assignment",
+    "doAssignQuest": "prompt_quest_acceptance",
+    "getQuestIndex": "get_available_quest_indices",
+    "getSelect": "handle_quest_selection",
+    "doAssign": "offer_quests",
+    "doKilled": "record_quest_kill",
+    "checkKill": "check_quest_kills",
+    "checkItem": "collect_quest_items",
+    "isReward": "try_complete_quest",
+    "doReward": "reward_quests",
+    "hasQuest": "has_available_quest"
+  },
+  "system/daemons/verb_d.c": {
+    "getVerbs": "get_verbs",
+    "getVerb": "get_verb",
+    "getErrorMessage": "get_error_message",
+    "getValidVerb": "is_valid_verb_path",
+    "scheduledVerbLoad": "load_verb_batch",
+    "eventReloadVerbs": "reload_verbs"
+  },
+  "system/kernel/master/parser.c": {
+    "parseRefresh": "refresh_parser"
+  },
+  "system/kernel/simul_efun/bit.c": {
+    "bitCheck": "bit_check",
+    "bitSet": "bit_set",
+    "bitClear": "bit_clear"
+  },
+  "cmds/wizard/loadall.c": {
+    "skipLoadDir": "skip_load_dir"
+  },
+  "world/area_pattern/boat_n_s1.c": {
+    "isAreaPattern": "is_area_pattern",
+    "getName": "get_name",
+    "getMapStyle": "get_map_style"
+  },
+  "world/area_pattern/forest36_r_01.c": {
+    "isAreaPattern": "is_area_pattern",
+    "getName": "get_name",
+    "getMapStyle": "get_map_style"
+  },
+  "world/area_pattern/forest9_r_01.c": {
+    "isAreaPattern": "is_area_pattern",
+    "getName": "get_name",
+    "getMapStyle": "get_map_style"
+  },
+  "world/area_pattern/green36_r_01.c": {
+    "isAreaPattern": "is_area_pattern",
+    "getName": "get_name",
+    "getMapStyle": "get_map_style"
+  },
+  "world/area_pattern/green81_r_01.c": {
+    "isAreaPattern": "is_area_pattern",
+    "getName": "get_name",
+    "getMapStyle": "get_map_style"
+  },
+  "world/area_pattern/green9_r_01.c": {
+    "isAreaPattern": "is_area_pattern",
+    "getName": "get_name",
+    "getMapStyle": "get_map_style"
+  },
+  "world/area_pattern/mist900_s_01.c": {
+    "isAreaPattern": "is_area_pattern",
+    "getName": "get_name",
+    "getMapStyle": "get_map_style"
+  },
+  "world/area_pattern/mist900_s_02.c": {
+    "isAreaPattern": "is_area_pattern",
+    "getName": "get_name",
+    "getMapStyle": "get_map_style"
+  },
+  "world/area_pattern/room12_s_r01.c": {
+    "isAreaPattern": "is_area_pattern",
+    "getName": "get_name",
+    "getMapStyle": "get_map_style"
+  },
+  "world/area_pattern/room16_s_r01.c": {
+    "isAreaPattern": "is_area_pattern",
+    "getName": "get_name",
+    "getMapStyle": "get_map_style"
+  },
+  "world/area_pattern/room9_e_01.c": {
+    "isAreaPattern": "is_area_pattern",
+    "getName": "get_name",
+    "getMapStyle": "get_map_style"
+  },
+  "world/area_pattern/room9_e_r01.c": {
+    "isAreaPattern": "is_area_pattern",
+    "getName": "get_name",
+    "getMapStyle": "get_map_style"
+  },
+  "world/area_pattern/room9_n_01.c": {
+    "isAreaPattern": "is_area_pattern",
+    "getName": "get_name",
+    "getMapStyle": "get_map_style"
+  },
+  "world/area_pattern/room9_n_r01.c": {
+    "isAreaPattern": "is_area_pattern",
+    "getName": "get_name",
+    "getMapStyle": "get_map_style"
+  },
+  "world/area_pattern/room9_s_01.c": {
+    "isAreaPattern": "is_area_pattern",
+    "getName": "get_name",
+    "getMapStyle": "get_map_style"
+  },
+  "world/area_pattern/room9_s_02.c": {
+    "isAreaPattern": "is_area_pattern",
+    "getName": "get_name",
+    "getMapStyle": "get_map_style"
+  },
+  "world/area_pattern/room9_s_03.c": {
+    "isAreaPattern": "is_area_pattern",
+    "getName": "get_name",
+    "getMapStyle": "get_map_style"
+  },
+  "world/area_pattern/room9_s_04.c": {
+    "isAreaPattern": "is_area_pattern",
+    "getName": "get_name",
+    "getMapStyle": "get_map_style"
+  },
+  "world/area_pattern/room9_s_05.c": {
+    "isAreaPattern": "is_area_pattern",
+    "getName": "get_name",
+    "getMapStyle": "get_map_style"
+  },
+  "world/area_pattern/room9_s_06.c": {
+    "isAreaPattern": "is_area_pattern",
+    "getName": "get_name",
+    "getMapStyle": "get_map_style"
+  },
+  "world/area_pattern/room9_s_07.c": {
+    "isAreaPattern": "is_area_pattern",
+    "getName": "get_name",
+    "getMapStyle": "get_map_style"
+  },
+  "world/area_pattern/room9_s_08.c": {
+    "isAreaPattern": "is_area_pattern",
+    "getName": "get_name",
+    "getMapStyle": "get_map_style"
+  },
+  "world/area_pattern/room9_s_09.c": {
+    "isAreaPattern": "is_area_pattern",
+    "getName": "get_name",
+    "getMapStyle": "get_map_style"
+  },
+  "world/area_pattern/room9_s_r01.c": {
+    "isAreaPattern": "is_area_pattern",
+    "getName": "get_name",
+    "getMapStyle": "get_map_style"
+  },
+  "world/area_pattern/room9_w_01.c": {
+    "isAreaPattern": "is_area_pattern",
+    "getName": "get_name",
+    "getMapStyle": "get_map_style"
+  },
+  "world/area_pattern/room9_w_r01.c": {
+    "isAreaPattern": "is_area_pattern",
+    "getName": "get_name",
+    "getMapStyle": "get_map_style"
+  },
+  "world/area_pattern/sea2304_s_01.c": {
+    "isAreaPattern": "is_area_pattern",
+    "getName": "get_name",
+    "getMapStyle": "get_map_style"
+  },
+  "world/area_pattern/sea2304_s_02.c": {
+    "isAreaPattern": "is_area_pattern",
+    "getName": "get_name",
+    "getMapStyle": "get_map_style"
+  },
+  "world/area_pattern/sea2500_r_01.c": {
+    "isAreaPattern": "is_area_pattern",
+    "getName": "get_name",
+    "getMapStyle": "get_map_style"
+  },
+  "world/area_pattern/ship_s_01.c": {
+    "isAreaPattern": "is_area_pattern",
+    "getName": "get_name",
+    "getMapStyle": "get_map_style"
+  },
+  "world/camp/example.c": {
+    "isCamp": "is_camp",
+    "getName": "get_name",
+    "getFriendly": "get_friendly_camps",
+    "getAdversely": "get_hostile_camps",
+    "getHate": "get_attack_rank_threshold",
+    "getHateMsg": "get_attack_message",
+    "getAdvHate": "get_rival_attack_rank_threshold",
+    "getAdvHateMsg": "get_rival_attack_message"
+  },
+  "world/quest/example.c": {
+    "isQuest": "is_quest",
+    "isNewly": "is_repeatable",
+    "noGiveUp": "is_abandonment_forbidden",
+    "getName": "get_name",
+    "getDetail": "get_detail",
+    "getLevel": "get_level",
+    "preCondition": "check_prerequisites",
+    "getAssigner": "get_assigner",
+    "getAssignMessage": "get_assignment_messages",
+    "getKill": "get_required_kills",
+    "getItem": "get_required_items",
+    "postCondition": "check_completion_conditions",
+    "getRewarder": "get_rewarder",
+    "getRewardMessage": "get_reward_messages",
+    "getReward": "get_reward_description"
+  }
+}

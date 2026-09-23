@@ -2,7 +2,7 @@ void check(int value, string label) {
     MASTER_OB->check(value, "simul efun: " + label);
 }
 
-private void testPercent() {
+private void test_percent() {
     mixed value;
 
     value = percent(1, 5);
@@ -25,7 +25,7 @@ private void testPercent() {
     );
 }
 
-private void testBase64() {
+private void test_base64() {
     string *plain, *encoded, *invalid;
     string text;
     int i;
@@ -73,7 +73,7 @@ private void testBase64() {
         check(catch(base64decode(text)) != 0, "Base64 rejects malformed UTF-8 " + text);
 }
 
-private void testJson() {
+private void test_json() {
     string text, encoded;
     string *invalid;
     mixed value, shared;
@@ -204,7 +204,7 @@ private void testJson() {
     check(json_decode(json_encode(text)) == text, "JSON longer escaped string");
 }
 
-private void testPresentClone() {
+private void test_present_clone() {
     object a, b, outside;
     object *items;
     string source;
@@ -213,8 +213,8 @@ private void testPresentClone() {
     a = new(source);
     b = new(source);
     outside = new(source);
-    a->moveTo(this_object());
-    b->moveTo(this_object());
+    a->move_to(this_object());
+    b->move_to(this_object());
     items = all_inventory(this_object());
     check(sizeof(items) == 2, "present_clone test inventory");
     check(present_clone(source) == items[0], "present_clone default environment");
@@ -259,11 +259,11 @@ private void testPresentClone() {
 
 void run() {
     debug_message("SEFUN: Percent");
-    testPercent();
+    test_percent();
     debug_message("SEFUN: Base64");
-    testBase64();
+    test_base64();
     debug_message("SEFUN: Json");
-    testJson();
+    test_json();
     debug_message("SEFUN: PresentClone");
-    testPresentClone();
+    test_present_clone();
 }

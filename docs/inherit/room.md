@@ -12,16 +12,16 @@ void setup();
 string coordinate();
 
 // 设置环境区域和坐标
-varargs void setArea(mixed area, int x, int y, int z);
+varargs void set_area(mixed area, int x, int y, int z);
 
 // 移除指定出口
-void removeExit(string dir);
+void remove_exit(string dir);
 
 // 出口数大于 1 时移除随机出口
-void removeRandomExit();
+void remove_random_exit();
 
 // 增加出口
-void addExit(string dir, mixed dest);
+void add_exit(string dir, mixed dest);
 
 // 检查是否合法移动
 int valid_leave(object me, string dir);
@@ -45,7 +45,7 @@ mapping query_doors();
 string look_door(string dir);
 ```
 
-另有兼容命名 `set_area()`、`remove_exit()`、`remove_random_exit()`、`add_exit()`，分别对应上述驼峰方法；`create_door()` 对应 `set_door()`。光照接口为 `int query_light()` 和 `void add_light(int light)`。完整实现见 [room.c](../../inherit/room.c)。
+历史名称 `setArea()`、`removeExit()`、`removeRandomExit()`、`addExit()` 仍是兼容入口；新代码使用上述下划线名称，继承覆盖迁移见 [命名规范](../function-naming.md)。`create_door()` 对应 `set_door()`。光照接口为 `int query_light()` 和 `void add_light(int light)`。完整实现见 [room.c](../../inherit/room.c)。
 
 房间在 `create()` 中设置描述、出口和 `objects` 后调用 `setup()`，由它触发首次 `reset()`：
 

@@ -32,19 +32,19 @@ nosave string *banned_name = ({
 private nosave mapping loginIds = ([]);
 private nosave mapping authenticated = ([]);
 
-private int validPlayerId(string id) {
+private int valid_player_id(string id) {
     return stringp(id) && strlen(id) >= MIN_ID_LEN && sizeof(regexp(
         ({ id }),
         "^[a-z]+$"
     )) == 1 && id != lower_case(ROOT_UID) && id != lower_case(BACKBONE_UID);
 }
 
-private int validLogin(object ob) {
-    return objectp(ob) && clonep(ob) && base_name(ob) == LOGIN_OB && interactive(ob) && validPlayerId(loginIds[ob]) && ob->query("id") == loginIds[ob];
+private int valid_login(object ob) {
+    return objectp(ob) && clonep(ob) && base_name(ob) == LOGIN_OB && interactive(ob) && valid_player_id(loginIds[ob]) && ob->query("id") == loginIds[ob];
 }
 
-private int mayEnter(object ob, object user) {
-    return validLogin(ob) && authenticated[ob] == loginIds[ob] && objectp(user) && clonep(user) && base_name(user) == USER_OB && getuid(user) == loginIds[ob] && user->query("id") == loginIds[ob];
+private int may_enter(object ob, object user) {
+    return valid_login(ob) && authenticated[ob] == loginIds[ob] && objectp(user) && clonep(user) && base_name(user) == USER_OB && getuid(user) == loginIds[ob] && user->query("id") == loginIds[ob];
 }
 
 // 内部调用的函数
@@ -112,7 +112,7 @@ protected void signin(object ob) {
 protected void get_id(string arg, object ob) {
     arg = lower_case(trim(arg));
 
-    if (!validPlayerId(arg)) {
+    if (!valid_player_id(arg)) {
         write("\n请输入你的" HIY "英文" NOR "登录ID(至少 " + MIN_ID_LEN + " 位字母):");
         input_to("get_id", ob);
         return;
@@ -151,7 +151,7 @@ nomask int check_password(string str, string password) {
 protected void get_passwd(string pass, object ob) {
     string my_pass;
 
-    if (!validLogin(ob))
+    if (!valid_login(ob))
         return;
     my_pass = ob->query("password");
     if (!stringp(my_pass) || !check_password(pass, my_pass)) {
@@ -176,9 +176,9 @@ object make_body(object ob) {
     if (!objectp(ob) || !clonep(ob) || base_name(ob) != LOGIN_OB)
         return 0;
     playerId = ob->query("id");
-    if (!validPlayerId(playerId))
+    if (!valid_player_id(playerId))
         return 0;
-    if (!offlineLookup && (origin() != "local" || !validLogin(ob) || authenticated[ob] != playerId))
+    if (!offlineLookup && (origin() != "local" || !valid_login(ob) || authenticated[ob] != playerId))
         return 0;
     user = new(USER_OB);
 
@@ -247,7 +247,7 @@ void enter_world(object ob, object user) {
 #else
     string start_room = VOID_OB;
 #endif
-    if (origin() != "local" || !mayEnter(ob, user))
+    if (origin() != "local" || !may_enter(ob, user))
         error("Unauthorized login transition.\n");
     map_delete(authenticated, ob);
     map_delete(loginIds, ob);
@@ -269,7 +269,7 @@ void enter_world(object ob, object user) {
 
 // 断线重连
 void reconnect(object ob, object user) {
-    if (origin() != "local" || !mayEnter(ob, user))
+    if (origin() != "local" || !may_enter(ob, user))
         error("Unauthorized login transition.\n");
     map_delete(authenticated, ob);
     map_delete(loginIds, ob);
@@ -359,7 +359,7 @@ protected void confirm_password(string pass, object ob) {
     string old_pass;
 
     write("\n");
-    if (!validLogin(ob))
+    if (!valid_login(ob))
         return;
     old_pass = ob->query_temp("password");
     if (crypt(pass, old_pass) != old_pass) {
@@ -411,7 +411,7 @@ protected mapping *query_gender_options() {
     });
 }
 
-private mapping *validatedGenderOptions() {
+private mapping *validated_gender_options() {
     mixed options, option;
     mapping *result;
     string key, previous;
@@ -439,7 +439,7 @@ private mapping *validatedGenderOptions() {
     return result;
 }
 
-private string genderChoices(mapping *options) {
+private string gender_choices(mapping *options) {
     string *labels;
     mapping option;
 
@@ -452,16 +452,16 @@ private string genderChoices(mapping *options) {
 protected string query_gender_prompt() {
     mapping *options;
 
-    options = validatedGenderOptions();
-    return sizeof(options) ? WHT "您要扮演" + genderChoices(options) + "的角色？" NOR : "";
+    options = validated_gender_options();
+    return sizeof(options) ? WHT "您要扮演" + gender_choices(options) + "的角色？" NOR : "";
 }
 
-private void completeCharacter(object ob, string gender) {
+private void complete_character(object ob, string gender) {
     object user;
     string playerId, name;
     mixed err;
 
-    if (!validLogin(ob) || authenticated[ob] != loginIds[ob])
+    if (!valid_login(ob) || authenticated[ob] != loginIds[ob])
         error("Unauthorized character creation.\n");
     playerId = loginIds[ob];
     name = ob->query_temp("name");
@@ -495,7 +495,7 @@ private void completeCharacter(object ob, string gender) {
 }
 
 protected void register(object ob) {
-    if (!validLogin(ob) || authenticated[ob] != loginIds[ob]) return;
+    if (!valid_login(ob) || authenticated[ob] != loginIds[ob]) return;
     write(query_name_prompt());
     input_to("get_name", ob);
 }
@@ -504,7 +504,7 @@ protected void get_name(string arg, object ob) {
     string result;
     mapping *options;
 
-    if (!validLogin(ob) || authenticated[ob] != loginIds[ob]) return;
+    if (!valid_login(ob) || authenticated[ob] != loginIds[ob]) return;
     result = validate_character_name(arg);
     if (result) {
         write(result);
@@ -512,11 +512,11 @@ protected void get_name(string arg, object ob) {
         input_to("get_name", ob);
         return;
     }
-    options = validatedGenderOptions();
+    options = validated_gender_options();
     ob->set_temp("name", arg);
     ob->delete_temp("gender");
     if (!sizeof(options)) {
-        completeCharacter(ob, 0);
+        complete_character(ob, 0);
         return;
     }
     write(query_gender_prompt());
@@ -528,11 +528,11 @@ protected void get_gender(string gender, object ob) {
     mapping option;
     string key;
 
-    if (!validLogin(ob) || authenticated[ob] != loginIds[ob]) return;
-    options = validatedGenderOptions();
+    if (!valid_login(ob) || authenticated[ob] != loginIds[ob]) return;
+    options = validated_gender_options();
     write("\n");
     if (!sizeof(options)) {
-        completeCharacter(ob, 0);
+        complete_character(ob, 0);
         return;
     }
     if (gender != "") {
@@ -540,11 +540,11 @@ protected void get_gender(string gender, object ob) {
             key = option["key"];
             if (lower_case(gender) == key || (sizeof(key) == 1 && lower_case(gender[0..0]) == key)) {
                 ob->set_temp("gender", option["value"]);
-                completeCharacter(ob, option["value"]);
+                complete_character(ob, option["value"]);
                 return;
             }
         }
-        write(WHT "您只能扮演" + genderChoices(options) + "的角色。" NOR);
+        write(WHT "您只能扮演" + gender_choices(options) + "的角色。" NOR);
     }
     input_to("get_gender", ob);
 }

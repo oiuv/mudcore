@@ -8,18 +8,18 @@ private mixed parserResult;
 private object receivedActor;
 private string receivedArg;
 
-string testVerb() { return "baseline"; }
-object testRoom() { return this_object(); }
-int testMovement(string line) {
+string test_verb() { return "baseline"; }
+object test_room() { return this_object(); }
+int test_movement(string line) {
     seen += ({ "exit" });
     return line == "go baseline" && accepted == "exit";
 }
-mixed testParser(string line, int flags) {
+mixed test_parser(string line, int flags) {
     seen += ({ "parser" });
     parsedText = line;
     return parserResult;
 }
-int testFailure(string text) {
+int test_failure(string text) {
     failureText = text;
     return 0;
 }
@@ -48,11 +48,11 @@ string default_alias(string arg) { return "alias:" + arg; }
 #define COMMAND_D this_object()
 #define EMOTE_D this_object()
 #define CHANNEL_D this_object()
-#define query_verb() testVerb()
-#define environment() testRoom()
-#define command(line) testMovement(line)
-#define parse_sentence(line, flags) testParser(line, flags)
-#define notify_fail(text) testFailure(text)
+#define query_verb() test_verb()
+#define environment() test_room()
+#define command(line) test_movement(line)
+#define parse_sentence(line, flags) test_parser(line, flags)
+#define notify_fail(text) test_failure(text)
 #include "/mudcore/inherit/command.c"
 
 private void check(int condition, string label) {

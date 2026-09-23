@@ -33,6 +33,8 @@ LPMUD游戏开发框架核心代码，仅仅包括核心代码，可以在此基
 
 ## 框架使用说明
 
+LPC 函数统一使用 `snake_case`，例如 `bit_check()`、`set_connection()`。历史公开名称保留兼容入口，新代码不再使用驼峰函数名；继承覆盖和回调迁移见 [函数命名规范](docs/function-naming.md)。
+
 新项目推荐从 [minimud 基础模板](https://github.com/mudcore/mud) 开始：
 
 ```sh
@@ -193,10 +195,10 @@ assure_file|建立文件目录
 atof|string 类型数字转 float 类型数字
 [atoi](docs/simul_efun/atoi.md)|将数字字符串或数值转为整数
 [base64encode / base64decode](docs/simul_efun/base64.md)|UTF-8 字符串的标准 Base64 编解码
-[bitCheck](docs/simul_efun/bitCheck.md)|检查指定二进制位，返回位掩码或 0；位序从 1 开始
-[bitClear](docs/simul_efun/bitClear.md)|返回数值指定位为0的值
+[bit_check](docs/simul_efun/bit_check.md)|检查指定二进制位，返回位掩码或 0；位序从 1 开始
+[bit_clear](docs/simul_efun/bit_clear.md)|返回数值指定位为0的值
 [bitmap_font](docs/simul_efun/bitmap_font.md)|处理中英文字符并点阵输出
-[bitSet](docs/simul_efun/bitSet.md)|返回数值指定位为1的值
+[bit_set](docs/simul_efun/bit_set.md)|返回数值指定位为1的值
 break_string|根据指定宽度换行显示内容
 cat|输出文件内容到屏幕
 cecho|随机颜色显示内容到屏幕

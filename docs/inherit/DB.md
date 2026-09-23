@@ -4,7 +4,7 @@
 
 ## 驱动与权限前提
 
-驱动需要启用 `__PACKAGE_DB__` 和所选后端。创建对象或调用 `setConnection()` 只设置连接参数，执行查询时才实际连接；指定参数不等于获得 master 授权。
+驱动需要启用 `__PACKAGE_DB__` 和所选后端。创建对象或调用 `set_connection()` 只设置连接参数，执行查询时才实际连接；指定参数不等于获得 master 授权。
 
 默认 master 的 `valid_database()` 要求数据库调用对象的 UID、EUID 均为 `ROOT_UID`，并校验显式配置的目标：
 
@@ -15,7 +15,7 @@
 
 未配置目标时拒绝连接。SQLite 的允许结果为 `1`，表示允许无密码连接；整数 `0` 表示拒绝。其他后端允许显式配置空字符串密码，但不等同于缺少密码配置。
 
-宿主有自己的 master 时，应按自己的 DAO 对象和目标授权。驱动传给连接检查的 `info` 是 `({ database, host, user })`，不含后端类型；由指定 DAO 固定后端，并在 master 限制调用者及目标，不要把 `setConnection()` 当作权限检查。
+宿主有自己的 master 时，应按自己的 DAO 对象和目标授权。驱动传给连接检查的 `info` 是 `({ database, host, user })`，不含后端类型；由指定 DAO 固定后端，并在 master 限制调用者及目标，不要把 `set_connection()` 当作权限检查。
 
 ## 连接配置
 
@@ -33,7 +33,7 @@ DB_SQLITE_DATABASE : /data/game.sqlite
 object db;
 
 db = new(CORE_DB);
-db->setConnection(([
+db->set_connection(([
     "host": "",
     "database": "/data/game.sqlite",
     "user": "",
@@ -54,7 +54,7 @@ DB_USERNAME : game_user
 DB_PASSWORD : 请替换为实际密码
 ```
 
-`new(CORE_DB)` 默认读取前三项，并使用驱动 `__DEFAULT_DB__`。需要显式选择时使用 `setConnection()` 的 `type` 或构造参数：
+`new(CORE_DB)` 默认读取前三项，并使用驱动 `__DEFAULT_DB__`。需要显式选择时使用 `set_connection()` 的 `type` 或构造参数：
 
 ```c
 object db;
@@ -62,18 +62,18 @@ object db;
 db = new(CORE_DB, "127.0.0.1", "game", "game_user", __USE_MYSQL__);
 ```
 
-密码由 master 的 `valid_database()` 提供，不是 `setConnection()` 的字段。不要将实际凭据写入源码或提交 `.env`。模块只对 MySQL 执行 `set names utf8mb4` 初始化。
+密码由 master 的 `valid_database()` 提供，不是 `set_connection()` 的字段。不要将实际凭据写入源码或提交 `.env`。模块只对 MySQL 执行 `set names utf8mb4` 初始化。
 
 ### 公共配置方法
 
 | 方法 | 作用 |
 | --- | --- |
 | `create(host, database, user, type)` | 创建时设置连接信息，参数可省略 |
-| `setConnection(mapping connection)` | 设置 `host`、`database`、`user`，可选 `type`；未指定类型时保留当前类型 |
-| `setAutoClose(int flag)` | 控制高层查询结束后的自动关闭，默认开启 |
+| `set_connection(mapping connection)` | 设置 `host`、`database`、`user`，可选 `type`；未指定类型时保留当前类型 |
+| `set_auto_close(int flag)` | 控制高层查询结束后的自动关闭，默认开启 |
 | `close(1)` | 强制关闭当前连接，下次查询再连接 |
 
-`setConnection()` 会先关闭旧连接并清空查询状态，再应用新目标，避免继续使用旧连接或旧后端的参数编码。不同查询流程不要交叉修改同一个组件的构造状态。
+`set_connection()` 会先关闭旧连接并清空查询状态，再应用新目标，避免继续使用旧连接或旧后端的参数编码。不同查询流程不要交叉修改同一个组件的构造状态。
 
 ## 查询
 
@@ -102,7 +102,7 @@ printf("%O\n", rows);
 | `count()`、`max()`、`min()`、`avg()`、`sum()` | 聚合查询 |
 | `with("column")` | `get()` 的结果第一行包含列名 |
 
-普通链式查询的 `first()`、`find()` 和 `value()` 在数据库端使用 `LIMIT 1`，保留分页偏移且不改变查询对象原有的 limit。显式 `limit(0)` 仍返回空结果；`inRandomOrder()` 保留原有候选集，原始 `sql()` 不自动改写。`pluck()` 只返回列值，不包含 `with("column")` 的表头。
+普通链式查询的 `first()`、`find()` 和 `value()` 在数据库端使用 `LIMIT 1`，保留分页偏移且不改变查询对象原有的 limit。显式 `limit(0)` 仍返回空结果；`in_random_order()` 保留原有候选集，原始 `sql()` 不自动改写。`pluck()` 只返回列值，不包含 `with("column")` 的表头。
 
 `first()` 无记录时返回空数组，`value()` 无记录时沿用空字符串返回；数据库返回的错误字符串继续向上传递。字符串既可能是业务值，也可能是错误，因此需要严格区分结果时优先使用 `get()` / `first()` 检查数组结果。权限拒绝等驱动错误可能抛异常，在服务边界使用 `catch` 处理。
 
@@ -115,33 +115,33 @@ printf("%O\n", rows);
 | `where("id", 1)` | 等号条件 |
 | `where("level", ">=", 10)` | 指定运算符 |
 | `where(({ ({ "level", ">=", 10 }), ({ "active", 1 }) }))` | 同时满足多项条件 |
-| `orWhere(...)` | 追加 OR 条件；作为第一个条件时不生成多余 OR |
-| `whereBetween("level", ({ 10, 20 }))` | 区间条件 |
-| `whereIn("id", ({ 1, 2, 3 }))` | 集合条件，第三参数可省略，表示是否取反 |
-| `whereNull("deleted_at")` | NULL 条件 |
+| `or_where(...)` | 追加 OR 条件；作为第一个条件时不生成多余 OR |
+| `where_between("level", ({ 10, 20 }))` | 区间条件 |
+| `where_in("id", ({ 1, 2, 3 }))` | 集合条件，第三参数可省略，表示是否取反 |
+| `where_null("deleted_at")` | NULL 条件 |
 | `distinct()` | 查询去重；指定字段的聚合对该字段去重，如 `distinct()->count("team")` |
-| `orderBy("level", "desc")` | 排序，多次调用可追加字段 |
+| `order_by("level", "desc")` | 排序，多次调用可追加字段 |
 | `limit(10)->offset(20)` | 限制行数与偏移；均须非负，偏移必须配合 limit |
-| `inRandomOrder()` | 对读取到的结果随机处理，不等同于数据库端随机查询 |
+| `in_random_order()` | 对读取到的结果随机处理，不等同于数据库端随机查询 |
 
 `count()` / `count("*")` 统计行数；需要统计不同值时明确提供字段，例如 `distinct()->count("team")`。
 
-数组形式的 `where` / `orWhere` 将数组内的条件以 AND 组合，并整体追加到已有条件，不覆盖先前的筛选。空 `IN` 集合恒假，空 `NOT IN` 集合恒真。
+数组形式的 `where` / `or_where` 将数组内的条件以 AND 组合，并整体追加到已有条件，不覆盖先前的筛选。空 `IN` 集合恒假，空 `NOT IN` 集合恒真。
 
-区间、集合和 NULL 条件还有 `orWhere...`、`whereNot...` 等对应方法，签名见 [实现](../../inherit/DB.c)。
+区间、集合和 NULL 条件还有 `or_where_*`、`where_not_*` 等对应方法，签名见 [实现](../../inherit/DB.c)。
 
 ## 分组与过滤
 
-`groupBy()` 支持多个字段及重复调用追加，`having()` 默认以 AND 追加，第四参数可指定 `"AND"` 或 `"OR"`；也可使用 `orHaving()`。
+`group_by()` 支持多个字段及重复调用追加，`having()` 默认以 AND 追加，第四参数可指定 `"AND"` 或 `"OR"`；也可使用 `or_having()`。
 
 ```c
 mixed rows;
 
 rows = db->table("scores")
     ->where("active", 1)
-    ->groupBy("team")
+    ->group_by("team")
     ->having("SUM(points)", ">=", 20)
-    ->orderBy("total", "desc")
+    ->order_by("total", "desc")
     ->get("team", "SUM(points) AS total", "COUNT(*) AS members");
 ```
 
@@ -191,7 +191,7 @@ rows = db->sql("SELECT id, name FROM players WHERE name = ? AND level >= ?",
 
 框架只替换引号和普通注释之外的 `?`，支持 SQL 的重复引号转义；参数数量必须匹配。数组中的字符串、整数、有限浮点数和 `undefined` 分别编码为文本、数字和 SQL NULL；整数 `0` 与空字符串保持各自含义。mapping 缺失项属于 `undefined`，需要默认数值时应由调用方显式提供。
 
-相同的值编码也用于 `where`、`having`、IN/BETWEEN、`insert` 和 `update`。字符串中的单引号、反斜杠、中文和注入样式文本都作为数据处理。SQL NULL 的 `where` 等号比较会生成 `IS NULL`，不等号生成 `IS NOT NULL`；也可直接使用 `whereNull()`。
+相同的值编码也用于 `where`、`having`、IN/BETWEEN、`insert` 和 `update`。字符串中的单引号、反斜杠、中文和注入样式文本都作为数据处理。SQL NULL 的 `where` 等号比较会生成 `IS NULL`，不等号生成 `IS NOT NULL`；也可直接使用 `where_null()`。
 
 当前 FluffOS 的 `db_exec(handle, sql)` 没有向 LPC 暴露原生绑定接口。这里是**框架层的参数替换与值编码**，不是数据库服务端预处理语句，也不提供预处理缓存。SQLite 使用十六进制 BLOB 转 TEXT，MySQL 使用十六进制字面量转 utf8mb4 文本，PostgreSQL 使用 UTF-8 十六进制解码；不依赖字符串反斜杠转义模式。对应语法见 [SQLite](https://www.sqlite.org/lang_expr.html)、[MySQL](https://dev.mysql.com/doc/refman/8.4/en/hexadecimal-literals.html)、[PostgreSQL](https://www.postgresql.org/docs/current/functions-binarystring.html)。
 

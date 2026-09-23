@@ -18,5 +18,5 @@ LONG);
             "y_axis": 5,
         ]),
     ]));
-    setArea("void", x, y, z);
+    set_area("void", x, y, z);
 }

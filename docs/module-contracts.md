@@ -34,7 +34,7 @@
 | UNIQUE / `inherit/unique.c` | 属性、替代物原型 | 替代品配置 | children/new/destruct | 显式检查唯一性/创建替代品；不是禁止克隆 |
 | USER_COMBAT_RECORD / `inherit/user_combat_record.c` | 无 daemon | 宿主战斗记录调用 | 基础 | 数据随持久字段保存，不自行记录战斗或存档 |
 | USER_GMCP / `inherit/user_gmcp.c` | GMCP/JSON；GUI/地图配置经 `env()` | MSP、客户端支持 | GMCP efun | 显式初始化/通知；组件不自行请求运营服务 |
-| USER_QUEST / `inherit/user_quest.c` | 任务对象 `isQuest/getKill/getItem`、`QUEST_SIZE` | 宿主奖励/任务服务 | 基础 | 管理接受/完成记录，不自动调度或发奖 |
+| USER_QUEST / `inherit/user_quest.c` | 任务对象 `is_quest/get_required_kills/get_required_items`、`QUEST_SIZE` | 宿主奖励/任务服务 | 基础 | 管理接受/完成记录，不自动调度或发奖 |
 | USER / `inherit/user.c` | `_LIVING/_USER_COMBAT_RECORD/_USER_GMCP/_USER_QUEST` | 上述组件的协作者 | 所选组件能力 | 保留既有完整玩家组合；连接由 `USER_OB` 管理 |
 | USER_BASE / `inherit/user_base.c` | `_ACTION/_COMMAND/_DBASE/_MESSAGE/_MOVE/_NAME/_SAVE` | 移动的可选协作 | 所选命令阶段能力 | 显式选择最小组合；不是单独连接对象 |
 | VERB / `inherit/verb.c` | parser efun、谓词规则/回调 | 同义词 | parser | 创建时注册规则；关闭 parser 后不要预加载该组件/谓词 |
@@ -58,7 +58,7 @@ TUI 是额外组件组，入口与依赖在 `<tui.h>`，不由 `_USER_BASE` 自�
 
 `nomask void enable_living()` 在首次激活前验证配置，随后注册命令；无效阶段不会留下 living 状态。只有选择 parser 才调用 `parse_init()`。`nomask void disable_living(string type)` 清除命令状态，参数保留兼容。阶段列表不是逐条命令动态重读；重新配置需按宿主停用/重编译流程处理。
 
-`MUDCORE_ENABLE_PARSER` 默认 `1`，`MUDCORE_HAS_PARSER` 是内部能力检测结果，不应由宿主伪造。关闭时命令/登录不引用 parser efun，不加载 `VERB_D`；`master->parseRefresh()` 被显式调用时报告不可用。默认启用但驱动缺少所需 efun 时明确报错。显式选择 parser 不可用的组合也报错；这不保证直接加载 `_VERB` 在裁剪驱动上可用。
+`MUDCORE_ENABLE_PARSER` 默认 `1`，`MUDCORE_HAS_PARSER` 是内部能力检测结果，不应由宿主伪造。关闭时命令/登录不引用 parser efun，不加载 `VERB_D`；`master->refresh_parser()` 被显式调用时报告不可用。默认启用但驱动缺少所需 efun 时明确报错。显式选择 parser 不可用的组合也报错；这不保证直接加载 `_VERB` 在裁剪驱动上可用。
 
 ## 移动与房间
 

@@ -6,6 +6,7 @@ import { spawn } from 'node:child_process';
 import { startNetworkFixtures, exerciseLogin } from './network-fixtures.mjs';
 import assert from 'node:assert/strict';
 import { exerciseTui } from './tui-network.mjs';
+import { prepareNamingFixtures } from './naming-fixtures.mjs';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const driver = process.argv[2];
@@ -36,6 +37,7 @@ for (const mode of ['default', 'overrides']) {
     mkdirSync(join(sandbox, 'mudcore'));
     for (const dir of sourceDirs) cpSync(join(root, dir), join(sandbox, 'mudcore', dir), { recursive: true });
     cpSync(join(root, 'tests', 'lpc'), join(sandbox, 'tests'), { recursive: true });
+    prepareNamingFixtures(sandbox);
     for (const dir of ['log', 'data', 'fixtures/commands', 'fixtures/verbs/group', 'fixtures/preload', 'fixtures/virtual']) {
         mkdirSync(join(sandbox, dir), { recursive: true });
     }
@@ -53,7 +55,7 @@ for (const mode of ['default', 'overrides']) {
     put('fixtures/commands/fake.c.bak', 'this is not LPC');
     put('fixtures/commands/empty.txt', '');
     put('fixtures/verbs/group/fallback.lpc', 'int marker() { return 1; }\n');
-    put('fixtures/verbs/legacy.c', 'string *getVerbs() { return ({ "legacyverb" }); }\n');
+    put('fixtures/verbs/legacy.c', 'string *get_verbs() { return ({ "legacyverb" }); }\n');
     put('fixtures/preload/a.lpc', 'int marker() { return 1; }\n');
     put('fixtures/preload/b.c', 'int marker() { return 1; }\n');
     put('fixtures/preload.txt', '  # comment\r\n  ; comment\r\n\r\n /fixtures/preload \r\n');

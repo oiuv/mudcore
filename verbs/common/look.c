@@ -8,11 +8,11 @@ string list_all_inventory_of_object(object me, object env);
 
 protected void create() {
     verb::create();
-    setVerb("look");
-    setSynonyms("l");
-    setRules("", "STR", "OBJ", "at STR", "at OBJ", "on OBJ", "in OBJ", "inside OBJ",
+    set_verb("look");
+    set_synonyms("l");
+    set_rules("", "STR", "OBJ", "at STR", "at OBJ", "on OBJ", "in OBJ", "inside OBJ",
         "at OBJ in OBJ", "OBJ inside OBJ", "at OBJ on OBJ", "at STR on OBJ");
-    setErrorMessage("你想看什么?");
+    set_error_message("你想看什么?");
 }
 
 mixed can_look() {

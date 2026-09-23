@@ -29,7 +29,7 @@ protected string *query_command_handlers() {
 #endif
 }
 
-private string *validatedHandlers() {
+private string *validated_handlers() {
     mixed handlers, handler;
     string *known, *seen;
 
@@ -88,7 +88,7 @@ nomask int command_hook(string arg) {
     actor = this_object();
     verb = trim(query_verb());
     if (verb == "") return 0;
-    if (!arrayp(commandHandlers)) commandHandlers = validatedHandlers();
+    if (!arrayp(commandHandlers)) commandHandlers = validated_handlers();
     foreach (handler in commandHandlers) {
         switch (handler) {
             case "exit": result = handle_exit(actor, verb, arg); break;
@@ -109,7 +109,7 @@ nomask void enable_living() {
     string *handlers;
     mixed err;
 
-    if (!query_temp("living")) handlers = validatedHandlers();
+    if (!query_temp("living")) handlers = validated_handlers();
 
     if (stringp(query("id")))
         set_living_name(query("id"));

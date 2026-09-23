@@ -6,6 +6,8 @@ nosave string *gmcp_log = ({});
 
 // msp_oob("!!SOUND(10001.wav L=1 V=100 U=https://mud.ren/storage/wav/)");
 // msp_oob("!!MUSIC(1001.mp3 L=1 V=100 U=https://mud.ren/storage/wav/)");
+#include <function_compat.h>
+
 void msp_oob(string req) {
 #if efun_defined(telnet_msp_oob)
     efun::telnet_msp_oob(req);
@@ -27,7 +29,22 @@ void send_gmcp(string gmcp) {
     efun::send_gmcp(gmcp);
 }
 
+private varargs void _mudcore_impl_send_gmcp_data(mapping data, mixed *modules...);
+varargs void sendGMCP(mapping data, mixed *modules...);
+varargs void send_gmcp_data(mapping data, mixed *modules...) {
+    if (_mudcore_forward_name("send_gmcp_data", "sendGMCP", __FILE__)) {
+        sendGMCP(data, modules...); return;
+    }
+    _mudcore_impl_send_gmcp_data(data, modules...);
+}
+// Legacy alias; retain host overrides and ::parent calls during migration.
 varargs void sendGMCP(mapping data, mixed *modules...) {
+    if (_mudcore_forward_name("sendGMCP", "send_gmcp_data", __FILE__)) {
+        send_gmcp_data(data, modules...); return;
+    }
+    _mudcore_impl_send_gmcp_data(data, modules...);
+}
+private varargs void _mudcore_impl_send_gmcp_data(mapping data, mixed *modules...) {
     if (!has_gmcp())
         return;
 
@@ -43,7 +60,7 @@ varargs void sendGMCP(mapping data, mixed *modules...) {
 
 private void gmcp_enable() {
     message("system", "<GMCP negotiation enabled>\n", this_object());
-    sendGMCP(([ "mud_name": MUD_NAME ]), "Core", "Hello");
+    send_gmcp_data(([ "mud_name": MUD_NAME ]), "Core", "Hello");
 }
 
 protected void init_gmcp() {
@@ -53,10 +70,10 @@ protected void init_gmcp() {
 
     // Mudlet Client
     if (env("GUI")) {
-        sendGMCP(([ "version": env("GUI.version"), "url": env("GUI.url") ]), "Client", "GUI");
+        send_gmcp_data(([ "version": env("GUI.version"), "url": env("GUI.url") ]), "Client", "GUI");
     }
     if (sizeof(env("Map"))) {
-        sendGMCP(([ "url": env("Map") ]), "Client", "Map");
+        send_gmcp_data(([ "url": env("Map") ]), "Client", "Map");
     }
 
     if (wizardp(this_player())) {

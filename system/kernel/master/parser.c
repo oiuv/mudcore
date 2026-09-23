@@ -8,6 +8,8 @@
  */
 #include <parser_error.h>
 
+#include <function_compat.h>
+
 string *parse_command_id_list() {
     // debug_message("parse_command_id_list");
     return ({ "thing" });
@@ -76,7 +78,22 @@ string parser_error_message(int type, object ob, mixed arg, int flag) {
     }
 }
 
+private void _mudcore_impl_refresh_parser();
+void parseRefresh();
+void refresh_parser() {
+    if (_mudcore_forward_name("refresh_parser", "parseRefresh", CORE_MASTER_OB)) {
+        parseRefresh(); return;
+    }
+    _mudcore_impl_refresh_parser();
+}
+// Legacy alias; retain host overrides and ::parent calls during migration.
 void parseRefresh() {
+    if (_mudcore_forward_name("parseRefresh", "refresh_parser", CORE_MASTER_OB)) {
+        refresh_parser(); return;
+    }
+    _mudcore_impl_refresh_parser();
+}
+private void _mudcore_impl_refresh_parser() {
 #if MUDCORE_HAS_PARSER
     parse_refresh();
 #else

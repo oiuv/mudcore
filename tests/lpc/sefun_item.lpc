@@ -1,1 +1,1 @@
-void moveTo(object target) { move_object(target); }
+void move_to(object target) { move_object(target); }

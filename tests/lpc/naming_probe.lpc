@@ -1,0 +1,136 @@
+inherit "/mudcore/inherit/user_quest";
+
+#include <function_compat.h>
+
+void check(int condition, string label) { MASTER_OB->check(condition, "function names: " + label); }
+
+void run() {
+    mixed *inventory, *seen;
+    mixed err;
+    object ob;
+    string mode, file;
+    string *rules;
+    mapping data;
+
+    inventory = json_decode(read_file("/naming-inventory.json"));
+    foreach (mixed *entry in inventory) {
+        ob = load_object(entry[0]);
+        check(
+            !!efun::function_exists(entry[1], ob, 1),
+            "legacy entry " + entry[0] + "::" + entry[1]
+        );
+        check(
+            !!efun::function_exists(entry[2], ob, 1),
+            "canonical entry " + entry[0] + "::" + entry[2]
+        );
+    }
+    check(bit_check(4, 3) == 4 && bitCheck(4, 3) == 4, "bit check returns mask, not boolean");
+    check(bit_set(0, 3) == 4 && bitSet(0, 3) == 4, "bit set aliases");
+    check(bit_clear(5, 1) == 4 && bitClear(5, 1) == 4, "bit clear aliases");
+    foreach (mode in ({ "old", "new", "both", "leaf", "old_new", "new_old" })) {
+        ob = new("/tests/naming_room_" + mode);
+        ob->set_area("modern", 1, 2, 3);
+        check(
+            ob->query("area") == "modern" && ob->coordinate() == "(1,2,3)",
+            mode + " new call and parent"
+        );
+        ob->setArea("legacy", 4, 5, 6);
+        check(
+            ob->query("area") == "legacy" && ob->coordinate() == "(4,5,6)",
+            mode + " old call and parent"
+        );
+        if (member_array(mode, ({ "both", "old_new", "new_old" })) >= 0) {
+            check(
+                ob->query_temp("old") == 1 && ob->query_temp("new") == 1,
+                mode + " overrides remain independent across naming generations"
+            );
+        } else {
+            check(
+                ob->query_temp(mode == "new" ? "new" : "old") == 2,
+                mode + " override dispatched twice"
+            );
+        }
+        ob->set_area("optional");
+        check(ob->coordinate() == "(0,0,0)", "optional arguments retained");
+        destruct(ob);
+    }
+    foreach (mode in ({ "old", "new" })) {
+        ob = new("/tests/naming_verb_" + mode);
+        rules = ob->apply_rules();
+        check(
+            sizeof(rules) == 2 && rules[0] == "LIV" && rules[1] == "OBJ",
+            mode + " protected varargs forwarding"
+        );
+        check(ob->query_calls() == 1 && sizeof(ob->get_rules()) == 2 && sizeof(ob->getRules()) == 2,
+            mode + " protected override runs once");
+        destruct(ob);
+        ob = new("/tests/naming_gmcp_" + mode);
+        data = ([ "value": 7 ]);
+        if (mode == "old") ob->send_gmcp_data(data, "Core", "Hello");
+        else ob->sendGMCP(data, "Core", "Hello");
+        seen = ob->query_seen();
+        check(arrayp(seen) && seen[0] == data && sizeof(seen[1]) == 2 && seen[1][1] == "Hello",
+            mode + " GMCP data and variadic modules preserved");
+        check(!!function_exists("send_gmcp", ob), "raw GMCP API remains separate");
+        destruct(ob);
+    }
+    foreach (mode in ({ "old", "new", "both" })) {
+        file = "/tests/naming_provider_" + mode;
+        check(_mudcore_call_named(file, "get_name", "getName") == (mode == "old" ? "old" : "new"),
+            mode + " standalone host dispatch");
+        check(
+            _mudcore_call_named(file, "check_prerequisites", "preCondition", 3, 4) == 7,
+            "provider arguments forwarded"
+        );
+        set_todo(file);
+        check(mapp(get_todo(file)), mode + " host quest accepted by framework");
+        add_kill_count(file, "/fixtures/mob.c", 1);
+        addKilled(file, "/fixtures/mob.c", 1);
+        check(get_kill_count(
+            file,
+            "/fixtures/mob.c"
+        ) == 2 && getKilled(file, "/fixtures/mob.c") == 2,
+            mode + " kill counts use the required-kills map");
+        add_item_count(file, "/fixtures/token.c", 1);
+        addItem(file, "/fixtures/token.c", 1);
+        check(get_item_count(
+            file,
+            "/fixtures/token.c"
+        ) == 2 && getItem(file, "/fixtures/token.c") == 2,
+            mode + " item counts are distinct from required items");
+        mark_solved(file);
+        check(is_solved(file) && member_array(file, get_solved_quests()) >= 0, "solved quest list");
+        remove_solved(file);
+        check(!is_solved(file), "solved quest removed");
+        del_todo(file);
+        check(!get_todo(file), mode + " quest removed");
+    }
+    err = catch(_mudcore_call_named("/tests/naming_provider_error", "get_name", "getName"));
+    check(
+        stringp(err) && strsrch(err, "naming provider failure") >= 0,
+        "provider failure never falls back to legacy"
+    );
+    ob = new("/tests/naming_error_override");
+    err = catch(ob->set_area("test"));
+    check(
+        stringp(err) && strsrch(err, "naming override failure") >= 0,
+        "host override failure propagated"
+    );
+    destruct(ob);
+
+    ob = new("/mudcore/inherit/camp");
+    check(ob->adjust_camp_reputation("example", 100), "single-camp reputation adjustment");
+    check(ob->setCamp("example", 20), "legacy reputation adjustment");
+    check(ob->get_camp_reputation("example") == 120 && ob->getCamp("example") == 120,
+        "setCamp remains additive, not assignment");
+    check(ob->get_camp_rank("example") == 1 && ob->getCampScore("example") == 1,
+        "rank is distinct from raw reputation");
+    check(ob->get_camp_rank_name("example") == "友好" && ob->getCampRank("example") == "友好",
+        "rank name is distinct from numeric rank");
+    destruct(ob);
+    check(VERB_D->is_valid_verb_path(VERB_DIR + "legacy.c") &&
+        !VERB_D->is_valid_verb_path(VERB_DIR + "../escape.c"), "verb path predicate");
+    ob = load_object("/mudcore/world/quest/example");
+    check(!ob->is_repeatable() && !ob->isNewly(), "repeatable predicate preserves meaning");
+    check(!ob->is_abandonment_forbidden() && !ob->noGiveUp(), "negative predicate is not inverted");
+}

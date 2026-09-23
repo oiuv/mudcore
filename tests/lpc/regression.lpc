@@ -91,6 +91,6 @@ void run() {
 }
 
 void deferred() {
-    check(stringp(VERB_D->getVerb("fallback")), ".lpc verb fallback name");
+    check(stringp(VERB_D->get_verb("fallback")), ".lpc verb fallback name");
 
 }

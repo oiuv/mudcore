@@ -9,6 +9,8 @@ Version: v1.0
 #include <type.h>
 inherit _VERB;
 
+#include <function_compat.h>
+
 int do_area_move(object me, object env, string dir);
 int do_room_move(object me, object env, string dir);
 
@@ -62,10 +64,10 @@ nosave mapping empty_mapping = ([]);
 
 protected void create() {
     verb::create();
-    setVerb("go");
-    setSynonyms("move");
-    setRules("STR");
-    setErrorMessage("你想去哪儿？");
+    set_verb("go");
+    set_synonyms("move");
+    set_rules("STR");
+    set_error_message("你想去哪儿？");
 }
 
 mixed can_go_str(string dir, string arg) {
@@ -176,7 +178,8 @@ int do_area_move(object me, object env, string dir) {
         dir_name = dir;
 
     // 檢查area是否合法的移動并通过valid_leave实现移动
-    if (function_exists("moveObject", env) && !env->moveObject(me, dir))
+    if ((function_exists("move_area_object", env) || function_exists("moveObject", env)) &&
+        !_mudcore_call_named(env, "move_area_object", "moveObject", me, dir))
         return 1;
 
     mout = "往" + dir_name + "離開。";

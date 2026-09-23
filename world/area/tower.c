@@ -21,10 +21,10 @@ varargs void create(int x, int y, int z) {
 
     if (!random(10)) {
         set("long", "这里是勇者之塔第 " + z + " 层内部，在这有一座闪耀着白光的传送门，你可以使用它传送出去（out）。");
-        addExit("out", VOID_OB);
+        add_exit("out", VOID_OB);
     }
 
-    setArea("tower", x, y, z);
+    set_area("tower", x, y, z);
 }
 
 /**

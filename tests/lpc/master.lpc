@@ -122,6 +122,12 @@ void run() {
     }
     err = catch(load_object("/tests/sefun_probe")->run());
     if (err) check(0, "simul efun regression: " + err);
+    err = catch(load_object("/tests/naming_probe")->run());
+    if (err) check(0, "function naming regression: " + err);
+    err = catch(load_object("/tests/quest_scan_probe")->run());
+    if (err) check(0, "quest scan regression: " + err);
+    err = catch(load_object("/tests/hot_reload_probe")->run());
+    if (err) check(0, "hot reload regression: " + err);
     err = catch(load_object("/tests/command_baseline")->run());
     if (err) check(0, "command baseline: " + err);
     err = catch(load_object("/tests/regression")->run());
@@ -151,8 +157,8 @@ void run() {
     load_object("/tests/tls_probe")->run();
     ports = json_decode(read_file("/network.json"));
     load_object("/tests/intermud_probe")->run(ports["intermudPort"], ports["udpPort"]);
-    call_out("startIntermud", 2);
-    call_out("restartIntermud", 4);
+    call_out("start_intermud", 2);
+    call_out("restart_intermud", 4);
     debug_message("LOGIN TEST READY");
 }
 
@@ -165,7 +171,7 @@ string *epilog(int flag) {
     return ({});
 }
 
-void startIntermud() {
+void start_intermud() {
     mapping ports;
 
     ports = json_decode(read_file("/network.json"));
@@ -175,7 +181,7 @@ void startIntermud() {
     );
 }
 
-void restartIntermud() {
+void restart_intermud() {
     mapping ports;
 
     ports = json_decode(read_file("/network.json"));

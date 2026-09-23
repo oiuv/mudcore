@@ -1,0 +1,61 @@
+// Run only in the disposable test mudlib. Never rewrite the host's parent object.
+#define RELOAD_DIR "/fixtures/.naming_reload/"
+
+void check(int condition, string label) { MASTER_OB->check(condition, "hot reload: " + label); }
+
+void run() {
+    object base, legacy, verb;
+    mixed err;
+    string name, source;
+    string *rules, *synonyms;
+
+    base = load_object(RELOAD_DIR "verb");
+    legacy = load_object(RELOAD_DIR "legacy");
+    check(legacy->configure() == "legacy", "old consumer works before migration");
+    check(!!efun::function_exists("setVerb", base, 1) &&
+        !efun::function_exists("set_verb", base, 1), "cached parent exposes only old names");
+
+    source = read_file(CORE_VERB + ".c");
+    check(
+        stringp(source) && write_file(RELOAD_DIR "verb.c", source, 1),
+        "install current parent source"
+    );
+    check(find_object(RELOAD_DIR "verb") == base && !efun::function_exists("set_verb", base, 1),
+        "changing disk source does not replace the loaded program");
+    foreach (name in ({ "look", "go" })) {
+        err = catch(load_object(RELOAD_DIR + name));
+        check(
+            !!err && !find_object(RELOAD_DIR + name),
+            name + " rejects cached pre-migration parent"
+        );
+    }
+
+    destruct(base);
+    base = load_object(RELOAD_DIR "verb");
+    foreach (name in ({ "set_verb", "set_synonyms", "set_rules", "set_error_message" })) {
+        check(!!efun::function_exists(name, base, 1), "reloaded parent provides " + name);
+    }
+    check(!efun::function_exists("set_verb", legacy, 1) && legacy->configure() == "legacy",
+        "existing consumers still retain their inherited old program");
+    foreach (name in ({ "look", "go" })) {
+        err = catch(verb = load_object(RELOAD_DIR + name));
+        check(!err && objectp(verb), name + " compiles after parent-first reload");
+        if (!objectp(verb)) continue;
+        check(
+            verb->get_verb() == name && verb->getVerb() == name,
+            name + " initialized through new setters"
+        );
+        rules = verb->get_rules();
+        synonyms = verb->get_synonyms();
+        check(arrayp(rules) && sizeof(rules) > 0 && arrayp(synonyms) &&
+            member_array(
+                name == "look" ? "l" : "move",
+                synonyms
+            ) >= 0, name + " rules and synonyms retained");
+        check(stringp(verb->get_error_message()), name + " error message retained");
+        destruct(verb);
+    }
+    destruct(legacy);
+    destruct(base);
+    debug_message("HOT RELOAD PASS: cached parent reproduced; parent-first look/go reload verified.");
+}

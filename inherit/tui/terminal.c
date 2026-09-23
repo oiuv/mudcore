@@ -17,8 +17,10 @@ private nosave int termWidth = 80, termHeight = 24;
 private nosave string termType = "";
 private nosave mixed deferredError;
 
+#include <function_compat.h>
+
 void tui_close();
-protected void tuiInput(string text);
+protected void handle_tui_input(string text);
 
 int tui_supported() { return TUI_HAS_INPUT; }
 int tui_active() { return mode != TUI_IDLE; }
@@ -31,21 +33,21 @@ void tui_send(string text) {
     if (stringp(text) && sizeof(text)) receive(text);
 }
 
-private void releaseInput() {
+private void release_input() {
 #if TUI_HAS_INPUT
     remove_get_char(this_object());
 #endif
 }
 
-private void armInput() {
+private void arm_input() {
 #if TUI_HAS_INPUT
-    if (!get_char((: tuiInput :), 1)) error("TUI: another input handler is active.\n");
+    if (!get_char((: handle_tui_input :), 1)) error("TUI: another input handler is active.\n");
 #else
     error("TUI: interactive mode is not supported by this driver.\n");
 #endif
 }
 
-private void requireInput() {
+private void require_input() {
     if (!tui_supported()) error("TUI: interactive mode is not supported by this driver.\n");
     if (mode != TUI_IDLE) error("TUI: an interface is already active.\n");
     if (!interactive(this_object()) || this_player() != this_object())
@@ -53,7 +55,7 @@ private void requireInput() {
     if (in_input(this_object())) error("TUI: another input handler is active.\n");
 }
 
-private void beginInput(int nextMode, function callback) {
+private void begin_input(int nextMode, function callback) {
     if (!keyDecoder) keyDecoder = new(TUI_KEYS);
     keyDecoder->reset();
     generation++;
@@ -67,30 +69,30 @@ private void beginInput(int nextMode, function callback) {
 }
 
 // Detach the old session before invoking user callbacks; callbacks may open a new one.
-private void finishInput() {
-    releaseInput();
+private void finish_input() {
+    release_input();
     mode = TUI_IDLE;
     generation++;
     reply = 0;
 }
 
-private void failInput(mixed err) {
+private void fail_input(mixed err) {
     catch(tui_close());
     error(stringp(err) ? err : "TUI: callback failed.\n");
 }
 
-private void finishRead(int state) {
+private void finish_read(int state) {
     function callback;
     string line;
 
     callback = reply;
     line = state == TUI_RL_DONE ? editor->rl_line() : 0;
     tui_send(ansi_bracketed_paste(0));
-    finishInput();
+    finish_input();
     if (functionp(callback)) evaluate(callback, line, state);
 }
 
-private void finishMenu(int state) {
+private void finish_menu(int state) {
     function callback;
     mixed result;
     string *items;
@@ -101,17 +103,17 @@ private void finishMenu(int state) {
     if (arrayp(result)) {
         if (state != TUI_RL_DONE) result = ({});
         items = map(result, (: menu->m_item($1) :));
-        finishInput();
+        finish_input();
         if (functionp(callback)) evaluate(callback, result, items, state);
     } else {
         if (state != TUI_RL_DONE) result = -1;
         item = result >= 0 ? menu->m_item(result) : 0;
-        finishInput();
+        finish_input();
         if (functionp(callback)) evaluate(callback, result, item, state);
     }
 }
 
-private void confirmInput(mixed event) {
+private void confirm_input(mixed event) {
     function callback;
     int yes, state;
 
@@ -124,7 +126,7 @@ private void confirmInput(mixed event) {
     else return;
     callback = reply;
     tui_send((state == TUI_RL_ABORT ? "取消" : (yes ? "是" : "否")) + "\r\n");
-    finishInput();
+    finish_input();
     if (functionp(callback)) evaluate(callback, yes, state);
 }
 
@@ -135,15 +137,15 @@ private void dispatch(mixed event) {
         case TUI_READ:
             state = editor->rl_feed(event);
             tui_send(editor->rl_take_output());
-            if (state != TUI_RL_MORE) finishRead(state);
+            if (state != TUI_RL_MORE) finish_read(state);
             break;
         case TUI_SELECT:
             state = menu->m_feed(event);
             tui_send(menu->m_take_output());
-            if (state != TUI_RL_MORE) finishMenu(state);
+            if (state != TUI_RL_MORE) finish_menu(state);
             break;
         case TUI_CONFIRM:
-            confirmInput(event);
+            confirm_input(event);
             break;
         case TUI_FULL:
             if (arrayp(event) && sizeof(event) && event[0] == TUI_EV_MOUSE)
@@ -155,7 +157,20 @@ private void dispatch(mixed event) {
     }
 }
 
+private void _mudcore_impl_handle_tui_input(string text);
+protected void tuiInput(string text);
+protected void handle_tui_input(string text) {
+    if (_mudcore_forward_name("handle_tui_input", "tuiInput", __FILE__)) { tuiInput(text); return; }
+    _mudcore_impl_handle_tui_input(text);
+}
+// Legacy alias; retain host overrides and ::parent calls during migration.
 protected void tuiInput(string text) {
+    if (_mudcore_forward_name("tuiInput", "handle_tui_input", __FILE__)) {
+        handle_tui_input(text); return;
+    }
+    _mudcore_impl_handle_tui_input(text);
+}
+private void _mudcore_impl_handle_tui_input(string text) {
     mixed event, err;
     mixed *events;
     int token;
@@ -164,7 +179,7 @@ protected void tuiInput(string text) {
     if (deferredError) {
         err = deferredError;
         deferredError = 0;
-        failInput(err);
+        fail_input(err);
     }
     token = generation;
     // Ctrl+C must still cancel after an incomplete escape sequence.
@@ -177,11 +192,11 @@ protected void tuiInput(string text) {
     foreach (event in events) {
         if (mode == TUI_IDLE || generation != token) break;
         err = catch(dispatch(event));
-        if (err) failInput(err);
+        if (err) fail_input(err);
     }
     if (mode == TUI_IDLE || generation != token) return;
-    err = catch(armInput());
-    if (err) failInput(err);
+    err = catch(arm_input());
+    if (err) fail_input(err);
 }
 
 // Hosts with their own driver applies can forward to these named hooks.
@@ -216,7 +231,7 @@ void terminal_type(string name) { tui_terminal_type(name); }
 varargs void tui_readline(function callback, mapping opts) {
     mixed err;
 
-    requireInput();
+    require_input();
     if (!functionp(callback)) error("TUI: callback required.\n");
     opts = mapp(opts) ? copy(opts) : ([]);
     err = catch {
@@ -226,76 +241,76 @@ varargs void tui_readline(function callback, mapping opts) {
         editor->rl_set_completer(opts["completer"]);
         if (arrayp(opts["history"])) editor->rl_set_history(opts["history"]);
         editor->rl_set_width(termWidth);
-        beginInput(TUI_READ, callback);
+        begin_input(TUI_READ, callback);
         tui_send(ansi_bracketed_paste(1) + editor->rl_begin(opts["initial"]));
-        armInput();
+        arm_input();
     };
-    if (err) failInput(err);
+    if (err) fail_input(err);
 }
 
-private void startMenu(function callback, string prompt, string *choices, mapping opts) {
+private void start_menu(function callback, string prompt, string *choices, mapping opts) {
     mixed err;
 
-    requireInput();
+    require_input();
     if (!functionp(callback)) error("TUI: callback required.\n");
     err = catch {
         if (!menu) menu = new(TUI_MENU);
         menu->m_set_width(termWidth);
-        beginInput(TUI_SELECT, callback);
+        begin_input(TUI_SELECT, callback);
         tui_send(menu->m_begin(prompt, choices, opts));
-        if (menu->m_state() != TUI_RL_MORE) finishMenu(menu->m_state());
-        else armInput();
+        if (menu->m_state() != TUI_RL_MORE) finish_menu(menu->m_state());
+        else arm_input();
     };
-    if (err) failInput(err);
+    if (err) fail_input(err);
 }
 
 varargs void tui_select(function callback, string prompt, string *choices, mapping opts) {
     opts = mapp(opts) ? copy(opts) : ([]);
     map_delete(opts, "multi");
-    startMenu(callback, prompt, choices, opts);
+    start_menu(callback, prompt, choices, opts);
 }
 
 varargs void tui_multiselect(function callback, string prompt, string *choices, mapping opts) {
     opts = mapp(opts) ? copy(opts) : ([]);
     opts["multi"] = 1;
-    startMenu(callback, prompt, choices, opts);
+    start_menu(callback, prompt, choices, opts);
 }
 
 varargs void tui_confirm(function callback, string prompt, int defaultValue) {
     mixed err;
 
-    requireInput();
+    require_input();
     if (!functionp(callback)) error("TUI: callback required.\n");
     err = catch {
         confirmDefault = defaultValue ? 1 : 0;
-        beginInput(TUI_CONFIRM, callback);
+        begin_input(TUI_CONFIRM, callback);
         tui_send("? " + prompt + (defaultValue ? " [Y/n] " : " [y/N] "));
-        armInput();
+        arm_input();
     };
-    if (err) failInput(err);
+    if (err) fail_input(err);
 }
 
 varargs void tui_open(object app, mapping opts) {
     mixed err;
 
-    requireInput();
+    require_input();
     if (!objectp(app)) error("TUI: application required.\n");
     opts = mapp(opts) ? copy(opts) : ([]);
     err = catch {
         currentApp = app;
-        beginInput(TUI_FULL, 0);
+        begin_input(TUI_FULL, 0);
         tui_send(ansi_alt_screen(1) + ansi_cursor_visible(0) + ansi_bracketed_paste(1) +
             (opts["mouse"] ? ansi_mouse(1) : ""));
         app->on_open(this_object(), termWidth, termHeight);
         if (currentApp) {
             tui_send(currentApp->render());
-            armInput();
+            arm_input();
         }
     };
-    if (err) failInput(err);
+    if (err) fail_input(err);
 }
 
-private void closeSession() {
+private void close_session() {
     object app;
     int oldMode;
 
@@ -304,7 +319,7 @@ private void closeSession() {
     oldMode = mode;
     currentApp = 0;
     deferredError = 0;
-    finishInput();
+    finish_input();
     if (oldMode == TUI_FULL)
         tui_send(ansi_mouse(0) + ansi_bracketed_paste(0) + ansi_cursor_visible(1) +
             ansi_reset() + ansi_alt_screen(0));
@@ -321,13 +336,13 @@ void tui_close() {
     if (interactive(this_object()) && query_charmode(this_object()) > 0)
         error("TUI: asynchronous close is unsupported; close from a key callback.\n");
 #endif
-    closeSession();
+    close_session();
 }
 
 void tui_destroy() {
     mixed err;
 
-    err = catch(closeSession());
+    err = catch(close_session());
     if (keyDecoder) destruct(keyDecoder);
     if (editor) destruct(editor);
     if (menu) destruct(menu);

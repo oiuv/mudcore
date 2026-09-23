@@ -1,10 +1,27 @@
 #include <ansi.h>
 inherit _CLEAN_UP;
 
+#include <function_compat.h>
+
 int help(object me);
 int loadall(string dir);
 
+private int _mudcore_impl_skip_load_dir(string dir);
+protected int skipLoadDir(string dir);
+protected int skip_load_dir(string dir) {
+    if (_mudcore_forward_name("skip_load_dir", "skipLoadDir", __FILE__)) {
+        return skipLoadDir(dir);
+    }
+    return _mudcore_impl_skip_load_dir(dir);
+}
+// Legacy alias; retain host overrides and ::parent calls during migration.
 protected int skipLoadDir(string dir) {
+    if (_mudcore_forward_name("skipLoadDir", "skip_load_dir", __FILE__)) {
+        return skip_load_dir(dir);
+    }
+    return _mudcore_impl_skip_load_dir(dir);
+}
+private int _mudcore_impl_skip_load_dir(string dir) {
     string part, excludedDir;
     string *parts;
 
@@ -44,7 +61,7 @@ int main(object me, string dir) {
 int loadall(string dir) {
     string file, err, *dirs;
 
-    if (skipLoadDir(dir))
+    if (skip_load_dir(dir))
         return 1;
     if (dir[<1] != '/')
         dir += "/";
@@ -53,7 +70,7 @@ int loadall(string dir) {
         return 1;
 
     foreach (file in dirs) {
-        if (file_size(dir + file) == -2 && !skipLoadDir(dir + file + "/"))
+        if (file_size(dir + file) == -2 && !skip_load_dir(dir + file + "/"))
             call_out("loadall", 1, dir + file + "/");
     }
     foreach (file in lpc_source_files(dir)) {

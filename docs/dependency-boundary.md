@@ -34,7 +34,7 @@ HTTP 的 `get`、`post`、`head`、`ws` 入口保留。`ws` 仍仅构造升级�
 
 宿主可覆盖 `valid_database(caller, operation, info)` 对自己的 DAO 对象做白名单授权。FluffOS 的连接 `info` 为 `({ database, host, user })`，不含后端类型；需要限制类型的宿主应让指定 DAO 固定使用相应驱动常量（SQLite 为 `__USE_SQLITE3__`），并在 master 限制该 DAO 和数据库路径，不能假称此 apply 可以检查驱动未传入的类型。数据库组件仅对 MySQL 执行字符集初始化，不再向 SQLite 发送 MySQL 语句。
 
-数据库构造器现在统一编码值，原生 SQL 可用 `sql(sqlText, params)` 的匿名 `?` 参数；这不是驱动原生预处理接口。`groupBy()` / `having()` 开始生成实际 SQL，数组条件不再覆盖前面的筛选。字段及运算符改为受限结构输入，复杂表达式迁移到受控 SQL 模板；整数、文本和 `undefined` 分别保留数值、文本、NULL 语义。`setConnection()` 切换目标会关闭旧连接并清空查询。完整示例和兼容边界见 [数据库接口](inherit/DB.md)。
+数据库构造器现在统一编码值，原生 SQL 可用 `sql(sqlText, params)` 的匿名 `?` 参数；这不是驱动原生预处理接口。`group_by()` / `having()` 开始生成实际 SQL，数组条件不再覆盖前面的筛选。字段及运算符改为受限结构输入，复杂表达式迁移到受控 SQL 模板；整数、文本和 `undefined` 分别保留数值、文本、NULL 语义。`set_connection()` 切换目标会关闭旧连接并清空查询。完整示例和兼容边界见 [数据库接口](inherit/DB.md)。
 
 `read_lines()` 保留有效行的前后空白，只去掉 CRLF 的行末 CR；过滤空行与缩进注释时才使用裁剪后的文本。预加载在解析路径时单独 `trim()`，公告等普通文本调用方无需为了本次修复自行补回缩进。
 

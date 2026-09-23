@@ -17,29 +17,29 @@ void logon() {
     ready();
 }
 
-private void lineDone(mixed text, int state) {
+private void line_done(mixed text, int state) {
     receive("LINE:" + json_encode(({ text, state })) + "\n");
     ready();
 }
 
-private void selectionDone(int index, string item, int state) {
+private void selection_done(int index, string item, int state) {
     MASTER_OB->check(options["multi"] == 1, "TUI select does not mutate options");
     receive("SELECT:" + json_encode(({ index, item, state })) + "\n");
     ready();
 }
 
-private void multiDone(int *indexes, string *items, int state) {
+private void multi_done(int *indexes, string *items, int state) {
     receive("MULTI:" + json_encode(({ indexes, items, state })) + "\n");
     ready();
 }
 
-private void confirmDone(int yes, int state) {
+private void confirm_done(int yes, int state) {
     receive("CONFIRM:" + json_encode(({ yes, state })) + "\n");
     ready();
 }
 
-private void chainDone(int index, string item, int state) {
-    tui_readline((: lineDone :), ([ "prompt": "CHAIN>" ]));
+private void chain_done(int index, string item, int state) {
+    tui_readline((: line_done :), ([ "prompt": "CHAIN>" ]));
 }
 
 private void recovered() {
@@ -47,7 +47,7 @@ private void recovered() {
     ready();
 }
 
-private void failureDone(mixed text, int state) {
+private void failure_done(mixed text, int state) {
     call_out((: recovered :), 0);
     error("expected TUI callback failure\n");
 }
@@ -57,11 +57,11 @@ private void captured(string text) {
     ready();
 }
 
-private void appClosed() {
+private void app_closed() {
     ready();
 }
 
-private void tryAsyncClose() {
+private void try_async_close() {
     mixed err;
 
     err = catch(tui_close());
@@ -72,7 +72,7 @@ private void tryAsyncClose() {
     receive("ASYNC REFUSED\n");
 }
 
-private void tryAsyncAppQuit() {
+private void try_async_app_quit() {
     mixed err;
 
     err = catch(app->app_quit());
@@ -86,36 +86,36 @@ void command(string text) {
 
     switch (text) {
         case "read":
-            tui_readline((: lineDone :), ([ "prompt": "INPUT>" ]));
+            tui_readline((: line_done :), ([ "prompt": "INPUT>" ]));
             break;
         case "select":
             options = ([ "multi": 1 ]);
-            tui_select((: selectionDone :), "SELECT>", ({ "金创药", "干粮", "清水" }), options);
+            tui_select((: selection_done :), "SELECT>", ({ "金创药", "干粮", "清水" }), options);
             break;
         case "multi":
-            tui_multiselect((: multiDone :), "MULTI>", ({ "a", "b", "c" }));
+            tui_multiselect((: multi_done :), "MULTI>", ({ "a", "b", "c" }));
             break;
         case "async-close":
-            tui_confirm((: confirmDone :), "ASYNC>", 1);
-            call_out((: tryAsyncClose :), 0);
+            tui_confirm((: confirm_done :), "ASYNC>", 1);
+            call_out((: try_async_close :), 0);
             break;
         case "confirm":
-            tui_confirm((: confirmDone :), "CONFIRM>", 1);
+            tui_confirm((: confirm_done :), "CONFIRM>", 1);
             break;
         case "chain":
-            tui_select((: chainDone :), "CHAIN SELECT>", ({ "next" }));
+            tui_select((: chain_done :), "CHAIN SELECT>", ({ "next" }));
             break;
         case "fail":
-            tui_readline((: failureDone :), ([ "prompt": "FAIL>" ]));
+            tui_readline((: failure_done :), ([ "prompt": "FAIL>" ]));
             break;
         case "async-app":
         case "app":
             app = new(CORE_DIR "system/object/tui_demo");
-            app->set_on_exit((: appClosed :));
+            app->set_on_exit((: app_closed :));
             tui_open(app);
             appScreen = app->app_screen();
             appWidget = app->app_widgets()[0];
-            if (text == "async-app") call_out((: tryAsyncAppQuit :), 0);
+            if (text == "async-app") call_out((: try_async_app_quit :), 0);
             break;
         case "idle-close":
             input_to((: captured :));
@@ -124,7 +124,7 @@ void command(string text) {
             break;
         case "busy":
             input_to((: captured :));
-            err = catch(tui_confirm((: confirmDone :), "busy"));
+            err = catch(tui_confirm((: confirm_done :), "busy"));
             MASTER_OB->check(err != 0 && !tui_active(), "TUI preserves existing input handler");
             receive("CAPTURE>\n");
             break;

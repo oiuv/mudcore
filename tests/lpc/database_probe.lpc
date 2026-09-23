@@ -4,7 +4,7 @@ void create() { seteuid(0); }
 void activate() { seteuid(getuid()); }
 void check(int value, string label) { MASTER_OB->check(value, "database: " + label); }
 
-void checkParameters() {
+void check_parameters() {
 #ifdef __USE_SQLITE3__
     mixed result, denied, missing;
     string text, injection;
@@ -28,20 +28,23 @@ void checkParameters() {
     );
     check(table("sample")->where("id", 10)->update(([ "name": injection ])) == 1, "quoted update");
     check(table("sample")->where("id", 10)->value("name") == injection, "updated value preserved");
-    check(table("sample")->whereIn("name", ({ injection }))->count() == 2, "IN values are encoded");
     check(
-        table("sample")->whereBetween("name", ({ injection, injection }))->count() == 2,
+        table("sample")->where_in("name", ({ injection }))->count() == 2,
+        "IN values are encoded"
+    );
+    check(
+        table("sample")->where_between("name", ({ injection, injection }))->count() == 2,
         "BETWEEN text values are encoded"
     );
-    check(table("sample")->whereIn("id", ({}))->count() == 0, "empty IN matches nothing");
-    check(table("sample")->whereNotIn("id", ({}))->count() == 2, "empty NOT IN matches all");
-    check(table("sample")->orWhere("id", 10)->count() == 1, "initial OR condition is valid");
+    check(table("sample")->where_in("id", ({}))->count() == 0, "empty IN matches nothing");
+    check(table("sample")->where_not_in("id", ({}))->count() == 2, "empty NOT IN matches all");
+    check(table("sample")->or_where("id", 10)->count() == 1, "initial OR condition is valid");
     check(table("sample")->where("id", 10)->where(({ ({ "name", injection }) }))->count() == 1,
         "array where preserves earlier predicate");
     check(table("sample")->where(
         "id",
         99
-    )->orWhere(({ ({ "id", 11 }), ({ "name", injection }) }))->count() == 1,
+    )->or_where(({ ({ "id", 11 }), ({ "name", injection }) }))->count() == 1,
         "OR array predicates stay grouped");
     check(table("sample")->where("id", 10)->where(({ ({ "id", 11 }) }))->count() == 0,
         "array where does not replace prior filter");
@@ -114,7 +117,7 @@ void checkParameters() {
     check(denied != 0, "invalid table name rejected");
     denied = catch(table("sample")->where("id", "= 0 OR 1=1 --", 10));
     check(denied != 0, "operator injection rejected");
-    denied = catch(table("sample")->orderBy("id; DROP TABLE sample"));
+    denied = catch(table("sample")->order_by("id; DROP TABLE sample"));
     check(denied != 0, "order field injection rejected");
     denied = catch(table("sample")->update(([ "name = 'x' --": "bad" ])));
     check(denied != 0, "update field injection rejected");
@@ -132,7 +135,7 @@ void checkParameters() {
 #endif
 }
 
-void checkGrouping() {
+void check_grouping() {
 #ifdef __USE_SQLITE3__
     mixed result, denied;
 
@@ -147,14 +150,14 @@ void checkGrouping() {
     result = table("scores")->where(
         "active",
         1
-    )->groupBy("team")->having(
+    )->group_by("team")->having(
         "SUM(points)",
         ">=",
         20
-    )->orderBy("total", "desc")->get("team", "SUM(points) AS total", "COUNT(*) AS members");
+    )->order_by("total", "desc")->get("team", "SUM(points) AS total", "COUNT(*) AS members");
     check(arrayp(result) && sizeof(result) == 1 && result[0][0] == "red" && result[0][1] == 30 &&
         result[0][2] == 2, "WHERE GROUP BY HAVING and aggregate projections");
-    result = table("scores")->groupBy("team")->having(
+    result = table("scores")->group_by("team")->having(
         "COUNT(*)",
         ">=",
         2
@@ -163,24 +166,24 @@ void checkGrouping() {
         arrayp(result) && sizeof(result) == 1 && result[0][0] == "red",
         "multiple HAVING defaults to AND"
     );
-    result = table("scores")->groupBy("team")->having(
+    result = table("scores")->group_by("team")->having(
         "SUM(points)",
         ">",
         25
-    )->orHaving("team", "=", "green")->orderBy("team")->get("team");
+    )->or_having("team", "=", "green")->order_by("team")->get("team");
     check(arrayp(result) && sizeof(result) == 2 && result[0][0] == "green" && result[1][0] == "red",
         "orHaving includes the second group");
-    result = table("scores")->groupBy("team")->having("team", "=", "x' OR 1=1 --")->get("team");
+    result = table("scores")->group_by("team")->having("team", "=", "x' OR 1=1 --")->get("team");
     check(arrayp(result) && !sizeof(result), "HAVING values cannot alter query structure");
-    result = table("scores")->groupBy("team")->orderBy(
+    result = table("scores")->group_by("team")->order_by(
         "total",
         "desc"
     )->limit(1)->offset(1)->get("team", "SUM(points) AS total");
     check(arrayp(result) && sizeof(result) == 1 && result[0][0] == "blue" && result[0][1] == 23,
         "grouping precedes ordering limit and offset");
-    result = table("scores")->groupBy("team")->groupBy("active")->get("team", "active");
+    result = table("scores")->group_by("team")->group_by("active")->get("team", "active");
     check(arrayp(result) && sizeof(result) == 4, "repeated groupBy appends columns");
-    result = table("scores")->groupBy("team", "active")->get("team", "active");
+    result = table("scores")->group_by("team", "active")->get("team", "active");
     check(arrayp(result) && sizeof(result) == 4, "groupBy accepts multiple columns");
     check(table("scores")->count() == 5, "new table query clears previous grouping and limits");
     result = table("scores")->get("COUNT(DISTINCT team) AS teams");
@@ -193,14 +196,14 @@ void checkGrouping() {
         "count without a column still counts rows");
     check(table("scores")->distinct()->count("*") == 5,
         "distinct count star remains valid row count");
-    denied = catch(table("scores")->groupBy("team")->having("points", ">", 0, "OR 1=1 --"));
+    denied = catch(table("scores")->group_by("team")->having("points", ">", 0, "OR 1=1 --"));
     check(denied != 0, "HAVING boolean injection rejected");
-    denied = catch(table("scores")->groupBy("team")->update(([ "points": 0 ])));
+    denied = catch(table("scores")->group_by("team")->update(([ "points": 0 ])));
     check(
         denied != 0 && table("scores")->sum("points") == 58,
         "grouped UPDATE rejected without modifying rows"
     );
-    denied = catch(table("scores")->groupBy("team")->delete());
+    denied = catch(table("scores")->group_by("team")->delete());
     check(
         denied != 0 && table("scores")->count() == 5,
         "grouped DELETE rejected without deleting rows"
@@ -208,7 +211,7 @@ void checkGrouping() {
 #endif
 }
 
-void checkQueryReuse() {
+void check_query_reuse() {
 #ifdef __USE_SQLITE3__
     mixed result, denied;
 
@@ -244,7 +247,7 @@ void checkQueryReuse() {
     check(arrayp(result) && !sizeof(result), "read after delete remains a SELECT");
 
     table("reuse")->insert(([ "id": 2, "name": "second" ]));
-    result = orderBy("id")->get("id");
+    result = order_by("id")->get("id");
     check(arrayp(result) && sizeof(result) == 3, "read after insert remains a SELECT");
     result = table("reuse")->get("reuse.missing_column");
     check(stringp(result), "invalid projection returns a query error");
@@ -261,13 +264,13 @@ void checkQueryReuse() {
     check(arrayp(result) && sizeof(result) == 3 && member_array("name", result) < 0,
         "pluck excludes the optional column header");
 
-    denied = catch(table("reuse")->groupBy("id")->update(([ "name": "wrong" ])));
+    denied = catch(table("reuse")->group_by("id")->update(([ "name": "wrong" ])));
     result = get("id");
     check(denied && arrayp(result) && sizeof(result) == 3,
         "rejected grouped update leaves no pending write");
     check(table("reuse")->where("name", "wrong")->count() == 0,
         "reading after rejected update cannot change data");
-    denied = catch(table("reuse")->groupBy("id")->delete());
+    denied = catch(table("reuse")->group_by("id")->delete());
     result = get("id");
     check(denied && arrayp(result) && sizeof(result) == 3,
         "rejected grouped delete leaves no pending write");
@@ -284,7 +287,7 @@ void checkQueryReuse() {
     result = value("missing");
     check(stringp(result) && result != "raw", "raw SQL missing column reports an error");
 
-    result = table("reuse")->orderBy("id")->first("id");
+    result = table("reuse")->order_by("id")->first("id");
     check(arrayp(result) && result[0] == 1 && strsrch(db_sql, "LIMIT 1") >= 0,
         "first limits normal reads in the database");
     result = get("id");
@@ -303,11 +306,11 @@ void checkQueryReuse() {
     check(denied != 0, "negative offsets are rejected");
     denied = catch(table("reuse")->offset(1)->get());
     check(denied != 0, "offset without limit is not silently ignored");
-    result = table("reuse")->inRandomOrder()->first("id");
+    result = table("reuse")->in_random_order()->first("id");
     check(arrayp(result) && result[0] >= 1 && result[0] <= 3 &&
         strsrch(db_sql, "LIMIT 1") < 0, "random first keeps the full candidate set");
-    table("reuse")->orderBy("id");
-    denied = catch(orderBy("id; invalid"));
+    table("reuse")->order_by("id");
+    denied = catch(order_by("id; invalid"));
     result = get("id");
     check(denied && arrayp(result) && sizeof(result) == 3 && result[0][0] == 1,
         "rejected sort column preserves the previous ordering");
@@ -319,7 +322,7 @@ void run() {
     mixed result, denied;
     int handle;
 
-    setConnection(([
+    set_connection(([
         "host": "",
         "database": "/data/regression.sqlite",
         "user": "",
@@ -329,6 +332,10 @@ void run() {
     check(intp(result), "SQLite table created without MySQL initialization");
     close(1);
     check(table("sample")->insert(([ "id": 1, "name": "中文" ])) == 1, "insert");
+    check(table("sample")->whereIn("id", ({ 1 }))->orderBy("id")->count() == 1,
+        "legacy chained query aliases");
+    check(join_sql_values(({ 1, 2 }), ",") == "1,2" && implodeX(({ 1, 2 }), ",") == "1,2",
+        "SQL value joining aliases");
     result = table("sample")->where("id", 1)->first();
     check(
         arrayp(result) && result[0] == 1 && result[1] == "中文",
@@ -338,9 +345,9 @@ void run() {
     check(table("sample")->where("id", 1)->value("name") == "更新", "updated value");
     check(table("sample")->where("id", 1)->delete() == 1, "delete");
     check(table("sample")->count() == 0, "empty after delete");
-    checkParameters();
-    checkGrouping();
-    checkQueryReuse();
+    check_parameters();
+    check_grouping();
+    check_query_reuse();
     denied = catch(handle = db_connect("", "/data/not-authorized.sqlite", "", __USE_SQLITE3__));
     check(denied != 0, "Root caller still needs approved database path");
     if (!denied && handle > 0) db_close(handle);

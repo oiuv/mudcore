@@ -21,20 +21,67 @@ nosave string *set_data_resist = ({ "objects", "loaded", "loads", "area_exit" })
 // 不能用一般刪除方法的項目 (可能是區域管理用的項目或其它特別的項目)
 nosave string *delete_data_resist = ({ "objects", "loaded", "loads" });
 
+#include <function_compat.h>
+
 varargs int do_look(object me, string arg);
 
 ////////////////////////////////////////////////////////////
 // 一般設定、檢查、查詢
 ////////////////////////////////////////////////////////////
 // 傳回有对象存在的座標集
-string *query_LOO() { return LOO; }
+private string *_mudcore_impl_query_object_locations();
+string *query_LOO();
+string *query_object_locations() {
+    if (_mudcore_forward_name("query_object_locations", "query_LOO", __FILE__)) {
+        return query_LOO();
+    }
+    return _mudcore_impl_query_object_locations();
+}
+// Legacy alias; retain host overrides and ::parent calls during migration.
+string *query_LOO() {
+    if (_mudcore_forward_name("query_LOO", "query_object_locations", __FILE__)) {
+        return query_object_locations();
+    }
+    return _mudcore_impl_query_object_locations();
+}
+private string *_mudcore_impl_query_object_locations() { return LOO; }
 // 加入一個座標元素在LOO集中
+private void _mudcore_impl_add_object_location(string location);
+void add_LOO(string location);
+void add_object_location(string location) {
+    if (_mudcore_forward_name("add_object_location", "add_LOO", __FILE__)) {
+        add_LOO(location); return;
+    }
+    _mudcore_impl_add_object_location(location);
+}
+// Legacy alias; retain host overrides and ::parent calls during migration.
 void add_LOO(string location) {
+    if (_mudcore_forward_name("add_LOO", "add_object_location", __FILE__)) {
+        add_object_location(location); return;
+    }
+    _mudcore_impl_add_object_location(location);
+}
+private void _mudcore_impl_add_object_location(string location) {
     if (member_array(location, LOO) == -1)
         LOO += ({ location });
 }
 // 刪除一個座標元素在LOO集中
+private void _mudcore_impl_remove_object_location(string location);
+void del_LOO(string location);
+void remove_object_location(string location) {
+    if (_mudcore_forward_name("remove_object_location", "del_LOO", __FILE__)) {
+        del_LOO(location); return;
+    }
+    _mudcore_impl_remove_object_location(location);
+}
+// Legacy alias; retain host overrides and ::parent calls during migration.
 void del_LOO(string location) {
+    if (_mudcore_forward_name("del_LOO", "remove_object_location", __FILE__)) {
+        remove_object_location(location); return;
+    }
+    _mudcore_impl_remove_object_location(location);
+}
+private void _mudcore_impl_remove_object_location(string location) {
     if (member_array(location, LOO) != -1)
         LOO -= ({ location });
 }
@@ -245,7 +292,7 @@ int move_in(int x, int y, object ob) {
     set_icon_weight(x, y, get_icon_weight(ob));
 
     // 增加LOO搜尋集
-    add_LOO((string)y + "," + (string)x);
+    add_object_location((string)y + "," + (string)x);
 
     return 1;
 }
@@ -274,14 +321,29 @@ int move_out(int x, int y, object ob) {
     if (sizeof(area[y][x]["objects"]) < 1) {
         map_delete(area[y][x], "objects");
         // 刪除LOO搜尋集
-        del_LOO((string)y + "," + (string)x);
+        remove_object_location((string)y + "," + (string)x);
     }
 
     return 1;
 }
 
 // 移动指定对象到当前区域指定方向
+private int _mudcore_impl_move_area_object(object ob, string dir);
+int moveObject(object ob, string dir);
+int move_area_object(object ob, string dir) {
+    if (_mudcore_forward_name("move_area_object", "moveObject", __FILE__)) {
+        return moveObject(ob, dir);
+    }
+    return _mudcore_impl_move_area_object(ob, dir);
+}
+// Legacy alias; retain host overrides and ::parent calls during migration.
 int moveObject(object ob, string dir) {
+    if (_mudcore_forward_name("moveObject", "move_area_object", __FILE__)) {
+        return move_area_object(ob, dir);
+    }
+    return _mudcore_impl_move_area_object(ob, dir);
+}
+private int _mudcore_impl_move_area_object(object ob, string dir) {
     int x, y, x_past, y_past;
     x_past = ob->query("area_info/x_axis");
     y_past = ob->query("area_info/y_axis");
@@ -442,8 +504,8 @@ int moveObject(object ob, string dir) {
 }
 // 移动对象（兼容性别名，不推荐使用）
 int valid_leave(object ob, string dir) {
-    debug_message("[警告]请使用 moveObject 方法代替 valid_leave");
-    return moveObject(ob, dir);
+    debug_message("[警告]请使用 move_area_object 方法代替 valid_leave");
+    return move_area_object(ob, dir);
 }
 
 ////////////////////////////////////////////////////////////
@@ -615,7 +677,13 @@ varargs string show_objects(int x, int y, int type) {
             area[y][x]["objects"] -= ({ ob });
             continue;
         }
-        if (!userp(ob) && QUEST_D->hasQuest(this_player(), ob))
+        if (!userp(ob) && _mudcore_call_named(
+            QUEST_D,
+            "has_available_quest",
+            "hasQuest",
+            this_player(),
+            ob
+        ))
             str += sprintf("%s%s\n", BLINK + HIY "！" NOR, ob->short());
         else
             str += sprintf("  %s\n", ob->short());

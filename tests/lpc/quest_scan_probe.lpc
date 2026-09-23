@@ -1,0 +1,36 @@
+inherit CORE_EVER_QUEST_D;
+
+int registrations;
+
+int is_quest() { return 1; }
+
+void register_information() {
+    registrations++;
+    set_information(this_object(), "summary", "registered");
+}
+
+void check(int condition, string label) { MASTER_OB->check(condition, "quest scan: " + label); }
+
+void run() {
+    object ordinary, legacy, unmarked, optedOut;
+    mapping information;
+
+    ordinary = load_object("/mudcore/world/quest/example");
+    legacy = load_object("/tests/naming_provider_old");
+    unmarked = load_object("/tests/naming_quest_unmarked");
+    optedOut = load_object("/tests/naming_quest_optout");
+    collect_all_quest_information();
+    information = query("information");
+    check(registrations == 1 && query_information(this_object(), "summary") == "registered",
+        "information provider is registered exactly once");
+    check(
+        undefinedp(information[ordinary]),
+        "ordinary is_quest provider is not an information quest"
+    );
+    check(undefinedp(information[legacy]), "legacy isQuest provider is not an information quest");
+    check(undefinedp(information[unmarked]), "registration method alone is not a quest marker");
+    check(undefinedp(information[optedOut]), "false quest marker opts out of scanning");
+    delete("information");
+    destruct(unmarked);
+    destruct(optedOut);
+}

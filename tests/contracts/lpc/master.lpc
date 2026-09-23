@@ -36,7 +36,7 @@ void error_handler(mapping details, int caught) {
 }
 void log_error(string file, string message) { debug_message(file + ": " + message); }
 
-private void commandTests() {
+private void command_tests() {
     object actor;
     string *selection;
     mixed err;
@@ -75,7 +75,7 @@ private void commandTests() {
     destruct(actor);
 }
 
-private void moveTests() {
+private void move_tests() {
     object actor;
     mixed err;
 
@@ -98,7 +98,7 @@ private void moveTests() {
     destruct(actor);
 }
 
-private void policyTests() {
+private void policy_tests() {
     object inspector, core, custom, empty;
     mapping result;
     string method;
@@ -139,7 +139,7 @@ private void policyTests() {
     destruct(empty);
 }
 
-private void loginTests() {
+private void login_tests() {
     object login, policy, user;
     int mode;
     mixed err;
@@ -179,10 +179,10 @@ void run() {
     mixed err;
 
     err = catch {
-        commandTests();
-        moveTests();
-        policyTests();
-        loginTests();
+        command_tests();
+        move_tests();
+        policy_tests();
+        login_tests();
     };
     if (err) check(0, "contract probe: " + err);
     debug_message("CONTRACT LOGIN READY");

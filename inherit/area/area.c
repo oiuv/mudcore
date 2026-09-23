@@ -20,14 +20,61 @@ string *LOLO = ({});
 // 一般設定、檢查、查詢
 ////////////////////////////////////////////////////////////
 // 傳回有載入对象的座標集
-string *query_LOLO() { return LOLO; }
+#include <function_compat.h>
+
+private string *_mudcore_impl_query_load_locations();
+string *query_LOLO();
+string *query_load_locations() {
+    if (_mudcore_forward_name("query_load_locations", "query_LOLO", __FILE__)) {
+        return query_LOLO();
+    }
+    return _mudcore_impl_query_load_locations();
+}
+// Legacy alias; retain host overrides and ::parent calls during migration.
+string *query_LOLO() {
+    if (_mudcore_forward_name("query_LOLO", "query_load_locations", __FILE__)) {
+        return query_load_locations();
+    }
+    return _mudcore_impl_query_load_locations();
+}
+private string *_mudcore_impl_query_load_locations() { return LOLO; }
 // 加入一個座標元素在LOLO集中
+private void _mudcore_impl_add_load_location(string location);
+void add_LOLO(string location);
+void add_load_location(string location) {
+    if (_mudcore_forward_name("add_load_location", "add_LOLO", __FILE__)) {
+        add_LOLO(location); return;
+    }
+    _mudcore_impl_add_load_location(location);
+}
+// Legacy alias; retain host overrides and ::parent calls during migration.
 void add_LOLO(string location) {
+    if (_mudcore_forward_name("add_LOLO", "add_load_location", __FILE__)) {
+        add_load_location(location); return;
+    }
+    _mudcore_impl_add_load_location(location);
+}
+private void _mudcore_impl_add_load_location(string location) {
     if (member_array(location, LOLO) == -1)
         LOLO += ({ location });
 }
 // 刪除一個座標元素在LOLO集中
+private void _mudcore_impl_remove_load_location(string location);
+void del_LOLO(string location);
+void remove_load_location(string location) {
+    if (_mudcore_forward_name("remove_load_location", "del_LOLO", __FILE__)) {
+        del_LOLO(location); return;
+    }
+    _mudcore_impl_remove_load_location(location);
+}
+// Legacy alias; retain host overrides and ::parent calls during migration.
 void del_LOLO(string location) {
+    if (_mudcore_forward_name("del_LOLO", "remove_load_location", __FILE__)) {
+        remove_load_location(location); return;
+    }
+    _mudcore_impl_remove_load_location(location);
+}
+private void _mudcore_impl_remove_load_location(string location) {
     if (member_array(location, LOLO) != -1)
         LOLO -= ({ location });
 }
@@ -52,7 +99,7 @@ int set_loads(int x, int y, string filename, int amount) {
     area[y][x]["loads"][filename] = amount;
 
     // 加入快速搜尋集
-    add_LOLO((string)y + "," + (string)x);
+    add_load_location((string)y + "," + (string)x);
     return 1;
 }
 
@@ -65,7 +112,7 @@ int del_loads(int x, int y) {
     map_delete(area[y][x], "loads");
 
     // 移除快速搜尋集
-    del_LOLO((string)y + "," + (string)x);
+    remove_load_location((string)y + "," + (string)x);
     return 1;
 }
 

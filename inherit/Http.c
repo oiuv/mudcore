@@ -12,6 +12,8 @@ private nosave int nextRequest;
 private nosave int requestTimeoutSeconds = 30;
 nosave int Debug;
 
+#include <function_compat.h>
+
 protected void response(mixed result) { debug_message(result); }
 protected void response_data(int requestId, mixed result) { response(result); }
 protected void response_complete(int requestId) {}
@@ -26,7 +28,7 @@ protected int write_http_socket(int fd, string packet) {
 }
 protected int resolve_http_host(string host, function callback) { return resolve(host, callback); }
 
-private varargs void finishRequest(int requestId, string failure, int descriptorReused) {
+private varargs void finish_request(int requestId, string failure, int descriptorReused) {
     int fd;
     mapping state;
 
@@ -46,7 +48,7 @@ private varargs void finishRequest(int requestId, string failure, int descriptor
 }
 
 protected void request_timeout(int requestId) {
-    finishRequest(requestId, "request timed out");
+    finish_request(requestId, "request timed out");
 }
 
 void set_request_timeout(int seconds) {
@@ -60,7 +62,7 @@ int *query_requests() { return keys(requestFds); }
 int cancel_request(int requestId) {
     if (undefinedp(requestFds[requestId]))
         return 0;
-    finishRequest(requestId, "request cancelled");
+    finish_request(requestId, "request cancelled");
     return 1;
 }
 void cancel_all_requests() {
@@ -71,7 +73,7 @@ void cancel_all_requests() {
 }
 
 // 字节偏移不可用 LPC 字符数替代，Content-Length 和 chunk-size 都按字节计算。
-private int lineEnd(buffer data) {
+private int line_end(buffer data) {
     int i;
 
     for (i = 0; i + 1 < sizeof(data); i++) {
@@ -81,7 +83,7 @@ private int lineEnd(buffer data) {
     return -1;
 }
 
-private int headerEnd(buffer data) {
+private int header_end(buffer data) {
     int i;
 
     for (i = 0; i + 3 < sizeof(data); i++) {
@@ -92,7 +94,7 @@ private int headerEnd(buffer data) {
 }
 
 // 返回 1 表示完整，0 表示等待后续字节；非法或截断报文不报告成功。
-private int consumeResponse(mapping state, buffer incoming) {
+private int consume_response(mapping state, buffer incoming) {
     buffer pending;
     string text, line, key, value, transfer;
     string *lines;
@@ -104,7 +106,7 @@ private int consumeResponse(mapping state, buffer incoming) {
         pending = state["pending"];
         switch (state["mode"]) {
             case "headers":
-                end = headerEnd(pending);
+                end = header_end(pending);
                 if (end < 0) {
                     if (sizeof(pending) > HTTP_HEADER_LIMIT)
                         error("HTTP headers too large.\n");
@@ -168,7 +170,7 @@ private int consumeResponse(mapping state, buffer incoming) {
                 state["pending"] = allocate_buffer(0);
                 return state["remaining"] == 0;
             case "chunk-size":
-                end = lineEnd(pending);
+                end = line_end(pending);
                 if (end < 0) {
                     if (sizeof(pending) > HTTP_HEADER_LIMIT)
                         error("HTTP chunk header too large.\n");
@@ -202,7 +204,7 @@ private int consumeResponse(mapping state, buffer incoming) {
                 state["mode"] = "chunk-size";
                 break;
             case "trailers":
-                end = lineEnd(pending);
+                end = line_end(pending);
                 if (end < 0) {
                     if (sizeof(pending) + state["trailerBytes"] > HTTP_HEADER_LIMIT)
                         error("HTTP trailers too large.\n");
@@ -231,7 +233,7 @@ protected void socket_shutdown(int fd) {
     state = Status[fd];
     if (!mapp(state))
         return;
-    finishRequest(state["id"], member_array(state["mode"], ({ "eof", "upgrade" })) == -1 ?
+    finish_request(state["id"], member_array(state["mode"], ({ "eof", "upgrade" })) == -1 ?
         "connection closed before response completed" : 0);
 }
 
@@ -246,16 +248,16 @@ protected void receive_data(int fd, mixed result) {
         return;
     bytes = bufferp(result) ? result : string_encode(result, "utf-8");
     err = catch {
-        complete = consumeResponse(state, bytes);
+        complete = consume_response(state, bytes);
         response_data(
             state["id"],
             bufferp(result) ? read_buffer(result, 0, sizeof(result)) : result
         );
     };
     if (err)
-        finishRequest(state["id"], "response processing failed: " + err);
+        finish_request(state["id"], "response processing failed: " + err);
     else if (complete)
-        finishRequest(state["id"], 0);
+        finish_request(state["id"], 0);
 }
 
 protected void write_data(int fd) {
@@ -268,11 +270,11 @@ protected void write_data(int fd) {
         return;
     err = catch(result = write_http_socket(fd, state["http"]));
     if (err) {
-        finishRequest(state["id"], "request write failed: " + err);
+        finish_request(state["id"], "request write failed: " + err);
     } else if (result == EESUCCESS || result == EECALLBACK) {
         state["sent"] = 1;
     } else {
-        finishRequest(state["id"], "request write failed: " + socket_error(result));
+        finish_request(state["id"], "request write failed: " + socket_error(result));
     }
 }
 
@@ -282,7 +284,7 @@ protected void connect(int fd, string addr) {
     requestId = Status[fd]["id"];
     result = socket_connect(fd, addr + " " + Status[fd]["port"], "receive_data", "write_data");
     if (result != EESUCCESS)
-        finishRequest(requestId, "connect failed: " + socket_error(result));
+        finish_request(requestId, "connect failed: " + socket_error(result));
 }
 
 protected void on_resolve(int requestId, string host, string addr, int key) {
@@ -293,13 +295,13 @@ protected void on_resolve(int requestId, string host, string addr, int key) {
         return;
     fd = requestFds[requestId];
     if (!addr) {
-        finishRequest(requestId, "DNS lookup failed");
+        finish_request(requestId, "DNS lookup failed");
         return;
     }
     Host[Status[fd]["host"]] = addr;
     err = catch(connect(fd, addr));
     if (err)
-        finishRequest(requestId, "connect failed: " + err);
+        finish_request(requestId, "connect failed: " + err);
 }
 
 protected int open_http_socket(int isTLS, string host) {
@@ -326,7 +328,22 @@ protected int open_http_socket(int isTLS, string host) {
     return fd;
 }
 
+private string _mudcore_impl_encode_query_part(mixed value);
+protected string encodeQueryPart(mixed value);
+protected string encode_query_part(mixed value) {
+    if (_mudcore_forward_name("encode_query_part", "encodeQueryPart", __FILE__)) {
+        return encodeQueryPart(value);
+    }
+    return _mudcore_impl_encode_query_part(value);
+}
+// Legacy alias; retain host overrides and ::parent calls during migration.
 protected string encodeQueryPart(mixed value) {
+    if (_mudcore_forward_name("encodeQueryPart", "encode_query_part", __FILE__)) {
+        return encode_query_part(value);
+    }
+    return _mudcore_impl_encode_query_part(value);
+}
+private string _mudcore_impl_encode_query_part(mixed value) {
     buffer bytes;
     string result = "";
     int ch;
@@ -399,7 +416,7 @@ nomask protected object request(string method, string url, mixed data, mapping h
     }
     if ((method == "GET" || method == "HEAD") && mapp(data)) {
         foreach (item, value in data)
-            params = (params ? params + "&" : "") + encodeQueryPart(item) + "=" + encodeQueryPart(value);
+            params = (params ? params + "&" : "") + encode_query_part(item) + "=" + encode_query_part(value);
         if (params)
             path += (strsrch(path, '?') < 0 ? "?" : "&") + params;
     }
@@ -412,7 +429,7 @@ nomask protected object request(string method, string url, mixed data, mapping h
     fd = open_http_socket(isTLS, host);
     // 有些驱动在 TLS 握手失败时释放 fd，却不通知关闭；旧请求不能误关复用的 fd。
     if (mapp(Status[fd])) {
-        err = catch(finishRequest(Status[fd]["id"], "connection closed by driver", 1));
+        err = catch(finish_request(Status[fd]["id"], "connection closed by driver", 1));
         if (err) {
             close_http_socket(fd);
             error(err);
@@ -431,11 +448,11 @@ nomask protected object request(string method, string url, mixed data, mapping h
         } else {
             dnsKey = resolve_http_host(host, (: on_resolve($(requestId), $1, $2, $3) :));
             if (dnsKey < 0)
-                finishRequest(requestId, "DNS lookup could not start");
+                finish_request(requestId, "DNS lookup could not start");
         }
     };
     if (err)
-        finishRequest(requestId, "request initialization failed: " + err);
+        finish_request(requestId, "request initialization failed: " + err);
     return this_object();
 }
 

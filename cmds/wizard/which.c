@@ -1,6 +1,8 @@
 // which.c
 inherit _CLEAN_UP;
 
+#include <function_compat.h>
+
 int help(object me);
 
 int main(object me, string arg) {
@@ -11,7 +13,7 @@ int main(object me, string arg) {
     if (!arg)
         return help(me);
 
-    file = COMMAND_D->find_command(arg) || VERB_D->getVerb(arg);
+    file = COMMAND_D->find_command(arg) || _mudcore_call_named(VERB_D, "get_verb", "getVerb", arg);
     if (!file)
         write("没有找到 " + arg + " 这个命令。\n");
     else

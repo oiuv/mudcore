@@ -27,7 +27,7 @@
 
 // 函数原型声明
 public void close(int fd);
-private void clearConnectTimer(int fd);
+private void clear_connect_timer(int fd);
 
 // 基础连接类
 class socket_connection {
@@ -87,7 +87,7 @@ protected varargs int create_socket(int type, string callback_read, string callb
     }
     oldConn = SocketConnections[fd];
     if (oldConn) {
-        clearConnectTimer(fd);
+        clear_connect_timer(fd);
         map_delete(SocketConnections, fd);
         if (oldConn->callbacks["error"] && oldConn->callbacks["object"]) {
             err = catch(call_other(oldConn->callbacks["object"], oldConn->callbacks["error"],
@@ -117,7 +117,7 @@ void set_connect_timeout(int seconds) {
     connectTimeoutSeconds = seconds;
 }
 
-private void clearConnectTimer(int fd) {
+private void clear_connect_timer(int fd) {
     if (!undefinedp(connectTimers[fd])) {
         remove_call_out(connectTimers[fd]);
         map_delete(connectTimers, fd);
@@ -451,7 +451,7 @@ public varargs int send(int fd, mixed data, string target_addr, int target_port)
 
 // 关闭连接
 public void close(int fd) {
-    clearConnectTimer(fd);
+    clear_connect_timer(fd);
     if (SocketConnections[fd]) {
         socket_close(fd);
         map_delete(SocketConnections, fd);
@@ -636,7 +636,7 @@ protected void handle_receive_callback(int fd, mixed data, string addr) {
 
     if (conn->state == SOCKET_STATE_CONNECTING) {
         conn->state = SOCKET_STATE_CONNECTED;
-        clearConnectTimer(fd);
+        clear_connect_timer(fd);
         trace("connect:已建立", ([ "fd": fd ]));
         if (conn->callbacks["connect"] && conn->callbacks["object"]) {
             trace("callback:connect", ([ "fd": fd, "callback": conn->callbacks["connect"] ]));
@@ -670,7 +670,7 @@ protected void handle_write_callback(int fd) {
     trace("write:可写", ([ "fd": fd, "state": conn->state ]));
     if (conn->state == SOCKET_STATE_CONNECTING) {
         conn->state = SOCKET_STATE_CONNECTED;
-        clearConnectTimer(fd);
+        clear_connect_timer(fd);
         trace("connect:已建立", ([ "fd": fd ]));
         if (conn->callbacks["connect"] && conn->callbacks["object"]) {
             trace("callback:connect", ([ "fd": fd, "callback": conn->callbacks["connect"] ]));

@@ -12,9 +12,13 @@
 
 ```c
 // 接受任务
-QUEST_D->doAssign(npc, me);
+QUEST_D->offer_quests(npc, me);
 // 完成任务
-QUEST_D->doReward(npc, me);
+QUEST_D->reward_quests(npc, me);
 ```
 
 同时还需实现一个任务管理指令，方便玩家查看自己任务信息。
+
+### 与自由任务的边界
+
+普通任务的 `is_quest()`（旧名 `isQuest()`）只表示任务身份，不表示接入自由任务消息服务。`EVER_QUEST_D` 自动收集信息时要求对象的 `is_quest()` 为真，且公开提供 `register_information()`；宿主自由任务仍需实现该服务要求的消息与生命周期接口。普通领取型任务不要仅为通过扫描而添加空注册方法，两套服务可以按需分别接入。

@@ -20,7 +20,7 @@ string base64encode(string source) {
     return string_decode(output, "UTF-8");
 }
 
-private int base64Digit(int ch) {
+private int base64_digit(int ch) {
     if (ch >= 'A' && ch <= 'Z') return ch - 'A';
     if (ch >= 'a' && ch <= 'z') return ch - 'a' + 26;
     if (ch >= '0' && ch <= '9') return ch - '0' + 52;
@@ -47,10 +47,10 @@ string base64decode(string source) {
     if (compact[size - 2] == '=') padding++;
     output = allocate_buffer(size / 4 * 3 - padding);
     for (i = 0, j = 0; i < size; i += 4) {
-        a = base64Digit(compact[i]);
-        b = base64Digit(compact[i + 1]);
-        c = i == size - 4 && padding == 2 ? 0 : base64Digit(compact[i + 2]);
-        d = i == size - 4 && padding ? 0 : base64Digit(compact[i + 3]);
+        a = base64_digit(compact[i]);
+        b = base64_digit(compact[i + 1]);
+        c = i == size - 4 && padding == 2 ? 0 : base64_digit(compact[i + 2]);
+        d = i == size - 4 && padding ? 0 : base64_digit(compact[i + 3]);
         if (i == size - 4 && ((padding == 2 && (b & 15)) || (padding == 1 && (c & 3))))
             error("base64decode: nonzero padding bits.\n");
         value = (a << 18) | (b << 12) | (c << 6) | d;

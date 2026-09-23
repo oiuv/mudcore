@@ -85,11 +85,13 @@ nosave int db_inRandomOrder;
 nosave int db_withColumn;
 nosave int db_autoClose = 1;
 
+#include <function_compat.h>
+
 varargs mixed close(int flag);
-void resetSql();
+void reset_sql();
 
 // SQL 构造与参数处理。
-private int mysqlDialect() {
+private int mysql_dialect() {
 #ifdef __USE_MYSQL__
     return db_type == __USE_MYSQL__;
 #else
@@ -97,7 +99,7 @@ private int mysqlDialect() {
 #endif
 }
 
-private string sqlIdentifier(string name) {
+private string sql_identifier(string name) {
     string *parts;
     string quote;
     int i;
@@ -105,7 +107,7 @@ private string sqlIdentifier(string name) {
     if (!stringp(name) || !sizeof(regexp(({ name }),
         "^[A-Za-z_][A-Za-z0-9_]*(\\.[A-Za-z_][A-Za-z0-9_]*)*$")))
         error("Invalid SQL identifier.\n");
-    quote = mysqlDialect() ? "`" : "\"";
+    quote = mysql_dialect() ? "`" : "\"";
     parts = explode(name, ".");
     for (i = 0; i < sizeof(parts); i++)
         parts[i] = quote + parts[i] + quote;
@@ -113,7 +115,7 @@ private string sqlIdentifier(string name) {
 }
 
 // 构造器只接受字段、通配符和常见聚合表达式；复杂 SQL 由 sql() 显式提供。
-private string sqlColumn(string column, int allowAlias) {
+private string sql_column(string column, int allowAlias) {
     string name, alias, func, argument, expression;
     int split, open;
 
@@ -122,7 +124,7 @@ private string sqlColumn(string column, int allowAlias) {
     split = strsrch(upper_case(name), " AS ");
     if (split >= 0) {
         if (!allowAlias) error("SQL alias is not allowed here.\n");
-        alias = sqlIdentifier(trim(name[split + 4..]));
+        alias = sql_identifier(trim(name[split + 4..]));
         name = trim(name[0..split - 1]);
     }
     open = strsrch(name, "(");
@@ -134,22 +136,22 @@ private string sqlColumn(string column, int allowAlias) {
         if (argument == "*" || argument == "1") {
             if (func != "COUNT") error("Only COUNT accepts * or 1.\n");
         } else if (strsrch(upper_case(argument), "DISTINCT ") == 0) {
-            argument = "DISTINCT " + sqlIdentifier(trim(argument[9..]));
+            argument = "DISTINCT " + sql_identifier(trim(argument[9..]));
         } else {
-            argument = sqlIdentifier(argument);
+            argument = sql_identifier(argument);
         }
         expression = func + "(" + argument + ")";
     } else if (name == "*") {
         expression = name;
     } else if (strlen(name) > 2 && name[<2..] == ".*") {
-        expression = sqlIdentifier(name[0..<3]) + ".*";
+        expression = sql_identifier(name[0..<3]) + ".*";
     } else {
-        expression = sqlIdentifier(name);
+        expression = sql_identifier(name);
     }
     return expression + (alias ? " AS " + alias : "");
 }
 
-private string sqlOperator(string op) {
+private string sql_operator(string op) {
     string result;
 
     if (!stringp(op)) error("SQL operator must be a string.\n");
@@ -161,7 +163,7 @@ private string sqlOperator(string op) {
 }
 
 // 值编码与 SQL 模板分开。十六进制文本不受反斜杠转义或 SQL 模式影响。
-private string sqlValue(mixed value) {
+private string sql_value(mixed value) {
     buffer bytes;
     string *hexBytes;
     string encoded, number;
@@ -196,22 +198,22 @@ private string sqlValue(mixed value) {
     error("SQL text encoding is not implemented for this database backend.\n");
 }
 
-private string sqlCondition(mixed *args) {
+private string sql_condition(mixed *args) {
     string op;
     mixed value;
 
     if (sizeof(args) != 2 && sizeof(args) != 3)
         error("SQL comparison requires a column and value, with an optional operator.\n");
-    op = sizeof(args) == 2 ? "=" : sqlOperator(args[1]);
+    op = sizeof(args) == 2 ? "=" : sql_operator(args[1]);
     value = args[<1];
     if (undefinedp(value)) {
         if (op == "=") op = "IS";
         else if (op == "!=" || op == "<>") op = "IS NOT";
     }
-    return sqlColumn(args[0], 0) + " " + op + " " + sqlValue(value);
+    return sql_column(args[0], 0) + " " + op + " " + sql_value(value);
 }
 
-private string sqlBoolean(string boolean) {
+private string sql_boolean(string boolean) {
     string result;
 
     result = stringp(boolean) && trim(boolean) != "" ? upper_case(trim(boolean)) : "AND";
@@ -219,24 +221,24 @@ private string sqlBoolean(string boolean) {
     return result;
 }
 
-private void appendWhere(string condition, string boolean) {
+private void append_where(string condition, string boolean) {
     string op;
 
-    op = sqlBoolean(boolean);
+    op = sql_boolean(boolean);
     db_sql_where += (sizeof(db_sql_where) ? " " + op + " " : "") + condition;
 }
 
-private string sqlColumns(string *columns) {
+private string sql_columns(string *columns) {
     string *result;
     string column;
 
     result = ({});
-    foreach (column in columns) result += ({ sqlColumn(column, 1) });
+    foreach (column in columns) result += ({ sql_column(column, 1) });
     return implode(result, ",");
 }
 
 // 仅替换引号和普通注释之外的匿名 ?；不猜测依赖 SQL 模式的语法。
-private string bindSql(string query, mixed *bindings) {
+private string bind_sql(string query, mixed *bindings) {
     string result, ch, next;
     int i, quote, comment, index;
 
@@ -274,7 +276,7 @@ private string bindSql(string query, mixed *bindings) {
             comment = 1;
             result += ch + next;
             i++;
-        } else if (ch == "#" && mysqlDialect()) {
+        } else if (ch == "#" && mysql_dialect()) {
             comment = 1;
             result += ch;
         } else if (ch == "/" && next == "*") {
@@ -297,7 +299,7 @@ private string bindSql(string query, mixed *bindings) {
                 error("Use anonymous ? parameters, not numbered parameters.\n");
             if (index >= sizeof(bindings)) error("Not enough SQL parameter values.\n");
             // 参数保持独立表达式，避免 -? 与负数拼成 -- 注释。
-            result += "(" + sqlValue(bindings[index++]) + ")";
+            result += "(" + sql_value(bindings[index++]) + ")";
         } else {
             result += ch;
         }
@@ -335,9 +337,24 @@ varargs void create(string host, string db, string user, int type) {
  *
  * @param db
  */
+private void _mudcore_impl_set_connection(mapping db);
+void setConnection(mapping db);
+void set_connection(mapping db) {
+    if (_mudcore_forward_name("set_connection", "setConnection", __FILE__)) {
+        setConnection(db); return;
+    }
+    _mudcore_impl_set_connection(db);
+}
+// Legacy alias; retain host overrides and ::parent calls during migration.
 void setConnection(mapping db) {
+    if (_mudcore_forward_name("setConnection", "set_connection", __FILE__)) {
+        set_connection(db); return;
+    }
+    _mudcore_impl_set_connection(db);
+}
+private void _mudcore_impl_set_connection(mapping db) {
     close(1);
-    resetSql();
+    reset_sql();
     db_host = db["host"];
     db_db = db["database"];
     db_user = db["user"];
@@ -350,11 +367,37 @@ void setConnection(mapping db) {
  *
  * @param flag
  */
+private void _mudcore_impl_set_auto_close(int flag);
+void setAutoClose(int flag);
+void set_auto_close(int flag) {
+    if (_mudcore_forward_name("set_auto_close", "setAutoClose", __FILE__)) {
+        setAutoClose(flag); return;
+    }
+    _mudcore_impl_set_auto_close(flag);
+}
+// Legacy alias; retain host overrides and ::parent calls during migration.
 void setAutoClose(int flag) {
+    if (_mudcore_forward_name("setAutoClose", "set_auto_close", __FILE__)) {
+        set_auto_close(flag); return;
+    }
+    _mudcore_impl_set_auto_close(flag);
+}
+private void _mudcore_impl_set_auto_close(int flag) {
     db_autoClose = flag;
 }
 // 重置查询
+private void _mudcore_impl_reset_sql();
+void resetSql();
+void reset_sql() {
+    if (_mudcore_forward_name("reset_sql", "resetSql", __FILE__)) { resetSql(); return; }
+    _mudcore_impl_reset_sql();
+}
+// Legacy alias; retain host overrides and ::parent calls during migration.
 void resetSql() {
+    if (_mudcore_forward_name("resetSql", "reset_sql", __FILE__)) { reset_sql(); return; }
+    _mudcore_impl_reset_sql();
+}
+private void _mudcore_impl_reset_sql() {
     db_error = 0;
     db_withColumn = 0;
     db_distinct = 0;
@@ -382,8 +425,8 @@ varargs object sql(string sql, mixed *bindings) {
 
     if (!stringp(sql)) error("SQL template must be a string.\n");
     if (bindings && !arrayp(bindings)) error("SQL bindings must be an array.\n");
-    prepared = arrayp(bindings) ? bindSql(sql, bindings) : sql;
-    resetSql();
+    prepared = arrayp(bindings) ? bind_sql(sql, bindings) : sql;
+    reset_sql();
     db_rawSql = prepared;
     db_sql = prepared;
 
@@ -396,8 +439,8 @@ varargs object sql(string sql, mixed *bindings) {
  * @return object
  */
 object table(string table) {
-    resetSql();
-    db_table = sqlIdentifier(table);
+    reset_sql();
+    db_table = sql_identifier(table);
 
     return this_object();
 }
@@ -418,17 +461,47 @@ object distinct() {
  * @param del 分隔符
  * @return string
  */
+private string _mudcore_impl_join_sql_values(mixed *arr, string del);
+string implodeX(mixed *arr, string del);
+string join_sql_values(mixed *arr, string del) {
+    if (_mudcore_forward_name("join_sql_values", "implodeX", __FILE__)) {
+        return implodeX(arr, del);
+    }
+    return _mudcore_impl_join_sql_values(arr, del);
+}
+// Legacy alias; retain host overrides and ::parent calls during migration.
 string implodeX(mixed *arr, string del) {
+    if (_mudcore_forward_name("implodeX", "join_sql_values", __FILE__)) {
+        return join_sql_values(arr, del);
+    }
+    return _mudcore_impl_join_sql_values(arr, del);
+}
+private string _mudcore_impl_join_sql_values(mixed *arr, string del) {
     string *result;
     mixed value;
 
     result = ({});
-    foreach (value in arr) result += ({ sqlValue(value) });
+    foreach (value in arr) result += ({ sql_value(value) });
     return implode(result, del);
 }
 
 // 数组条件作为一组追加，保留已有条件，避免多次调用互相覆盖。
+private void _mudcore_impl_append_where_group(mixed *where, string boolean);
+void addArrayOfWheres(mixed *where, string boolean);
+void append_where_group(mixed *where, string boolean) {
+    if (_mudcore_forward_name("append_where_group", "addArrayOfWheres", __FILE__)) {
+        addArrayOfWheres(where, boolean); return;
+    }
+    _mudcore_impl_append_where_group(where, boolean);
+}
+// Legacy alias; retain host overrides and ::parent calls during migration.
 void addArrayOfWheres(mixed *where, string boolean) {
+    if (_mudcore_forward_name("addArrayOfWheres", "append_where_group", __FILE__)) {
+        append_where_group(where, boolean); return;
+    }
+    _mudcore_impl_append_where_group(where, boolean);
+}
+private void _mudcore_impl_append_where_group(mixed *where, string boolean) {
     string *conditions;
     mixed item;
 
@@ -436,80 +509,294 @@ void addArrayOfWheres(mixed *where, string boolean) {
     conditions = ({});
     foreach (item in where) {
         if (!arrayp(item)) error("SQL condition group must contain arrays.\n");
-        conditions += ({ sqlCondition(item) });
+        conditions += ({ sql_condition(item) });
     }
-    appendWhere("(" + implode(conditions, " AND ") + ")", boolean);
+    append_where("(" + implode(conditions, " AND ") + ")", boolean);
 }
 
 object where(mixed *x...) {
-    if (sizeof(x) == 1 && arrayp(x[0])) addArrayOfWheres(x[0], "AND");
-    else appendWhere(sqlCondition(x), "AND");
+    if (sizeof(x) == 1 && arrayp(x[0])) append_where_group(x[0], "AND");
+    else append_where(sql_condition(x), "AND");
     return this_object();
 }
 
+private object _mudcore_impl_or_where(mixed *x...);
+object orWhere(mixed *x...);
+object or_where(mixed *x...) {
+    if (_mudcore_forward_name("or_where", "orWhere", __FILE__)) { return orWhere(x...); }
+    return _mudcore_impl_or_where(x...);
+}
+// Legacy alias; retain host overrides and ::parent calls during migration.
 object orWhere(mixed *x...) {
-    if (sizeof(x) == 1 && arrayp(x[0])) addArrayOfWheres(x[0], "OR");
-    else appendWhere(sqlCondition(x), "OR");
+    if (_mudcore_forward_name("orWhere", "or_where", __FILE__)) { return or_where(x...); }
+    return _mudcore_impl_or_where(x...);
+}
+private object _mudcore_impl_or_where(mixed *x...) {
+    if (sizeof(x) == 1 && arrayp(x[0])) append_where_group(x[0], "OR");
+    else append_where(sql_condition(x), "OR");
     return this_object();
 }
 
-private object addBetween(string column, mixed *values, int not, string boolean) {
+private object add_between(string column, mixed *values, int not, string boolean) {
     string condition;
 
     if (!arrayp(values) || sizeof(values) != 2) error("BETWEEN requires two values.\n");
-    condition = sqlColumn(
+    condition = sql_column(
         column,
         0
-    ) + (not ? " NOT BETWEEN " : " BETWEEN ") + sqlValue(values[0]) + " AND " + sqlValue(values[1]);
-    appendWhere(condition, boolean);
+    ) + (not ? " NOT BETWEEN " : " BETWEEN ") + sql_value(values[0]) + " AND " + sql_value(values[1]);
+    append_where(condition, boolean);
     return this_object();
 }
 
+private varargs object _mudcore_impl_where_between(string column, mixed *x, int not);
+varargs object whereBetween(string column, mixed *x, int not);
+varargs object where_between(string column, mixed *x, int not) {
+    if (_mudcore_forward_name("where_between", "whereBetween", __FILE__)) {
+        return whereBetween(column, x, not);
+    }
+    return _mudcore_impl_where_between(column, x, not);
+}
+// Legacy alias; retain host overrides and ::parent calls during migration.
 varargs object whereBetween(string column, mixed *x, int not) {
-    return addBetween(column, x, not, "AND");
+    if (_mudcore_forward_name("whereBetween", "where_between", __FILE__)) {
+        return where_between(column, x, not);
+    }
+    return _mudcore_impl_where_between(column, x, not);
 }
-object whereNotBetween(string column, mixed *x) { return addBetween(column, x, 1, "AND"); }
+private varargs object _mudcore_impl_where_between(string column, mixed *x, int not) {
+    return add_between(column, x, not, "AND");
+}
+private object _mudcore_impl_where_not_between(string column, mixed *x);
+object whereNotBetween(string column, mixed *x);
+object where_not_between(string column, mixed *x) {
+    if (_mudcore_forward_name("where_not_between", "whereNotBetween", __FILE__)) {
+        return whereNotBetween(column, x);
+    }
+    return _mudcore_impl_where_not_between(column, x);
+}
+// Legacy alias; retain host overrides and ::parent calls during migration.
+object whereNotBetween(string column, mixed *x) {
+    if (_mudcore_forward_name("whereNotBetween", "where_not_between", __FILE__)) {
+        return where_not_between(column, x);
+    }
+    return _mudcore_impl_where_not_between(column, x);
+}
+private object _mudcore_impl_where_not_between(string column, mixed *x) {
+    return add_between(column, x, 1, "AND");
+}
+private varargs object _mudcore_impl_or_where_between(string column, mixed *x, int not);
+varargs object orWhereBetween(string column, mixed *x, int not);
+varargs object or_where_between(string column, mixed *x, int not) {
+    if (_mudcore_forward_name("or_where_between", "orWhereBetween", __FILE__)) {
+        return orWhereBetween(column, x, not);
+    }
+    return _mudcore_impl_or_where_between(column, x, not);
+}
+// Legacy alias; retain host overrides and ::parent calls during migration.
 varargs object orWhereBetween(string column, mixed *x, int not) {
-    return addBetween(column, x, not, "OR");
+    if (_mudcore_forward_name("orWhereBetween", "or_where_between", __FILE__)) {
+        return or_where_between(column, x, not);
+    }
+    return _mudcore_impl_or_where_between(column, x, not);
 }
-object orWhereNotBetween(string column, mixed *x) { return addBetween(column, x, 1, "OR"); }
+private varargs object _mudcore_impl_or_where_between(string column, mixed *x, int not) {
+    return add_between(column, x, not, "OR");
+}
+private object _mudcore_impl_or_where_not_between(string column, mixed *x);
+object orWhereNotBetween(string column, mixed *x);
+object or_where_not_between(string column, mixed *x) {
+    if (_mudcore_forward_name("or_where_not_between", "orWhereNotBetween", __FILE__)) {
+        return orWhereNotBetween(column, x);
+    }
+    return _mudcore_impl_or_where_not_between(column, x);
+}
+// Legacy alias; retain host overrides and ::parent calls during migration.
+object orWhereNotBetween(string column, mixed *x) {
+    if (_mudcore_forward_name("orWhereNotBetween", "or_where_not_between", __FILE__)) {
+        return or_where_not_between(column, x);
+    }
+    return _mudcore_impl_or_where_not_between(column, x);
+}
+private object _mudcore_impl_or_where_not_between(string column, mixed *x) {
+    return add_between(column, x, 1, "OR");
+}
 
-private object addNull(string column, int not, string boolean) {
-    appendWhere(sqlColumn(column, 0) + (not ? " IS NOT NULL" : " IS NULL"), boolean);
+private object add_null(string column, int not, string boolean) {
+    append_where(sql_column(column, 0) + (not ? " IS NOT NULL" : " IS NULL"), boolean);
     return this_object();
 }
 
-varargs object whereNull(string column, int not) { return addNull(column, not, "AND"); }
-object whereNotNull(string column) { return addNull(column, 1, "AND"); }
-varargs object orWhereNull(string column, int not) { return addNull(column, not, "OR"); }
-object orWhereNotNull(string column) { return addNull(column, 1, "OR"); }
+private varargs object _mudcore_impl_where_null(string column, int not);
+varargs object whereNull(string column, int not);
+varargs object where_null(string column, int not) {
+    if (_mudcore_forward_name("where_null", "whereNull", __FILE__)) {
+        return whereNull(column, not);
+    }
+    return _mudcore_impl_where_null(column, not);
+}
+// Legacy alias; retain host overrides and ::parent calls during migration.
+varargs object whereNull(string column, int not) {
+    if (_mudcore_forward_name("whereNull", "where_null", __FILE__)) {
+        return where_null(column, not);
+    }
+    return _mudcore_impl_where_null(column, not);
+}
+private varargs object _mudcore_impl_where_null(string column, int not) {
+    return add_null(column, not, "AND");
+}
+private object _mudcore_impl_where_not_null(string column);
+object whereNotNull(string column);
+object where_not_null(string column) {
+    if (_mudcore_forward_name("where_not_null", "whereNotNull", __FILE__)) {
+        return whereNotNull(column);
+    }
+    return _mudcore_impl_where_not_null(column);
+}
+// Legacy alias; retain host overrides and ::parent calls during migration.
+object whereNotNull(string column) {
+    if (_mudcore_forward_name("whereNotNull", "where_not_null", __FILE__)) {
+        return where_not_null(column);
+    }
+    return _mudcore_impl_where_not_null(column);
+}
+private object _mudcore_impl_where_not_null(string column) { return add_null(column, 1, "AND"); }
+private varargs object _mudcore_impl_or_where_null(string column, int not);
+varargs object orWhereNull(string column, int not);
+varargs object or_where_null(string column, int not) {
+    if (_mudcore_forward_name("or_where_null", "orWhereNull", __FILE__)) {
+        return orWhereNull(column, not);
+    }
+    return _mudcore_impl_or_where_null(column, not);
+}
+// Legacy alias; retain host overrides and ::parent calls during migration.
+varargs object orWhereNull(string column, int not) {
+    if (_mudcore_forward_name("orWhereNull", "or_where_null", __FILE__)) {
+        return or_where_null(column, not);
+    }
+    return _mudcore_impl_or_where_null(column, not);
+}
+private varargs object _mudcore_impl_or_where_null(string column, int not) {
+    return add_null(column, not, "OR");
+}
+private object _mudcore_impl_or_where_not_null(string column);
+object orWhereNotNull(string column);
+object or_where_not_null(string column) {
+    if (_mudcore_forward_name("or_where_not_null", "orWhereNotNull", __FILE__)) {
+        return orWhereNotNull(column);
+    }
+    return _mudcore_impl_or_where_not_null(column);
+}
+// Legacy alias; retain host overrides and ::parent calls during migration.
+object orWhereNotNull(string column) {
+    if (_mudcore_forward_name("orWhereNotNull", "or_where_not_null", __FILE__)) {
+        return or_where_not_null(column);
+    }
+    return _mudcore_impl_or_where_not_null(column);
+}
+private object _mudcore_impl_or_where_not_null(string column) { return add_null(column, 1, "OR"); }
 
-private object addIn(string column, mixed *values, int not, string boolean) {
+private object add_in(string column, mixed *values, int not, string boolean) {
     string field, condition;
 
-    field = sqlColumn(column, 0);
+    field = sql_column(column, 0);
     if (!arrayp(values)) error("IN requires an array.\n");
     // 空集合不产生无效 SQL，IN 恒假，NOT IN 恒真。
-    condition = sizeof(values) ? field + (not ? " NOT IN (" : " IN (") + implodeX(
+    condition = sizeof(values) ? field + (not ? " NOT IN (" : " IN (") + join_sql_values(
         values,
         ","
     ) + ")" : (not ? "1=1" : "1=0");
-    appendWhere(condition, boolean);
+    append_where(condition, boolean);
     return this_object();
 }
 
-varargs object whereIn(string column, mixed *x, int not) { return addIn(column, x, not, "AND"); }
-object whereNotIn(string column, mixed *x) { return addIn(column, x, 1, "AND"); }
-varargs object orWhereIn(string column, mixed *x, int not) { return addIn(column, x, not, "OR"); }
-object orWhereNotIn(string column, mixed *x) { return addIn(column, x, 1, "OR"); }
+private varargs object _mudcore_impl_where_in(string column, mixed *x, int not);
+varargs object whereIn(string column, mixed *x, int not);
+varargs object where_in(string column, mixed *x, int not) {
+    if (_mudcore_forward_name("where_in", "whereIn", __FILE__)) { return whereIn(column, x, not); }
+    return _mudcore_impl_where_in(column, x, not);
+}
+// Legacy alias; retain host overrides and ::parent calls during migration.
+varargs object whereIn(string column, mixed *x, int not) {
+    if (_mudcore_forward_name("whereIn", "where_in", __FILE__)) { return where_in(column, x, not); }
+    return _mudcore_impl_where_in(column, x, not);
+}
+private varargs object _mudcore_impl_where_in(string column, mixed *x, int not) {
+    return add_in(column, x, not, "AND");
+}
+private object _mudcore_impl_where_not_in(string column, mixed *x);
+object whereNotIn(string column, mixed *x);
+object where_not_in(string column, mixed *x) {
+    if (_mudcore_forward_name("where_not_in", "whereNotIn", __FILE__)) {
+        return whereNotIn(column, x);
+    }
+    return _mudcore_impl_where_not_in(column, x);
+}
+// Legacy alias; retain host overrides and ::parent calls during migration.
+object whereNotIn(string column, mixed *x) {
+    if (_mudcore_forward_name("whereNotIn", "where_not_in", __FILE__)) {
+        return where_not_in(column, x);
+    }
+    return _mudcore_impl_where_not_in(column, x);
+}
+private object _mudcore_impl_where_not_in(string column, mixed *x) {
+    return add_in(column, x, 1, "AND");
+}
+private varargs object _mudcore_impl_or_where_in(string column, mixed *x, int not);
+varargs object orWhereIn(string column, mixed *x, int not);
+varargs object or_where_in(string column, mixed *x, int not) {
+    if (_mudcore_forward_name("or_where_in", "orWhereIn", __FILE__)) {
+        return orWhereIn(column, x, not);
+    }
+    return _mudcore_impl_or_where_in(column, x, not);
+}
+// Legacy alias; retain host overrides and ::parent calls during migration.
+varargs object orWhereIn(string column, mixed *x, int not) {
+    if (_mudcore_forward_name("orWhereIn", "or_where_in", __FILE__)) {
+        return or_where_in(column, x, not);
+    }
+    return _mudcore_impl_or_where_in(column, x, not);
+}
+private varargs object _mudcore_impl_or_where_in(string column, mixed *x, int not) {
+    return add_in(column, x, not, "OR");
+}
+private object _mudcore_impl_or_where_not_in(string column, mixed *x);
+object orWhereNotIn(string column, mixed *x);
+object or_where_not_in(string column, mixed *x) {
+    if (_mudcore_forward_name("or_where_not_in", "orWhereNotIn", __FILE__)) {
+        return orWhereNotIn(column, x);
+    }
+    return _mudcore_impl_or_where_not_in(column, x);
+}
+// Legacy alias; retain host overrides and ::parent calls during migration.
+object orWhereNotIn(string column, mixed *x) {
+    if (_mudcore_forward_name("orWhereNotIn", "or_where_not_in", __FILE__)) {
+        return or_where_not_in(column, x);
+    }
+    return _mudcore_impl_or_where_not_in(column, x);
+}
+private object _mudcore_impl_or_where_not_in(string column, mixed *x) {
+    return add_in(column, x, 1, "OR");
+}
 
+private object _mudcore_impl_group_by(string *column...);
+object groupBy(string *column...);
+object group_by(string *column...) {
+    if (_mudcore_forward_name("group_by", "groupBy", __FILE__)) { return groupBy(column...); }
+    return _mudcore_impl_group_by(column...);
+}
+// Legacy alias; retain host overrides and ::parent calls during migration.
 object groupBy(string *column...) {
+    if (_mudcore_forward_name("groupBy", "group_by", __FILE__)) { return group_by(column...); }
+    return _mudcore_impl_group_by(column...);
+}
+private object _mudcore_impl_group_by(string *column...) {
     string *groups;
     string field;
 
     if (!sizeof(column)) error("GROUP BY requires at least one column.\n");
     groups = ({});
-    foreach (field in column) groups += ({ sqlIdentifier(field) });
+    foreach (field in column) groups += ({ sql_identifier(field) });
     db_sql_groups += (sizeof(db_sql_groups) ? "," : "") + implode(groups, ",");
     return this_object();
 }
@@ -517,13 +804,28 @@ object groupBy(string *column...) {
 varargs object having(string column, string operator, mixed value, string boolean) {
     string condition, op;
 
-    condition = sqlCondition(({ column, operator, value }));
-    op = sqlBoolean(boolean);
+    condition = sql_condition(({ column, operator, value }));
+    op = sql_boolean(boolean);
     db_sql_havings += (sizeof(db_sql_havings) ? " " + op + " " : "") + condition;
     return this_object();
 }
 
+private object _mudcore_impl_or_having(string column, string operator, mixed value);
+object orHaving(string column, string operator, mixed value);
+object or_having(string column, string operator, mixed value) {
+    if (_mudcore_forward_name("or_having", "orHaving", __FILE__)) {
+        return orHaving(column, operator, value);
+    }
+    return _mudcore_impl_or_having(column, operator, value);
+}
+// Legacy alias; retain host overrides and ::parent calls during migration.
 object orHaving(string column, string operator, mixed value) {
+    if (_mudcore_forward_name("orHaving", "or_having", __FILE__)) {
+        return or_having(column, operator, value);
+    }
+    return _mudcore_impl_or_having(column, operator, value);
+}
+private object _mudcore_impl_or_having(string column, string operator, mixed value) {
     return having(column, operator, value, "OR");
 }
 /**
@@ -533,11 +835,22 @@ object orHaving(string column, string operator, mixed value) {
  * @param order asc / desc
  * @return object
  */
+private varargs object _mudcore_impl_order_by(string column, string order);
+varargs object orderBy(string column, string order);
+varargs object order_by(string column, string order) {
+    if (_mudcore_forward_name("order_by", "orderBy", __FILE__)) { return orderBy(column, order); }
+    return _mudcore_impl_order_by(column, order);
+}
+// Legacy alias; retain host overrides and ::parent calls during migration.
 varargs object orderBy(string column, string order) {
+    if (_mudcore_forward_name("orderBy", "order_by", __FILE__)) { return order_by(column, order); }
+    return _mudcore_impl_order_by(column, order);
+}
+private varargs object _mudcore_impl_order_by(string column, string order) {
     string field;
 
     if (!nullp(column)) {
-        field = sqlColumn(column, 0);
+        field = sql_column(column, 0);
         if (!stringp(order) || member_array(lower_case(order), ({ "asc", "desc" })) < 0) {
             order = "ASC";
         }
@@ -551,7 +864,22 @@ varargs object orderBy(string column, string order) {
     return this_object();
 }
 
+private object _mudcore_impl_in_random_order();
+object inRandomOrder();
+object in_random_order() {
+    if (_mudcore_forward_name("in_random_order", "inRandomOrder", __FILE__)) {
+        return inRandomOrder();
+    }
+    return _mudcore_impl_in_random_order();
+}
+// Legacy alias; retain host overrides and ::parent calls during migration.
 object inRandomOrder() {
+    if (_mudcore_forward_name("inRandomOrder", "in_random_order", __FILE__)) {
+        return in_random_order();
+    }
+    return _mudcore_impl_in_random_order();
+}
+private object _mudcore_impl_in_random_order() {
     db_inRandomOrder = 1;
 
     return this_object();
@@ -659,7 +987,7 @@ varargs mixed close(int flag) {
  * @brief 执行SQL语句并返回结果行数
  *
  */
-private mixed executeQuery(string query) {
+private mixed execute_query(string query) {
     mixed rows;
 
     db_error = 0;
@@ -683,11 +1011,11 @@ private mixed executeQuery(string query) {
 }
 
 varargs mixed exec() {
-    return executeQuery(db_sql());
+    return execute_query(db_sql());
 }
 
 // 某些 SQLite 驱动把执行失败也返回为 0，读取接口还必须确认列元数据。
-private int hasResultColumns() {
+private int has_result_columns() {
     if (arrayp(db_table_column) && sizeof(db_table_column)) return 1;
     close();
     db_error = "Database query returned no column metadata.";
@@ -698,11 +1026,11 @@ varargs mixed get(string *columns...) {
     mixed rows, *res;
     int i;
 
-    db_sql_columns = sizeof(columns) ? sqlColumns(columns) : "*";
+    db_sql_columns = sizeof(columns) ? sql_columns(columns) : "*";
 
     rows = exec();
     /* error */
-    if (stringp(db_error) || !hasResultColumns()) {
+    if (stringp(db_error) || !has_result_columns()) {
         return db_error;
     }
 
@@ -740,11 +1068,11 @@ varargs mixed first(string *columns...) {
     mixed rows, *res;
     int i = 1;
 
-    db_sql_columns = sizeof(columns) ? sqlColumns(columns) : "*";
+    db_sql_columns = sizeof(columns) ? sql_columns(columns) : "*";
 
-    rows = executeQuery(db_sql(!db_inRandomOrder));
+    rows = execute_query(db_sql(!db_inRandomOrder));
     /* error */
-    if (stringp(db_error) || !hasResultColumns()) {
+    if (stringp(db_error) || !has_result_columns()) {
         return db_error;
     }
 
@@ -789,11 +1117,11 @@ private mixed aggregate(string func, mixed column) {
 
     if (!column) return "";
     if (!stringp(db_table)) error("Call table() before an aggregate query.\n");
-    expression = intp(column) ? sprintf("%d", column) : sqlColumn(column, 0);
+    expression = intp(column) ? sprintf("%d", column) : sql_column(column, 0);
     if (db_distinct && stringp(column) && column != "*") expression = "DISTINCT " + expression;
     query = "SELECT " + func + "(" + expression + ") FROM " + db_table;
-    rows = executeQuery(db_sql_bindings(query));
-    if (stringp(db_error) || !hasResultColumns()) return db_error;
+    rows = execute_query(db_sql_bindings(query));
+    if (stringp(db_error) || !has_result_columns()) return db_error;
     if (!rows) {
         close();
         return 0;
@@ -841,14 +1169,14 @@ mixed insert(mapping m) {
     fields = ({});
     encoded = ({});
     foreach (column in columns) {
-        fields += ({ sqlIdentifier(column) });
-        encoded += ({ sqlValue(m[column]) });
+        fields += ({ sql_identifier(column) });
+        encoded += ({ sql_value(m[column]) });
     }
     query = "INSERT INTO " + db_table + " (" + implode(
         fields,
         ","
     ) + ") VALUES (" + implode(encoded, ",") + ")";
-    executeQuery(query);
+    execute_query(query);
     if (stringp(db_error)) return db_error;
     close();
     return 1;
@@ -863,9 +1191,9 @@ mixed update(mapping m) {
     if (!sizeof(m)) error("UPDATE requires at least one field.\n");
     assignments = ({});
     foreach (key, value in m)
-        assignments += ({ sqlIdentifier(key) + "=" + sqlValue(value) });
+        assignments += ({ sql_identifier(key) + "=" + sql_value(value) });
     query = "UPDATE " + db_table + " SET " + implode(assignments, ",");
-    executeQuery(db_sql_bindings(query, 1));
+    execute_query(db_sql_bindings(query, 1));
     if (stringp(db_error)) return db_error;
     close();
     return 1;
@@ -873,7 +1201,7 @@ mixed update(mapping m) {
 
 mixed delete() {
     if (!stringp(db_table)) error("Call table() before DELETE.\n");
-    executeQuery(db_sql_bindings("DELETE FROM " + db_table, 1));
+    execute_query(db_sql_bindings("DELETE FROM " + db_table, 1));
     if (stringp(db_error)) return db_error;
     close();
     return 1;

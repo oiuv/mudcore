@@ -5,6 +5,8 @@
 
 inherit _CLEAN_UP;
 
+#include <function_compat.h>
+
 void create() { seteuid(getuid()); }
 
 void show_info(object me, mapping coord) {
@@ -133,7 +135,7 @@ int main(object me, string arg) {
     if (arg == "loads") {
         int x, y, i;
         string *lolo;
-        lolo = environment(me)->query_LOLO();
+        lolo = _mudcore_call_named(environment(me), "query_load_locations", "query_LOLO");
         if ((i = sizeof(lolo)) > 0) {
             write("==================== 目前這個區域有載入对象的座標 ====================\n");
             while (i--) {
@@ -150,13 +152,13 @@ int main(object me, string arg) {
     }
 
     if (arg == "pattern") {
-        AREA_PATTERN_D->listPatterns();
+        _mudcore_call_named(AREA_PATTERN_D, "list_patterns", "listPatterns");
         return 1;
     }
 
     if (sscanf(arg, "%s %d -%s", type, value, control) == 3) {
         if (type == "pattern" && control == "s") {
-            AREA_PATTERN_D->setPattern(me, value);
+            _mudcore_call_named(AREA_PATTERN_D, "apply_pattern", "setPattern", me, value);
             write("ok.\n");
             return 1;
         }
@@ -164,7 +166,7 @@ int main(object me, string arg) {
 
     if (sscanf(arg, "%s %d", type, value) == 2) {
         if (type == "pattern") {
-            AREA_PATTERN_D->patternInfo(value);
+            _mudcore_call_named(AREA_PATTERN_D, "show_pattern_info", "patternInfo", value);
             return 1;
         }
     }

@@ -26,16 +26,16 @@ void run() {
 
     foreach (file in excluded) {
         dir = file[0..strsrch(file, "/", -1)];
-        MASTER_OB->check(skipLoadDir(dir), "loadall excluded directory: " + dir);
+        MASTER_OB->check(skip_load_dir(dir), "loadall excluded directory: " + dir);
         loadall(dir);
         loadall(dir[0..<2]);
         MASTER_OB->check(!objectp(find_object(file)), "loadall direct path skipped: " + file);
     }
     foreach (file in included) {
         dir = file[0..strsrch(file, "/", -1)];
-        MASTER_OB->check(!skipLoadDir(dir), "loadall preserves host directory: " + dir);
+        MASTER_OB->check(!skip_load_dir(dir), "loadall preserves host directory: " + dir);
     }
-    MASTER_OB->check(skipLoadDir("mudcore//tests/nested"), "loadall normalizes filter path");
+    MASTER_OB->check(skip_load_dir("mudcore//tests/nested"), "loadall normalizes filter path");
     loadall("/fixtures/commands");
     MASTER_OB->check(
         load_object("/fixtures/commands/duplicate")->marker() == 2,
