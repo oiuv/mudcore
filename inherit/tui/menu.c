@@ -1,0 +1,215 @@
+// /std/tui/menu — inline select / multiselect engine (pterm-style).
+//
+// Renders a prompt plus a scrolling choice list *in the normal output flow*
+// (no alternate screen), repainting in place with relative cursor movement.
+// Pure state machine like /std/tui/readline: feed key events, drain output;
+// /std/tui/terminal wires it to a live user via tui_select()/tui_multiselect().
+//
+//   ? Pick a class:
+//     ❯ warrior
+//       mage        (multiselect adds [x] marks; space toggles)
+//       thief
+//
+// Keys: ↑/↓/C-p/C-n move, PgUp/PgDn page, space toggles (multiselect),
+// Enter accepts, C-c/ESC aborts.  Typing printable characters filters the
+// list (pterm types-to-filter; case-insensitive substring); Backspace edits
+// the filter.  On completion the list collapses to a single
+// "? prompt: answer" line.  Results are always indexes into the ORIGINAL
+// choices array, filter or not.
+
+#include <tui.h>
+
+inherit TUI_ANSI;
+
+private string prompt = "";
+private string *items = ({});
+private int multi = 0;
+private int sel = 0;             // index into the filtered view
+private int top = 0;
+private int height = 7;          // max visible choices
+private int width = 0;           // terminal columns; 0 = no clipping
+private mapping checked = ([]);  // keyed by ORIGINAL item index
+private string filter = "";
+private int *vmap = ({});        // filtered view -> original index
+private int state = TUI_RL_MORE;
+private string out = "";
+private int drawn = 0;           // lines currently on screen
+private int began = 0;
+
+int m_state() { return state; }
+string m_take_output() { string o = out; out = ""; return o; }
+string m_filter() { return filter; }
+
+private void render();  // forward
+
+// Repaint in place (the terminal glue calls this after a NAWS resize).
+string m_redraw() {
+    if (state != TUI_RL_MORE || !began) return "";
+    render();
+    return m_take_output();
+}
+
+// The terminal glue feeds the real width (and re-feeds it on NAWS resize)
+// so long items never wrap and corrupt the repaint math.
+void m_set_width(int w) { width = w > 0 ? w : 0; }
+
+// selected original index (single), or the sorted checked indexes (multi)
+mixed m_result() {
+    if (multi) {
+        int *r = ({});
+        int i;
+
+        for (i = 0; i < sizeof(items); i++) {
+            if (checked[i]) r += ({ i });
+        }
+        return r;
+    }
+    return sizeof(vmap) ? vmap[sel] : -1;
+}
+
+string m_item(int i) { return i >= 0 && i < sizeof(items) ? items[i] : 0; }
+
+private void refilter() {
+    int keep = sizeof(vmap) && sel < sizeof(vmap) ? vmap[sel] : -1;
+    int i;
+
+    vmap = ({});
+    for (i = 0; i < sizeof(items); i++) {
+        if (filter == "" || strsrch(lower_case(items[i]), lower_case(filter)) != -1) {
+            vmap += ({ i });
+        }
+    }
+    sel = 0;
+    for (i = 0; i < sizeof(vmap); i++) {
+        if (vmap[i] == keep) {
+            sel = i;
+            break;
+        }
+    }
+    if (top > sel) top = sel;
+}
+
+private string clip(string s, int used) {
+    // leave the last column free: writing into it makes terminals autowrap,
+    // which would break the ansi_up(drawn) repaint arithmetic
+    return width > 0 ? wslice(s, 0, width - 1 - used) : s;
+}
+
+private string answer_text() {
+    if (state != TUI_RL_DONE) return "-";
+    if (!multi) {
+        int r = m_result();
+        return r >= 0 ? items[r] : "-";
+    }
+    return implode(map(m_result(), (: items[$1] :)), ", ");
+}
+
+private void render() {
+    string *lines;
+    int i, n = sizeof(vmap);
+
+    lines = ({ clip("? " + prompt +
+        (filter != "" ? " " + ansi_sgr("2") + filter + ansi_reset() : ""),
+        filter != "" ? 9 : 0) });
+    if (sel < top) top = sel;
+    if (sel >= top + height) top = sel - height + 1;
+    if (top < 0) top = 0;
+    if (top > 0) lines += ({ "    …" });
+    for (i = top; i < n && i < top + height; i++) {
+        string mark = multi ? (checked[vmap[i]] ? "[x] " : "[ ] ") : "";
+        string item = clip(items[vmap[i]], 4 + strlen(mark));
+        string line;
+
+        if (i == sel) {
+            line = "  ❯ " + mark + ansi_sgr("7") + item + ansi_reset();
+        } else {
+            line = "    " + mark + item;
+        }
+        lines += ({ line });
+    }
+    if (!n) lines += ({ "    " + ansi_sgr("2") + "(no match)" + ansi_reset() });
+    if (top + height < n) lines += ({ "    …" });
+
+    out += "\r" + ansi_up(drawn);
+    foreach (string l in lines) out += l + ansi_el(0) + "\r\n";
+    out += ansi_ed(0);
+    drawn = sizeof(lines);
+}
+
+private void finish() {
+    string head = clip("? " + prompt + " ", 12);
+    string answer = answer_text();
+
+    if (width > 0) answer = wslice(answer, 0, width - 1 - visible_width(head));
+    out += "\r" + ansi_up(drawn) + head + ansi_sgr("1;36") + answer + ansi_reset() + ansi_el(0) + "\r\n" + ansi_ed(0);
+    drawn = 0;
+    began = 0;
+}
+
+varargs string m_begin(string p, string *choices, mapping opts) {
+    prompt = stringp(p) ? p : "";
+    items = arrayp(choices) ? choices[0..] : ({});
+    if (!mapp(opts)) opts = ([]);
+    multi = opts["multi"];
+    height = opts["height"] > 0 ? opts["height"] : 7;
+    if (opts["width"] > 0) width = opts["width"];
+    checked = ([]);
+    if (arrayp(opts["checked"])) {
+        foreach (int i in opts["checked"]) checked[i] = 1;
+    }
+    filter = "";
+    vmap = ({});
+    refilter();
+    sel = opts["initial"] >= 0 && opts["initial"] < sizeof(vmap) ? opts["initial"] : 0;
+    top = 0;
+    state = sizeof(items) ? TUI_RL_MORE : TUI_RL_ABORT;
+    out = "";
+    drawn = 0;
+    began = 1;
+    render();
+    return m_take_output();
+}
+
+int m_feed(mixed ev) {
+    if (state != TUI_RL_MORE || !began) return state;
+
+    if (ev == TUI_KEY_UP || ev == TUI_CTRL('p')) {
+        if (sel > 0) sel--;
+    } else if (ev == TUI_KEY_DOWN || ev == TUI_CTRL('n')) {
+        if (sel < sizeof(vmap) - 1) sel++;
+    } else if (ev == TUI_KEY_PGUP) {
+        sel = sel - height < 0 ? 0 : sel - height;
+    } else if (ev == TUI_KEY_PGDN) {
+        sel = sel + height >= sizeof(vmap) ? sizeof(vmap) - 1 : sel + height;
+        if (sel < 0) sel = 0;
+    } else if (ev == TUI_KEY_HOME) {
+        sel = 0;
+    } else if (ev == TUI_KEY_END) {
+        if (sizeof(vmap)) sel = sizeof(vmap) - 1;
+    } else if (multi && ev == " ") {
+        if (sizeof(vmap)) checked[vmap[sel]] = !checked[vmap[sel]];
+    } else if (ev == TUI_KEY_BACKSPACE) {
+        if (filter == "") return state;  // nothing to erase: no repaint
+        filter = filter[0..<2];
+        refilter();
+    } else if (stringp(ev) && ev != "" && ev[0] >= 32 && ev[0] != 127) {
+        // type-to-filter: printable text narrows the list (space reserved for
+        // toggling in multi mode, handled above)
+        filter += ev;
+        refilter();
+    } else if (ev == TUI_KEY_ENTER) {
+        if (!multi && !sizeof(vmap)) return state;  // nothing to accept
+        if (multi && !sizeof(m_result()) && sizeof(vmap)) checked[vmap[sel]] = 1;
+        state = TUI_RL_DONE;
+        finish();
+        return state;
+    } else if (ev == TUI_CTRL('c') || ev == TUI_KEY_ESC) {
+        state = TUI_RL_ABORT;
+        finish();
+        return state;
+    } else {
+        return state;  // ignored key: no repaint
+    }
+    render();
+    return state;
+}

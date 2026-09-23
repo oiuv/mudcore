@@ -1,0 +1,142 @@
+// /std/tui/app — application container: screen ownership, widget list,
+// focus cycling, event routing.  Inherit it, override on_layout() (position
+// your widgets; called on open and on every resize) and optionally
+// on_unhandled_key() / on_close().
+//
+// The terminal glue (/std/tui/terminal) drives it: on_open/on_resize/
+// on_key/on_mouse arrive from there, and render() is collected after each
+// event batch.  Call app_quit() to leave the TUI.
+
+#include <tui.h>
+
+private object screen;
+private object *widgets = ({});
+private int focus = -1;
+private object term;
+private int quitting = 0;
+
+void app_quit();  // forward (used by on_key before its definition)
+
+object app_screen() { return screen; }
+object app_terminal() { return term; }
+object *app_widgets() { return widgets[0..]; }
+
+object app_add(object w) {
+    widgets += ({ w });
+    return w;
+}
+
+object app_focused() {
+    return focus >= 0 && focus < sizeof(widgets) ? widgets[focus] : 0;
+}
+
+void app_focus(object w) {
+    int i = member_array(w, widgets);
+
+    if (i == -1 || !widgets[i]->query_focusable()) return;
+    if (focus >= 0 && focus < sizeof(widgets)) widgets[focus]->set_focused(0);
+    focus = i;
+    widgets[i]->set_focused(1);
+}
+
+void app_cycle_focus(int dir) {
+    int i, n = sizeof(widgets);
+    int from = focus;
+
+    if (!n) return;
+    // With nothing focused yet, cycle as if from just outside the list, so
+    // forward lands on the first focusable and backward on the last.
+    if (from < 0) from = dir > 0 ? -1 : 0;
+    for (i = 1; i <= n; i++) {
+        int j = (from + dir * i + n * i) % n;
+        if (widgets[j]->query_focusable()) {
+            app_focus(widgets[j]);
+            return;
+        }
+    }
+}
+
+// --- overridables ---
+void on_layout(int w, int h) {}
+int on_unhandled_key(mixed ev) { return 0; }
+void on_closed() {}
+
+void on_open(object t, int w, int h) {
+    term = t;
+    if (!screen) screen = clone_object(TUI_SCREEN);
+    screen->scr_resize(w, h);
+    on_layout(w, h);
+    if (focus == -1) app_cycle_focus(1);
+}
+
+void on_resize(int w, int h) {
+    if (!screen) return;
+    screen->scr_resize(w, h);
+    on_layout(w, h);
+}
+
+void on_key(mixed ev) {
+    object f = app_focused();
+
+    if (ev == TUI_CTRL('c')) {  // always quits, whatever has focus
+        app_quit();
+        return;
+    }
+    if (f && f->handle_key(ev)) return;
+    if (ev == TUI_KEY_TAB) {
+        app_cycle_focus(1);
+        return;
+    }
+    if (ev == (TUI_MOD_SHIFT | TUI_KEY_TAB)) {
+        app_cycle_focus(-1);
+        return;
+    }
+    if (on_unhandled_key(ev)) return;
+    if (ev == "q" || ev == TUI_CTRL('c')) app_quit();
+}
+
+void on_mouse(mixed *ev) {
+    foreach (object w in widgets) {
+        if (w->contains(ev[2], ev[3])) {
+            if (w->query_focusable()) app_focus(w);
+            w->handle_mouse(ev);
+            return;
+        }
+    }
+}
+
+string render() {
+    if (!screen) return "";
+    foreach (object w in widgets) {
+        if (w->query_visible()) w->draw(screen);
+    }
+    return screen->scr_frame();
+}
+
+void app_quit() {
+    object terminal, widget;
+    mixed err, cleanupError;
+
+    if (quitting) return;
+    quitting = 1;
+    terminal = term;
+    if (terminal) err = catch(terminal->tui_close());
+    // A refused asynchronous close must leave the application usable.
+    if (err && terminal && terminal->tui_active()) {
+        quitting = 0;
+        error(stringp(err) ? err : "TUI: application close refused.\n");
+    }
+    term = 0;
+    cleanupError = catch(on_closed());
+    if (!err) err = cleanupError;
+    foreach (widget in widgets) {
+        if (!widget) continue;
+        cleanupError = catch(widget->remove());
+        if (!err) err = cleanupError;
+        if (widget) destruct(widget);
+    }
+    widgets = ({});
+    if (screen) destruct(screen);
+    destruct(this_object());
+    if (err) error(stringp(err) ? err : "TUI: application cleanup failed.\n");
+}

@@ -21,6 +21,7 @@
 - [登录与角色身份](daemons/login_d.md)、[角色初始化](daemons/char_d.md)
 - [命令查找与别名](daemons/command_d.md)、[虚拟对象](daemons/virtual_d.md)
 - [房间](inherit/room.md)、[玩家消息与分页](inherit/message.md)
+- [TUI 终端界面](TUI.md)：可选表格、菜单、输入编辑与全屏控件
 - [任务](quest.md)、[战斗接口](daemons/combat_d.md)
 
 ## 网络、存储与服务
@@ -33,6 +34,6 @@
 
 ## 模拟外部函数
 
-单项说明位于 [simul_efun](simul_efun/)；包括数组与数值处理、位操作、中文转换和调试输出。完整入口及源码分别见 [框架函数目录](../README.md#系统函数simul-efuns) 与 [simul efun 实现](../system/kernel/simul_efun/)。
+单项说明位于 [simul_efun](simul_efun/)；包括数组与数值处理、位操作、中文转换和调试输出。常用数据接口包括 [JSON](simul_efun/json.md)、[Base64](simul_efun/base64.md)、[百分比](simul_efun/percent.md) 和 [按来源查找物品](simul_efun/present_clone.md)。完整入口及源码分别见 [框架函数目录](../README.md#系统函数simul-efuns) 与 [simul efun 实现](../system/kernel/simul_efun/)。
 
 文档尚未逐一覆盖所有公共方法，接口签名以对应源码为准。修改接口时同步维护相关说明，不以一次编译成功替代实际行为验证。

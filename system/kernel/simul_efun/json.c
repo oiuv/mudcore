@@ -7,7 +7,7 @@
  * older drivers.
  *
  *
- * mixed json_decode(string text)
+ * mixed json_decode(mixed text)
  *     Deserializes JSON into an LPC value.
  *
  * string json_encode(mixed value)
@@ -47,611 +47,312 @@
 #ifndef __STD_JSON_H
 #define __STD_JSON_H
 
-#define to_string(x)                ("" + (x))
+private mixed jsonParseValue(mixed *parse);
 
-#define JSON_DECODE_PARSE_TEXT      0
-#define JSON_DECODE_PARSE_POS       1
-#define JSON_DECODE_PARSE_LINE      2
-#define JSON_DECODE_PARSE_CHAR      3
-#define JSON_DECODE_PARSE_FIELDS    4
-
-private mixed json_decode_parse_value(mixed *parse);
-private varargs mixed json_decode_parse_string(mixed *parse, int initiator_checked);
-
-private void json_decode_parse_next_char(mixed *parse) {
-    parse[JSON_DECODE_PARSE_POS]++;
-    parse[JSON_DECODE_PARSE_CHAR]++;
+// parse: ({ UTF-8 buffer, byte offset }); buffers are only read, never changed.
+private int jsonPeek(mixed *parse) {
+    return parse[1] < sizeof(parse[0]) ? parse[0][parse[1]] : -1;
 }
 
-private void json_decode_parse_next_chars(mixed *parse, int num) {
-    parse[JSON_DECODE_PARSE_POS] += num;
-    parse[JSON_DECODE_PARSE_CHAR] += num;
+private void jsonError(mixed *parse, string message) {
+    error(sprintf("json_decode: %s at byte %d.\n", message, parse[1]));
 }
 
-private void json_decode_parse_next_line(mixed *parse) {
-    parse[JSON_DECODE_PARSE_POS]++;
-    parse[JSON_DECODE_PARSE_LINE]++;
-    parse[JSON_DECODE_PARSE_CHAR] = 1;
-}
-
-private void json_decode_skip_whitespaces(mixed *parse) {
+private void jsonWhitespace(mixed *parse) {
     int ch;
-    while (1) {
-        json_decode_parse_next_char(parse);
-        ch = parse[JSON_DECODE_PARSE_TEXT][parse[JSON_DECODE_PARSE_POS]];
-        if (ch == ' ' || ch == '\n' || ch == '\r' || ch == '\t') {
+
+    ch = jsonPeek(parse);
+    while (ch == ' ' || ch == '\t' || ch == '\r' || ch == '\n') {
+        parse[1]++;
+        ch = jsonPeek(parse);
+    }
+}
+
+// Grow fragment arrays geometrically to avoid repeatedly copying long strings.
+private void jsonAppend(mixed *parts, string text) {
+    if (!sizeof(text)) return;
+    if (parts[1] == sizeof(parts[0])) parts[0] += allocate(sizeof(parts[0]));
+    parts[0][parts[1]++] = text;
+}
+
+private string jsonJoin(mixed *parts) {
+    return parts[1] ? implode(parts[0][0..parts[1] - 1], "") : "";
+}
+
+private int jsonHex(mixed *parse) {
+    int i, ch, value;
+
+    for (i = 0; i < 4; i++) {
+        ch = jsonPeek(parse);
+        if (ch >= '0' && ch <= '9') ch -= '0';
+        else if (ch >= 'a' && ch <= 'f') ch -= 'a' - 10;
+        else if (ch >= 'A' && ch <= 'F') ch -= 'A' - 10;
+        else jsonError(parse, "invalid Unicode escape");
+        value = (value << 4) | ch;
+        parse[1]++;
+    }
+    return value;
+}
+
+// ICU conversion may replace malformed UTF-8, so check the byte round trip.
+private string jsonUtf8(buffer input) {
+    string text;
+    buffer encoded;
+    int i;
+
+    text = string_decode(input, "UTF-8");
+    encoded = string_encode(text, "UTF-8");
+    if (sizeof(encoded) != sizeof(input)) error("json_decode: invalid UTF-8.\n");
+    for (i = 0; i < sizeof(input); i++)
+        if (encoded[i] != input[i]) error("json_decode: invalid UTF-8.\n");
+    return text;
+}
+
+// sprintf("%c") rejects some valid Unicode code points on older drivers.
+private string jsonCodePoint(int code) {
+    buffer bytes;
+
+    if (code < 0x80) {
+        bytes = allocate_buffer(1);
+        bytes[0] = code;
+    } else if (code < 0x800) {
+        bytes = allocate_buffer(2);
+        bytes[0] = 0xc0 | (code >> 6);
+        bytes[1] = 0x80 | (code & 63);
+    } else if (code < 0x10000) {
+        bytes = allocate_buffer(3);
+        bytes[0] = 0xe0 | (code >> 12);
+        bytes[1] = 0x80 | ((code >> 6) & 63);
+        bytes[2] = 0x80 | (code & 63);
+    } else {
+        bytes = allocate_buffer(4);
+        bytes[0] = 0xf0 | (code >> 18);
+        bytes[1] = 0x80 | ((code >> 12) & 63);
+        bytes[2] = 0x80 | ((code >> 6) & 63);
+        bytes[3] = 0x80 | (code & 63);
+    }
+    return string_decode(bytes, "UTF-8");
+}
+
+private string jsonParseString(mixed *parse) {
+    mixed *parts;
+    string escaped;
+    int start, ch, code, low;
+
+    if (jsonPeek(parse) != '"') jsonError(parse, "expected a quoted string");
+    parse[1]++;
+    parts = ({ allocate(16), 0 });
+    start = parse[1];
+    for (;;) {
+        ch = jsonPeek(parse);
+        if (ch < 32) jsonError(parse, "unterminated string or unescaped control character");
+        if (ch != '"' && ch != '\\') {
+            parse[1]++;
             continue;
-        } else {
-            return;
         }
-    }
-}
-
-private int json_decode_hexdigit(int ch) {
-    switch (ch) {
-        case '0':
-            return 0;
-        case '1':
-        case '2':
-        case '3':
-        case '4':
-        case '5':
-        case '6':
-        case '7':
-        case '8':
-        case '9':
-            return ch - '0';
-        case 'a':
-        case 'A':
-            return 10;
-        case 'b':
-        case 'B':
-            return 11;
-        case 'c':
-        case 'C':
-            return 12;
-        case 'd':
-        case 'D':
-            return 13;
-        case 'e':
-        case 'E':
-            return 14;
-        case 'f':
-        case 'F':
-            return 15;
-    }
-    return -1;
-}
-
-private varargs int json_decode_parse_at_token(mixed *parse, string token, int start) {
-    int i, j;
-    for (i = start, j = strlen(token); i < j; i++)
-        if (parse[JSON_DECODE_PARSE_TEXT][parse[JSON_DECODE_PARSE_POS] + i] != token[i])
-            return 0;
-    return 1;
-}
-
-private varargs void json_decode_parse_error(mixed *parse, string msg, int ch) {
-    if (ch)
-        msg = sprintf("%s, '%c'", msg, ch);
-    msg = sprintf(
-        "%s @ line %d char %d\n",
-        msg,
-        parse[JSON_DECODE_PARSE_LINE],
-        parse[JSON_DECODE_PARSE_CHAR]
-    );
-    error(msg);
-}
-
-private mixed json_decode_parse_object(mixed *parse) {
-    mapping out = ([]);
-    int done = 0;
-    mixed key, value;
-    int found_non_whitespace, found_sep, found_comma;
-    json_decode_parse_next_char(parse);
-    if (parse[JSON_DECODE_PARSE_TEXT][parse[JSON_DECODE_PARSE_POS]] == '}') {
-        done = 1;
-        json_decode_parse_next_char(parse);
-    }
-    while (!done) {
-        found_non_whitespace = 0;
-        while (!found_non_whitespace) {
-            switch (parse[JSON_DECODE_PARSE_TEXT][parse[JSON_DECODE_PARSE_POS]]) {
-                case 0:
-                    json_decode_parse_error(parse, "Unexpected end of data");
-                case ' ':
-                case '\t':
-                case '\r':
-                    json_decode_parse_next_char(parse);
-                    break;
-                case 0x0c:
-                case '\n':
-                    json_decode_parse_next_line(parse);
-                    break;
-                default:
-                    found_non_whitespace = 1;
-                    break;
-            }
-        }
-        key = json_decode_parse_string(parse);
-        found_sep = 0;
-        while (!found_sep) {
-            int ch = parse[JSON_DECODE_PARSE_TEXT][parse[JSON_DECODE_PARSE_POS]];
-            switch (ch) {
-                case 0:
-                    json_decode_parse_error(parse, "Unexpected end of data");
-                case ':':
-                    found_sep = 1;
-                    json_decode_parse_next_char(parse);
-                    break;
-                case ' ':
-                case '\t':
-                case '\r':
-                    json_decode_parse_next_char(parse);
-                    break;
-                case 0x0c:
-                case '\n':
-                    json_decode_parse_next_line(parse);
-                    break;
-                default:
-                    json_decode_parse_error(parse, "Unexpected character", ch);
-            }
-        }
-        value = json_decode_parse_value(parse);
-        found_comma = 0;
-        while (!found_comma && !done) {
-            int ch = parse[JSON_DECODE_PARSE_TEXT][parse[JSON_DECODE_PARSE_POS]];
-            switch (ch) {
-                case 0:
-                    json_decode_parse_error(parse, "Unexpected end of data");
-                case ',':
-                    found_comma = 1;
-                    json_decode_parse_next_char(parse);
-                    break;
-                case '}':
-                    done = 1;
-                    json_decode_parse_next_char(parse);
-                    break;
-                case ' ':
-                case '\t':
-                case '\r':
-                    json_decode_parse_next_char(parse);
-                    break;
-                case 0x0c:
-                case '\n':
-                    json_decode_parse_next_line(parse);
-                    break;
-                default:
-                    json_decode_parse_error(parse, "Unexpected character", ch);
-            }
-        }
-        out[key] = value;
-    }
-    return out;
-}
-
-private mixed json_decode_parse_array(mixed *parse) {
-    mixed *out = ({});
-    int done = 0;
-    int found_comma;
-    json_decode_parse_next_char(parse);
-    if (parse[JSON_DECODE_PARSE_TEXT][parse[JSON_DECODE_PARSE_POS]] == ']') {
-        done = 1;
-        json_decode_parse_next_char(parse);
-    }
-    while (!done) {
-        mixed value = json_decode_parse_value(parse);
-        found_comma = 0;
-        while (!found_comma && !done) {
-            int ch = parse[JSON_DECODE_PARSE_TEXT][parse[JSON_DECODE_PARSE_POS]];
-            switch (ch) {
-                case 0:
-                    json_decode_parse_error(parse, "Unexpected end of data");
-                case ',':
-                    found_comma = 1;
-                    json_decode_parse_next_char(parse);
-                    break;
-                case ']':
-                    done = 1;
-                    json_decode_parse_next_char(parse);
-                    break;
-                case ' ':
-                case '\t':
-                case '\r':
-                    json_decode_parse_next_char(parse);
-                    break;
-                case 0x0c:
-                case '\n':
-                    json_decode_parse_next_line(parse);
-                    break;
-                default:
-                    json_decode_parse_error(parse, "Unexpected character", ch);
-            }
-        }
-        out += ({ value });
-    }
-    return out;
-}
-
-private varargs mixed json_decode_parse_string(mixed *parse, int initiator_checked) {
-    int from, to, esc_state, esc_active;
-    string out;
-    if (!initiator_checked) {
-        int ch = parse[JSON_DECODE_PARSE_TEXT][parse[JSON_DECODE_PARSE_POS]];
-        if (!ch)
-            json_decode_parse_error(parse, "Unexpected end of data");
-        if (ch != '"')
-            json_decode_parse_error(parse, "Unexpected character", ch);
-    }
-    json_decode_parse_next_char(parse);
-    from = parse[JSON_DECODE_PARSE_POS];
-    to = -1;
-    esc_state = 0;
-    esc_active = 0;
-    while (to == -1) {
-        switch (parse[JSON_DECODE_PARSE_TEXT][parse[JSON_DECODE_PARSE_POS]]) {
-            case 0:
-                json_decode_parse_error(parse, "Unexpected end of data");
-            case '\\':
-                esc_state = !esc_state;
-                break;
-            case '"':
-                if (esc_state) {
-                    esc_state = 0;
-                    esc_active++;
-                } else {
-                    to = parse[JSON_DECODE_PARSE_POS] - 1;
+        if (parse[1] > start)
+            jsonAppend(parts, jsonUtf8(parse[0][start..parse[1] - 1]));
+        parse[1]++;
+        if (ch == '"') return jsonJoin(parts);
+        ch = jsonPeek(parse);
+        parse[1]++;
+        switch (ch) {
+            case '"': escaped = "\""; break;
+            case '\\': escaped = "\\"; break;
+            case '/': escaped = "/"; break;
+            case 'b': escaped = "\b"; break;
+            case 'f': escaped = "\x0c"; break;
+            case 'n': escaped = "\n"; break;
+            case 'r': escaped = "\r"; break;
+            case 't': escaped = "\t"; break;
+            case 'u':
+                code = jsonHex(parse);
+                if (code >= 0xd800 && code <= 0xdbff) {
+                    if (jsonPeek(parse) != '\\') jsonError(parse, "missing low surrogate");
+                    parse[1]++;
+                    if (jsonPeek(parse) != 'u') jsonError(parse, "missing low surrogate");
+                    parse[1]++;
+                    low = jsonHex(parse);
+                    if (low < 0xdc00 || low > 0xdfff) jsonError(parse, "invalid low surrogate");
+                    code = 0x10000 + ((code - 0xd800) << 10) + low - 0xdc00;
+                } else if (code >= 0xdc00 && code <= 0xdfff) {
+                    jsonError(parse, "unexpected low surrogate");
                 }
+                escaped = jsonCodePoint(code);
                 break;
-            default:
-                if (esc_state) {
-                    esc_state = 0;
-                    esc_active++;
-                }
-                break;
+            default: jsonError(parse, "invalid string escape");
         }
-        json_decode_parse_next_char(parse);
+        jsonAppend(parts, escaped);
+        start = parse[1];
     }
-    out = string_decode(parse[JSON_DECODE_PARSE_TEXT][from..to], "utf-8");
-    if (esc_active) {
-        if (member_array('"', out) != -1)
-            out = replace_string(out, "\\\"", "\"");
-        if (strsrch(out, "\\b") != -1)
-            out = replace_string(out, "\\b", "\b");
-        if (strsrch(out, "\\f") != -1)
-            out = replace_string(out, "\\f", "\x0c");
-        if (strsrch(out, "\\n") != -1)
-            out = replace_string(out, "\\n", "\n");
-        if (strsrch(out, "\\r") != -1)
-            out = replace_string(out, "\\r", "\r");
-        if (strsrch(out, "\\t") != -1)
-            out = replace_string(out, "\\t", "\t");
-        if (strsrch(out, "\\u") != -1) {
-            for (int i = 0; i < strlen(out); i++) {
-                if (out[i] == '\\' && out[i + 1] == 'u') {
-                    int *nybbles = allocate(4);
-                    int character = 0;
-                    i += 2;
-                    for (int k = 0; k < 4; k++) {
-                        if ((nybbles[k] = json_decode_hexdigit(out[i + k])) == -1)
-                            json_decode_parse_error(parse, "Invalid hex digit", out[i + k]);
-                    }
-                    character = (nybbles[0] << 12) | (nybbles[1] << 8) | (nybbles[2] << 4) | nybbles[3];
-                    // Single codepoint character
-                    if (!(((character) & 0xfffff800) == 0xd800)) {
-                        i -= 2;
-                        out[i..i + 2 + 4 - 1] = sprintf("%c", character);
-                        i = 0;
-                        continue;
-                    } else {
-                        // UTF16 - Surrogate, attempts to parse the second value
-                        int codepoint;
-                        int next_character = 0;
-                        int *nybbles2 = allocate(4);
-                        i += 4;
-                        if (out[i..i + 1] != "\\u") json_decode_parse_error(
-                            parse,
-                            "Invalid string, missing surrogate pair"
-                        );
-                        i += 2;
-                        for (int k = 0; k < 4; k++) {
-                            if ((nybbles2[k] = json_decode_hexdigit(out[i + k])) == -1)
-                                json_decode_parse_error(parse, "Invalid hex digit", out[i + k]);
-                        }
-                        next_character = (nybbles2[0] << 12) | (nybbles2[1] << 8) | (nybbles2[2] << 4) | (nybbles2[3]);
-                        i -= 2 + 4 + 2;  // reset to first \u
-                        codepoint = 0x10000 + (character - 0xd800) * 0x400 + (next_character - 0xDC00);
-                        out[i..i + 2 + 4 + 2 + 4 - 1] = sprintf("%c", codepoint);
-                        i = 0;
-                        continue;
-                    }
-                }
-            }
-        }
-        if (member_array('/', out) != -1)
-            out = replace_string(out, "\\/", "/");
-        if (member_array('\\', out) != -1)
-            out = replace_string(out, "\\\\", "\\");
-    }
-    return out;
 }
 
-private mixed json_decode_parse_number(mixed *parse) {
-    int from = parse[JSON_DECODE_PARSE_POS];
-    int to = -1;
-    int dot = -1;
-    int exp = -1;
-    int ch;
-    int next_ch;
+private mixed jsonParseNumber(mixed *parse) {
+    int start, digits, floating, ch;
     string number;
 
-    ch = parse[JSON_DECODE_PARSE_TEXT][parse[JSON_DECODE_PARSE_POS]];
-    if (ch == '-') {
-        next_ch = parse[JSON_DECODE_PARSE_TEXT][parse[JSON_DECODE_PARSE_POS] + 1];
-        if (!next_ch) json_decode_parse_error(parse, "Unexpected end of data");
-        if (next_ch < '0' || next_ch > '9')
-            json_decode_parse_error(parse, "Unexpected character", next_ch);
-        json_decode_parse_next_char(parse);
-    }
-
-    ch = parse[JSON_DECODE_PARSE_TEXT][parse[JSON_DECODE_PARSE_POS]];
+    start = parse[1];
+    if (jsonPeek(parse) == '-') parse[1]++;
+    ch = jsonPeek(parse);
     if (ch == '0') {
-        // 0 can only either be an direct int value 0, or 0e or 0E
-        next_ch = parse[JSON_DECODE_PARSE_TEXT][parse[JSON_DECODE_PARSE_POS] + 1];
-        // 0 before EOF
-        if (next_ch == 0) {
-            json_decode_parse_next_char(parse);
-            return 0;
-        }
-        // only valid char here are .eE, continue parse
-        if (next_ch == '.' || next_ch == 'e' || next_ch == 'E') {
-            json_decode_parse_next_char(parse);
-        } else {
-            // consume until next non-whitespace
-            json_decode_skip_whitespaces(parse);
-            next_ch = parse[JSON_DECODE_PARSE_TEXT][parse[JSON_DECODE_PARSE_POS]];
-            // can not continue to be number.
-            if ((next_ch >= '0' && next_ch <= '9') || next_ch == '-') json_decode_parse_error(
-                parse,
-                "Unexpected character",
-                next_ch
-            );
-            return 0;
-        }
+        parse[1]++;
+    } else {
+        if (ch < '1' || ch > '9') jsonError(parse, "expected a digit");
+        while (jsonPeek(parse) >= '0' && jsonPeek(parse) <= '9') parse[1]++;
     }
-    while (to == -1) {
-        ch = parse[JSON_DECODE_PARSE_TEXT][parse[JSON_DECODE_PARSE_POS]];
-        switch (ch) {
-            case '.':
-                if (dot != -1 || exp != -1)
-                    json_decode_parse_error(parse, "Unexpected character", ch);
-                dot = parse[JSON_DECODE_PARSE_POS];
-                json_decode_parse_next_char(parse);
-                break;
-            case '0':
-            case '1':
-            case '2':
-            case '3':
-            case '4':
-            case '5':
-            case '6':
-            case '7':
-            case '8':
-            case '9':
-                json_decode_parse_next_char(parse);
-                break;
-            case 'e':
-            case 'E':
-                if (exp != -1)
-                    json_decode_parse_error(parse, "Unexpected character", ch);
-                exp = parse[JSON_DECODE_PARSE_POS];
-                json_decode_parse_next_char(parse);
-                break;
-            case '-':
-            case '+':
-                if (exp == parse[JSON_DECODE_PARSE_POS] - 1) {
-                    json_decode_parse_next_char(parse);
-                    break;
-                }
-                // Fallthrough
-            default:
-                to = parse[JSON_DECODE_PARSE_POS] - 1;
-                if (dot == to || to < from)
-                    json_decode_parse_error(parse, "Unexpected character", ch);
-                break;
-        }
+    if (jsonPeek(parse) == '.') {
+        floating = 1;
+        parse[1]++;
+        digits = parse[1];
+        while (jsonPeek(parse) >= '0' && jsonPeek(parse) <= '9') parse[1]++;
+        if (parse[1] == digits) jsonError(parse, "expected a fractional digit");
     }
-    number = string_decode(parse[JSON_DECODE_PARSE_TEXT][from..to], "utf-8");
-    if (dot != -1 || exp != -1)
-        return to_float(number);
-    else
-        return to_int(number);
+    ch = jsonPeek(parse);
+    if (ch == 'e' || ch == 'E') {
+        floating = 1;
+        parse[1]++;
+        ch = jsonPeek(parse);
+        if (ch == '+' || ch == '-') parse[1]++;
+        digits = parse[1];
+        while (jsonPeek(parse) >= '0' && jsonPeek(parse) <= '9') parse[1]++;
+        if (parse[1] == digits) jsonError(parse, "expected an exponent digit");
+    }
+    number = string_decode(parse[0][start..parse[1] - 1], "UTF-8");
+    return floating ? to_float(number) : to_int(number);
 }
 
-private mixed json_decode_parse_value(mixed *parse) {
-    for (;;) {
-        int ch;
-        ch = parse[JSON_DECODE_PARSE_TEXT][parse[JSON_DECODE_PARSE_POS]];
-        switch (ch) {
-            case 0:
-                json_decode_parse_error(parse, "Unexpected end of data");
-            case '{':
-                return json_decode_parse_object(parse);
-            case '[':
-                return json_decode_parse_array(parse);
-            case '"':
-                return json_decode_parse_string(parse, 1);
-            case '-':
-            case '0':
-            case '1':
-            case '2':
-            case '3':
-            case '4':
-            case '5':
-            case '6':
-            case '7':
-            case '8':
-            case '9':
-                return json_decode_parse_number(parse);
-            case ' ':
-            case '\t':
-            case '\r':
-                json_decode_parse_next_char(parse);
-                break;
-            case 0x0c:
-            case '\n':
-                json_decode_parse_next_line(parse);
-                break;
-            case 't':
-                if (json_decode_parse_at_token(parse, "true", 1)) {
-                    json_decode_parse_next_chars(parse, 4);
-                    return 1;
-                } else {
-                    json_decode_parse_error(parse, "Unexpected character", ch);
-                }
-            case 'f':
-                if (json_decode_parse_at_token(parse, "false", 1)) {
-                    json_decode_parse_next_chars(parse, 5);
-                    return 0;
-                } else {
-                    json_decode_parse_error(parse, "Unexpected character", ch);
-                }
-            case 'n':
-                if (json_decode_parse_at_token(parse, "null", 1)) {
-                    json_decode_parse_next_chars(parse, 4);
-                    return 0;
-                } else {
-                    json_decode_parse_error(parse, "Unexpected character", ch);
-                }
-            default:
-                json_decode_parse_error(parse, "Unexpected character", ch);
-        }
+private mixed jsonParseValue(mixed *parse) {
+    mapping fields;
+    mixed *items;
+    mixed value;
+    string key, token;
+    int ch, count, i;
+
+    jsonWhitespace(parse);
+    ch = jsonPeek(parse);
+    switch (ch) {
+        case '"': return jsonParseString(parse);
+        case '{':
+            fields = ([]);
+            parse[1]++;
+            jsonWhitespace(parse);
+            if (jsonPeek(parse) == '}') {
+                parse[1]++;
+                return fields;
+            }
+            for (;;) {
+                key = jsonParseString(parse);
+                jsonWhitespace(parse);
+                if (jsonPeek(parse) != ':') jsonError(parse, "expected ':'");
+                parse[1]++;
+                fields[key] = jsonParseValue(parse);
+                jsonWhitespace(parse);
+                ch = jsonPeek(parse);
+                parse[1]++;
+                if (ch == '}') return fields;
+                if (ch != ',') jsonError(parse, "expected ',' or '}'");
+                jsonWhitespace(parse);
+            }
+        case '[':
+            items = allocate(16);
+            parse[1]++;
+            jsonWhitespace(parse);
+            if (jsonPeek(parse) == ']') {
+                parse[1]++;
+                return ({});
+            }
+            for (;;) {
+                value = jsonParseValue(parse);
+                if (count == sizeof(items)) items += allocate(sizeof(items));
+                items[count++] = value;
+                jsonWhitespace(parse);
+                ch = jsonPeek(parse);
+                parse[1]++;
+                if (ch == ']') return items[0..count - 1];
+                if (ch != ',') jsonError(parse, "expected ',' or ']'");
+            }
+        case 't': token = "true"; value = 1; break;
+        case 'f': token = "false"; value = 0; break;
+        case 'n': token = "null"; value = 0; break;
+        default:
+            if (ch == '-' || (ch >= '0' && ch <= '9')) return jsonParseNumber(parse);
+            jsonError(parse, "expected a JSON value");
     }
+    for (i = 0; i < sizeof(token); i++) {
+        if (jsonPeek(parse) != token[i]) jsonError(parse, "invalid literal");
+        parse[1]++;
+    }
+    return value;
 }
 
-private mixed json_decode_parse(mixed *parse) {
-    mixed out = json_decode_parse_value(parse);
-    for (;;) {
-        int ch = parse[JSON_DECODE_PARSE_TEXT][parse[JSON_DECODE_PARSE_POS]];
-        switch (ch) {
-            case 0:
-                return out;
-            case ' ':
-            case '\t':
-            case '\r':
-                json_decode_parse_next_char(parse);
-                break;
-            case 0x0c:
-            case '\n':
-                json_decode_parse_next_line(parse);
-                break;
-            default:
-                json_decode_parse_error(parse, "Unexpected character", ch);
-        }
-    }
-    return 0;
-}
-
-mixed json_decode(string text) {
+mixed json_decode(mixed text) {
     mixed *parse;
-    buffer endl = allocate_buffer(1);
-    endl[0] = 0;
+    mixed value;
 
-    if (!text) {
-        return 0;
+    if (intp(text) && text == 0) return 0;
+    if (stringp(text)) text = string_encode(text, "UTF-8");
+    else if (!bufferp(text)) error("json_decode: expected a string or buffer.\n");
+    parse = ({ text, 0 });
+    value = jsonParseValue(parse);
+    jsonWhitespace(parse);
+    if (parse[1] != sizeof(text)) jsonError(parse, "unexpected trailing data");
+    return value;
+}
+
+private string jsonQuote(string value) {
+    buffer input;
+    mixed *parts;
+    string escaped;
+    int i, start, ch;
+
+    input = string_encode(value, "UTF-8");
+    parts = ({ allocate(16), 0 });
+    jsonAppend(parts, "\"");
+    for (i = 0; i < sizeof(input); i++) {
+        ch = input[i];
+        if (ch >= 32 && ch != '"' && ch != '\\') continue;
+        if (i > start) jsonAppend(parts, string_decode(input[start..i - 1], "UTF-8"));
+        switch (ch) {
+            case '"': escaped = "\\\""; break;
+            case '\\': escaped = "\\\\"; break;
+            case '\b': escaped = "\\b"; break;
+            case 12: escaped = "\\f"; break;
+            case '\n': escaped = "\\n"; break;
+            case '\r': escaped = "\\r"; break;
+            case '\t': escaped = "\\t"; break;
+            default: escaped = sprintf("\\u%04x", ch);
+        }
+        jsonAppend(parts, escaped);
+        start = i + 1;
     }
-
-    parse = allocate(JSON_DECODE_PARSE_FIELDS);
-    parse[JSON_DECODE_PARSE_TEXT] = string_encode(text, "utf-8") + endl;
-    parse[JSON_DECODE_PARSE_POS] = 0;
-    parse[JSON_DECODE_PARSE_CHAR] = 1;
-    parse[JSON_DECODE_PARSE_LINE] = 1;
-    return json_decode_parse(parse);
+    if (start < sizeof(input)) jsonAppend(parts, string_decode(input[start..], "UTF-8"));
+    jsonAppend(parts, "\"");
+    return jsonJoin(parts);
 }
 
 varargs string json_encode(mixed value, mixed *pointers) {
-    if (undefinedp(value))
-        return "null";
-    if (intp(value) || floatp(value))
-        return to_string(value);
-    if (stringp(value)) {
-        if (member_array('"', value) != -1)
-            value = replace_string(value, "\"", "\\\"");
-        value = sprintf("\"%s\"", value);
-        if (member_array('\\', value) != -1) {
-            value = replace_string(value, "\\", "\\\\");
-            if (strsrch(value, "\\\"") != -1)
-                value = replace_string(value, "\\\"", "\"");
-        }
-        if (member_array('\b', value) != -1)
-            value = replace_string(value, "\b", "\\b");
-        if (member_array(0x0c, value) != -1)
-            value = replace_string(value, "\x0c", "\\f");
-        if (member_array('\n', value) != -1)
-            value = replace_string(value, "\n", "\\n");
-        if (member_array('\r', value) != -1)
-            value = replace_string(value, "\r", "\\r");
-        if (member_array('\t', value) != -1)
-            value = replace_string(value, "\t", "\\t");
-        if (member_array(0x1b, value) != -1)
-            value = replace_string(value, "\x1b", "\\u001b");
+    string *parts;
+    mixed key, item;
+    int count;
 
-        return value;
-    }
+    if (undefinedp(value)) return "null";
+    if (intp(value) || floatp(value)) return "" + value;
+    if (stringp(value)) return jsonQuote(value);
+    if (!mapp(value) && !arrayp(value)) return "null";
+    // Only ancestors count as cycles; repeated non-cyclic values are preserved.
+    if (pointers && member_array(value, pointers) != -1) return "null";
+    pointers = pointers ? pointers + ({ value }) : ({ value });
+    parts = allocate(sizeof(value));
     if (mapp(value)) {
-        string out;
-        int ix = 0;
-        if (pointers) {
-            // Don't recurse into circular data structures, output null for
-            // their interior reference
-            if (member_array(value, pointers) != -1)
-                return "null";
-            pointers += ({ value });
-        } else {
-            pointers = ({ value });
+        foreach (key, item in value) {
+            // JSON object keys must be strings, as in the existing interface.
+            if (!stringp(key)) continue;
+            parts[count++] = jsonQuote(key) + ":" + json_encode(item, pointers);
         }
-        foreach (mixed k, mixed v in value) {
-            // Non-string keys are skipped because the JSON spec requires that
-            // object field names be strings.
-            if (!stringp(k))
-                continue;
-            if (ix++)
-                out = sprintf("%s,%s:%s", out, json_encode(k, pointers), json_encode(v, pointers));
-            else
-                out = sprintf("%s:%s", json_encode(k, pointers), json_encode(v, pointers));
-        }
-        if (!out || out == "")
-            return "{}";
-        return sprintf("{%s}", out);
+        return count ? "{" + implode(parts[0..count - 1], ",") + "}" : "{}";
     }
-    if (arrayp(value)) {
-        if (sizeof(value)) {
-            string out;
-            int ix = 0;
-            if (pointers) {
-                // Don't recurse into circular data structures, output null for
-                // their interior reference
-                if (member_array(value, pointers) != -1)
-                    return "null";
-                pointers += ({ value });
-            } else {
-                pointers = ({ value });
-            }
-            foreach (mixed v in value)
-                if (ix++)
-                    out = sprintf("%s,%s", out, json_encode(v, pointers));
-                else
-                    out = json_encode(v, pointers);
-
-            if (!out || out == "")
-                return "[]";
-            return sprintf("[%s]", out);
-        } else {
-            return "[]";
-        }
-    }
-    // Values that cannot be represented in JSON are replaced by nulls.
-    return "null";
+    foreach (item in value) parts[count++] = json_encode(item, pointers);
+    return "[" + implode(parts, ",") + "]";
 }
 
 #endif /* __STD_JSON_H */

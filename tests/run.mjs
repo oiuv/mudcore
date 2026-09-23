@@ -5,6 +5,7 @@ import { fileURLToPath } from 'node:url';
 import { spawn } from 'node:child_process';
 import { startNetworkFixtures, exerciseLogin } from './network-fixtures.mjs';
 import assert from 'node:assert/strict';
+import { exerciseTui } from './tui-network.mjs';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const driver = process.argv[2];
@@ -75,6 +76,7 @@ for (const mode of ['default', 'overrides']) {
     put('test-ca.pem', ['localhost', 'mismatch'].map(name => readFileSync(join(root, `tests/fixtures/${name}-cert.pem`), 'utf8')).join('\n'));
     put('driver.cfg', [
         'name : Mudcore Regression', 'mud ip : 127.0.0.1', 'port number : ' + network.config.loginPort,
+        'external_port_2 : telnet ' + network.config.tuiPort,
         'mudlib directory : ' + sandbox.replaceAll('\\', '/'),
         'log directory : /log', 'debug log file : debug.log',
         'include directories : /tests:/mudcore/include', 'global include file : <globals.h>',
@@ -94,7 +96,8 @@ for (const mode of ['default', 'overrides']) {
             child.stdout.on('data', data => {
                 stdout += data.toString('utf8');
                 if (!loginTask && stdout.includes('LOGIN TEST READY'))
-                    loginTask = exerciseLogin(network.config.loginPort).catch(error => { loginError = error; });
+                    loginTask = Promise.all([exerciseLogin(network.config.loginPort), exerciseTui(network.config.tuiPort)])
+                        .catch(error => { loginError = error; });
             });
             child.stderr.on('data', data => { stderr += data.toString('utf8'); });
             child.on('error', error => { clearTimeout(timer); reject(error); });

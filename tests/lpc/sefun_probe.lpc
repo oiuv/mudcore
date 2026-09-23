@@ -1,0 +1,269 @@
+void check(int value, string label) {
+    MASTER_OB->check(value, "simul efun: " + label);
+}
+
+private void testPercent() {
+    mixed value;
+
+    value = percent(1, 5);
+    check(intp(value) && value == 20, "integer percent");
+    value = percent(2.5, 50);
+    check(floatp(value) && value == 5.0, "float numerator");
+    value = percent(1, 8.0);
+    check(floatp(value) && value == 12.5, "float denominator");
+    check(percent(-1, 8) == -12, "integer percent truncation");
+    value = percent_of(25, 50);
+    check(intp(value) && value == 12, "integer percent_of truncation");
+    value = percent_of(25.0, 50);
+    check(floatp(value) && value == 12.5, "float percentage");
+    value = percent_of(25, 50.0);
+    check(floatp(value) && value == 12.5, "float base");
+    check(catch(percent(1, 0)) != 0, "zero denominator rejected");
+    check(
+        catch(percent("1", 2)) != 0 && catch(percent_of(1, "2")) != 0,
+        "percent rejects non-numeric input"
+    );
+}
+
+private void testBase64() {
+    string *plain, *encoded, *invalid;
+    string text;
+    int i;
+
+    plain = ({ "", "f", "fo", "foo", "foob", "fooba", "foobar", "中文😀" });
+    encoded = ({
+        "",
+        "Zg==",
+        "Zm8=",
+        "Zm9v",
+        "Zm9vYg==",
+        "Zm9vYmE=",
+        "Zm9vYmFy",
+        "5Lit5paH8J+YgA=="
+    });
+    for (i = 0; i < sizeof(plain); i++) {
+        check(base64encode(plain[i]) == encoded[i], "Base64 encode vector " + i);
+        check(base64decode(encoded[i]) == plain[i], "Base64 decode vector " + i);
+    }
+    check(base64decode(" Zm\t9v\r\nYg== ") == "foob", "Base64 whitespace");
+    check(base64decode(" \r\n\t") == "", "Base64 whitespace-only input");
+    invalid = ({
+        "Z",
+        "Zg",
+        "Zg=",
+        "Zg===",
+        "!!!!",
+        "====",
+        "=m9v",
+        "Zg==AAAA",
+        "Zg=A",
+        "Zh==",
+        "Zm9=",
+        "中文"
+    });
+    foreach (text in invalid)
+        check(catch(base64decode(text)) != 0, "Base64 rejects " + text);
+    text = repeat_string("中文 abc\n", 512);
+    check(base64decode(base64encode(text)) == text, "Base64 longer text round trip");
+    text = json_decode("\"a\\u0000b\\u0000\"");
+    check(base64encode(text) == "YQBiAA==", "Base64 NUL text encoding");
+    check(base64decode("YQBiAA==") == text, "Base64 preserves trailing NUL");
+    check(base64decode("AAA=") == json_decode("\"\\u0000\\u0000\""), "Base64 two NUL bytes");
+    foreach (text in ({ "/w==", "wIA=", "7aCA" }))
+        check(catch(base64decode(text)) != 0, "Base64 rejects malformed UTF-8 " + text);
+}
+
+private void testJson() {
+    string text, encoded;
+    string *invalid;
+    mixed value, shared;
+    mixed *cycle, *values;
+    mapping fields;
+    buffer input;
+    int i, ch;
+
+    check(json_decode(0) == 0, "JSON null argument compatibility");
+    check(
+        json_decode("null") == 0 && json_decode("false") == 0 && json_decode("true") == 1,
+        "JSON literals"
+    );
+    check(json_decode("0") == 0 && json_decode("-0") == 0, "JSON zero");
+    check(json_decode("-12") == -12 && json_decode("1.25e+2") == 125.0, "JSON numbers");
+    check(
+        json_decode("0.5") == 0.5 && json_decode("0e-1") == 0.0,
+        "JSON fractions starting with zero"
+    );
+    check(json_decode("\"\"") == "", "JSON empty string");
+    check(sizeof(json_decode("[ \n\t ]")) == 0, "JSON empty array with whitespace");
+    check(sizeof(json_decode("{ \r\n }")) == 0, "JSON empty object with whitespace");
+    fields = json_decode(" {\"中文\": [0, false, null, {\"emoji\": \"😀\"}], \"n\": -1.25e2} \n");
+    check(fields["中文"][3]["emoji"] == "😀" && fields["n"] == -125.0, "JSON nested Unicode data");
+    check(json_decode("{\"a\":1,\"a\":2}")["a"] == 2, "JSON last duplicate key wins");
+    check(json_decode("\"\\u4e2d\\u6587\\ud83d\\ude00\"") == "中文😀", "JSON Unicode escapes");
+    input = string_encode(json_decode("\"\\u0378\""), "UTF-8");
+    check(
+        sizeof(input) == 2 && input[0] == 0xcd && input[1] == 0xb8,
+        "JSON unassigned Unicode code point"
+    );
+    input = string_encode(json_decode("\"\\uffff\""), "UTF-8");
+    check(sizeof(input) == 3 && input[0] == 0xef && input[2] == 0xbf, "JSON Unicode noncharacter");
+    text = json_decode("\"a\\u0000b\\u0000\"");
+    check(json_encode(text) == "\"a\\u0000b\\u0000\"", "JSON NUL escape round trip");
+    input = allocate_buffer(3);
+    input[0] = input[2] = '"';
+    input[1] = 0xff;
+    check(catch(json_decode(input)) != 0, "JSON rejects malformed UTF-8 buffer");
+    check(json_decode("\"\\\\n\"") == "\\n", "JSON literal backslash n");
+    check(json_decode("\"\\\\u0041\"") == "\\u0041", "JSON literal backslash u");
+    check(json_decode("\"\\u005cn\"") == "\\n", "JSON Unicode escape does not unescape twice");
+    check(
+        json_decode("\"\\\"\\\\\\/\\b\\f\\n\\r\\t\"") == "\"\\/\b\x0c\n\r\t",
+        "JSON named escapes"
+    );
+    text = "中文😀/\"\\n\\u0041\\\"\b\x0c\n\r\t";
+    check(json_decode(json_encode(text)) == text, "JSON mixed escapes round trip");
+    check(json_encode("中文😀") == "\"中文😀\"", "JSON preserves readable UTF-8 output");
+    for (i = 1; i < 32; i++) {
+        text = sprintf("%c", i);
+        encoded = json_encode(text);
+        check(json_decode(encoded) == text, "JSON control round trip " + i);
+        foreach (ch in string_encode(encoded, "UTF-8"))
+            check(ch >= 32, "JSON has no raw control bytes");
+        check(catch(json_decode("\"" + text + "\"")) != 0, "JSON rejects raw control " + i);
+    }
+    input = string_encode("{\"text\":\"中文😀\"}", "UTF-8");
+    fields = json_decode(input);
+    check(fields["text"] == "中文😀", "JSON buffer input");
+    check(
+        string_decode(input, "UTF-8") == "{\"text\":\"中文😀\"}",
+        "JSON leaves input buffer unchanged"
+    );
+    input = string_encode("0", "UTF-8") + allocate_buffer(1);
+    check(catch(json_decode(input)) != 0, "JSON rejects trailing NUL in buffer");
+    invalid = ({
+        "",
+        " ",
+        "[",
+        "{",
+        "\"",
+        "tru",
+        "truex",
+        "[1,]",
+        "{\"a\":1,}",
+        "{a:1}",
+        "{\"a\" 1}",
+        "[1 2]",
+        "1 2",
+        "+1",
+        "01",
+        "-01",
+        "-",
+        "1.",
+        "1e",
+        "1e+",
+        "1e-",
+        "1.e2",
+        ".1",
+        "NaN",
+        "Infinity",
+        "\"\\x41\"",
+        "\"\\u12\"",
+        "\"\\uGGGG\"",
+        "\"\\ud800\"",
+        "\"\\udc00\"",
+        "\"\\ud800\\u0041\"",
+        "\"\\udc00\\ud800\"",
+        "\x0c" + "0",
+        "[1," + "\x0c" + "2]",
+        "{}[]"
+    });
+    foreach (text in invalid)
+        check(catch(json_decode(text)) != 0, "JSON rejects " + sprintf("%O", text));
+    check(
+        catch(json_decode(7)) != 0 && catch(json_decode(({}))) != 0,
+        "JSON rejects invalid input types"
+    );
+    check(json_encode(([])) == "{}" && json_encode(({})) == "[]", "JSON empty containers");
+    check(json_encode(([ 1: "skip", "a": 2 ])) == "{\"a\":2}", "JSON skips non-string keys");
+    check(json_encode(this_object()) == "null", "JSON unsupported values remain null");
+    cycle = allocate(1);
+    cycle[0] = cycle;
+    check(json_encode(cycle) == "[null]", "JSON array cycle");
+    cycle[0] = 0;
+    fields = ([]);
+    fields["self"] = fields;
+    check(json_encode(fields) == "{\"self\":null}", "JSON mapping cycle");
+    map_delete(fields, "self");
+    shared = ({ 1 });
+    check(json_encode(({ shared, shared })) == "[[1],[1]]", "JSON shared value is not a cycle");
+    values = allocate(300);
+    for (i = 0; i < sizeof(values); i++) values[i] = i;
+    value = json_decode(json_encode(values));
+    check(sizeof(value) == 300 && value[0] == 0 && value[299] == 299, "JSON larger array");
+    text = repeat_string("中文😀\\n\n\"", 512);
+    check(json_decode(json_encode(text)) == text, "JSON longer escaped string");
+}
+
+private void testPresentClone() {
+    object a, b, outside;
+    object *items;
+    string source;
+
+    source = "/tests/sefun_item";
+    a = new(source);
+    b = new(source);
+    outside = new(source);
+    a->moveTo(this_object());
+    b->moveTo(this_object());
+    items = all_inventory(this_object());
+    check(sizeof(items) == 2, "present_clone test inventory");
+    check(present_clone(source) == items[0], "present_clone default environment");
+    check(present_clone(source, 2) == items[1], "present_clone shorthand index");
+    check(present_clone(source, this_object()) == items[0], "present_clone explicit environment");
+    check(present_clone(source, this_object(), 2) == items[1], "present_clone explicit index");
+    check(present_clone(a) == items[0], "present_clone object source");
+    check(present_clone(a, 2) == items[1], "present_clone object and index");
+    check(present_clone(a, this_object()) == items[0], "present_clone object and environment");
+    check(
+        present_clone(a, this_object(), 2) == items[1],
+        "present_clone object environment and index"
+    );
+    check(present_clone(file_name(outside)) == items[0], "present_clone clone filename");
+    check(present_clone(source + ".c") == items[0], "present_clone .c suffix");
+    check(present_clone(source + ".lpc") == items[0], "present_clone .lpc suffix");
+    check(
+        present_clone("tests/sefun_item") == items[0],
+        "present_clone path without leading slash"
+    );
+    check(present_clone(source, 3) == 0, "present_clone not enough matches");
+    check(present_clone(source, outside) == 0, "present_clone empty inventory");
+    check(present_clone("/missing/not_loaded") == 0, "present_clone missing source needs no load");
+    check(!find_object("/missing/not_loaded"), "present_clone does not load source");
+    check(catch(present_clone()) != 0, "present_clone missing argument");
+    check(catch(present_clone(source, this_object(), 1, 2)) != 0, "present_clone extra argument");
+    check(catch(present_clone(source, 0)) != 0, "present_clone zero index rejected");
+    check(catch(present_clone(source, -1)) != 0, "present_clone negative index rejected");
+    check(catch(present_clone(source, 1, 2)) != 0, "present_clone invalid environment");
+    check(
+        catch(present_clone(source, this_object(), "2")) != 0,
+        "present_clone invalid index type"
+    );
+    check(
+        catch(present_clone(1)) != 0 && catch(present_clone("")) != 0,
+        "present_clone invalid source"
+    );
+    destruct(a);
+    destruct(b);
+    destruct(outside);
+}
+
+void run() {
+    debug_message("SEFUN: Percent");
+    testPercent();
+    debug_message("SEFUN: Base64");
+    testBase64();
+    debug_message("SEFUN: Json");
+    testJson();
+    debug_message("SEFUN: PresentClone");
+    testPresentClone();
+}

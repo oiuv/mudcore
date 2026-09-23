@@ -1,0 +1,147 @@
+#include <tui.h>
+
+inherit TUI_TERMINAL;
+
+private object app, appScreen, appWidget;
+private mapping options;
+
+void command(string text);
+
+private void ready() {
+    receive("READY\n");
+    input_to((: command :));
+}
+
+void logon() {
+    receive("SUPPORTED:" + tui_supported() + "\n");
+    ready();
+}
+
+private void lineDone(mixed text, int state) {
+    receive("LINE:" + json_encode(({ text, state })) + "\n");
+    ready();
+}
+
+private void selectionDone(int index, string item, int state) {
+    MASTER_OB->check(options["multi"] == 1, "TUI select does not mutate options");
+    receive("SELECT:" + json_encode(({ index, item, state })) + "\n");
+    ready();
+}
+
+private void multiDone(int *indexes, string *items, int state) {
+    receive("MULTI:" + json_encode(({ indexes, items, state })) + "\n");
+    ready();
+}
+
+private void confirmDone(int yes, int state) {
+    receive("CONFIRM:" + json_encode(({ yes, state })) + "\n");
+    ready();
+}
+
+private void chainDone(int index, string item, int state) {
+    tui_readline((: lineDone :), ([ "prompt": "CHAIN>" ]));
+}
+
+private void recovered() {
+    MASTER_OB->check(!tui_active(), "TUI callback failure resets mode");
+    ready();
+}
+
+private void failureDone(mixed text, int state) {
+    call_out((: recovered :), 0);
+    error("expected TUI callback failure\n");
+}
+
+private void captured(string text) {
+    receive("CAPTURE:" + text + "\n");
+    ready();
+}
+
+private void appClosed() {
+    ready();
+}
+
+private void tryAsyncClose() {
+    mixed err;
+
+    err = catch(tui_close());
+    MASTER_OB->check(
+        err != 0 && tui_active(),
+        "TUI refuses asynchronous close without losing input"
+    );
+    receive("ASYNC REFUSED\n");
+}
+
+private void tryAsyncAppQuit() {
+    mixed err;
+
+    err = catch(app->app_quit());
+    MASTER_OB->check(err != 0 && tui_active() && app && appScreen && appWidget,
+        "TUI refuses asynchronous app exit without destroying its resources");
+    receive("ASYNC APP REFUSED\n");
+}
+
+void command(string text) {
+    mixed err;
+
+    switch (text) {
+        case "read":
+            tui_readline((: lineDone :), ([ "prompt": "INPUT>" ]));
+            break;
+        case "select":
+            options = ([ "multi": 1 ]);
+            tui_select((: selectionDone :), "SELECT>", ({ "金创药", "干粮", "清水" }), options);
+            break;
+        case "multi":
+            tui_multiselect((: multiDone :), "MULTI>", ({ "a", "b", "c" }));
+            break;
+        case "async-close":
+            tui_confirm((: confirmDone :), "ASYNC>", 1);
+            call_out((: tryAsyncClose :), 0);
+            break;
+        case "confirm":
+            tui_confirm((: confirmDone :), "CONFIRM>", 1);
+            break;
+        case "chain":
+            tui_select((: chainDone :), "CHAIN SELECT>", ({ "next" }));
+            break;
+        case "fail":
+            tui_readline((: failureDone :), ([ "prompt": "FAIL>" ]));
+            break;
+        case "async-app":
+        case "app":
+            app = new(CORE_DIR "system/object/tui_demo");
+            app->set_on_exit((: appClosed :));
+            tui_open(app);
+            appScreen = app->app_screen();
+            appWidget = app->app_widgets()[0];
+            if (text == "async-app") call_out((: tryAsyncAppQuit :), 0);
+            break;
+        case "idle-close":
+            input_to((: captured :));
+            tui_close();
+            receive("CAPTURE>\n");
+            break;
+        case "busy":
+            input_to((: captured :));
+            err = catch(tui_confirm((: confirmDone :), "busy"));
+            MASTER_OB->check(err != 0 && !tui_active(), "TUI preserves existing input handler");
+            receive("CAPTURE>\n");
+            break;
+        case "status":
+            MASTER_OB->check(!app && !appScreen && !appWidget, "TUI application resources freed");
+            receive(sprintf("SIZE:%d,%d ACTIVE:%d\n", tui_width(), tui_height(), tui_active()));
+            ready();
+            break;
+        default:
+            receive("COMMAND:" + text + "\n");
+            ready();
+    }
+}
+
+void net_dead() {
+    if (app) app->set_on_exit(0);
+    tui_destroy();
+    MASTER_OB->check(!app && !appScreen && !appWidget, "TUI disconnect cleanup");
+    destruct(this_object());
+}

@@ -38,3 +38,5 @@ CORE_USER_QUEST|/inherit/user_quest.c|玩家任务功能接口，实现玩家任
 CORE_USER|/inherit/user.c|玩家对象功能接口
 CORE_VERB|/inherit/verb.c|自然语法分析指令功能接口
 CORE_VRM|/inherit/vrm.c|随机迷宫功能接口，实现随机迷宫功能
+
+TUI 是按需包含 `<tui.h>` 的独立组件组：`TUI_PRINT` 提供普通输出，`TUI_TERMINAL` 接入玩家交互，`TUI_APP` 管理全屏应用。用法、驱动要求和上游授权见 [TUI 文档](TUI.md)。

@@ -1,0 +1,19 @@
+#include <tui.h>
+
+inherit CORE_USER_OB;
+inherit TUI_TERMINAL;
+
+void window_size(int width, int height) {
+    user::window_size(width, height);
+    tui_window_size(width, height);
+}
+
+void net_dead() {
+    catch(tui_destroy());
+    user::net_dead();
+}
+
+void remove() {
+    catch(tui_destroy());
+    user::remove();
+}

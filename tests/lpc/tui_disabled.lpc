@@ -1,0 +1,2 @@
+#define TUI_DISABLE_INPUT
+#include "/mudcore/inherit/tui/terminal.c"

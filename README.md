@@ -104,6 +104,7 @@ runtime_config.h|驱动提供，配合 get_config() 使用
 socket_err.h|驱动提供，配合 socket_error() 使用
 socket.h|定义 socket 类型，配合 socket_create() 使用
 type.h|驱动提供，配合 typeof() 使用
+[tui.h](docs/TUI.md)|可选终端界面的路径、按键和控件常量
 
 ### 继承特征模块(Inherit Objects)
 
@@ -133,6 +134,7 @@ CORE_ROOM|/inherit/room.c|游戏环境标准接口，已组合可覆盖的 _DBAS
 CORE_SAVE|/inherit/save.c|对象数据存取接口，主要是玩家角色使用存档和读档
 CORE_SOCKET|/inherit/Socket.c|通用 Socket 封装，提供 TCP、UDP 及 TLS 基础支持
 CORE_TEAM|/inherit/team.c|角色组队功能接口，实现组队相关功能
+[TUI_PRINT / TUI_TERMINAL / TUI_APP](docs/TUI.md)|/inherit/tui/|可选终端输出、菜单、输入编辑及全屏控件，需包含 `<tui.h>`；上游授权见文档
 CORE_UNIQUE|/inherit/unique.c|对象唯一性功能接口，注意和noclone不同，唯一性允许复制，但仅限一次
 CORE_USER_COMBAT_RECORD|/inherit/user_combat_record.c|玩家战斗记录功能，实现玩家战斗数据记录
 CORE_USER_GMCP|/inherit/user_gmcp.c|玩家GMCP功能接口，可配合mudlet客户端使用
@@ -188,6 +190,7 @@ array_sum|返回数组元素的和
 assure_file|建立文件目录
 atof|string 类型数字转 float 类型数字
 atoi|string 类型数字转 int 类型数字
+[base64encode / base64decode](docs/simul_efun/base64.md)|UTF-8 字符串的标准 Base64 编解码
 bitCheck|检查数值指定为是否为1
 bitClear|返回数值指定位为0的值
 bitmap_font|处理中英文字符并点阵输出
@@ -215,13 +218,15 @@ highest|返回一组数值的最大值
 is_chinese|判断指定字符串是否为中文
 is_english|判断指定字符串是否为英文
 is_numeric|判断指定字符串是否为数字
+[json_encode / json_decode](docs/simul_efun/json.md)|JSON 编解码，支持 UTF-8 字符串和 buffer 输入
 log_file|记录日志到指定文件
 log_time|方便日志记录的 ctime 时间格式
 lowest|返回一组数值的最小值
 msg|智能区域消息
 number_string|转化数字为科学计数法的字符串格式
-percent|返回数字在指定基数上的百分比
-percent_of|返回数据在指定倍数上的百分比
+[percent](docs/simul_efun/percent.md)|返回数字占基数的百分比，支持整数和浮点数
+[percent_of](docs/simul_efun/percent.md)|返回基数的指定百分比，支持整数和浮点数
+[present_clone](docs/simul_efun/present_clone.md)|按来源文件查找容器中的第 n 个直属物品
 print_r|数组打印功能，格式化输出，开发调试用
 process_bar|显示指定百分比的进度条
 pronoun|返回中文人称代词

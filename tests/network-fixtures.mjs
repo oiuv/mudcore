@@ -106,7 +106,7 @@ export async function startNetworkFixtures(root) {
     }
     return {
         config: { httpPort, otherHttpPort, tlsPort, untrustedPort, mismatchPort, socketTlsPort,
-            udpPort: udp.address().port, loginPort: await reservePort(), intermudPort: await reserveUdpPort() },
+            udpPort: udp.address().port, loginPort: await reservePort(), tuiPort: await reservePort(), intermudPort: await reserveUdpPort() },
         verify() {
             assert(requests.some(x => x.method === 'HEAD' && x.path.includes('q=%E4%B8%AD%E6%96%87')), 'HEAD query reached server');
             assert(packets.filter(x => x.startsWith('@@@ping_q')).length >= 2, 'Intermud DNS peer received ping');

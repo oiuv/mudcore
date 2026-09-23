@@ -1,0 +1,38 @@
+#include <tui.h>
+#include "assertions.h"
+
+void do_tests() {
+    object terminal;
+    mixed err;
+
+    terminal = new("/tests/tui_disabled");
+    ASSERT_EQ(0, terminal->tui_supported());
+    err = catch(terminal->tui_confirm((: 0 :), "unsupported"));
+    ASSERT(err != 0);
+    ASSERT_EQ(0, terminal->tui_active());
+    terminal->tui_close();
+    terminal->tui_destroy();
+    destruct(terminal);
+    terminal = new(TUI_TERMINAL);
+    terminal->tui_window_size(65535, 65535);
+    ASSERT_EQ(500, terminal->tui_width());
+    ASSERT_EQ(200, terminal->tui_height());
+    terminal->tui_window_size(0, 0);
+    ASSERT_EQ(500, terminal->tui_width());
+    terminal->tui_terminal_type("test-terminal");
+    ASSERT_EQ("test-terminal", terminal->tui_term());
+    err = catch(terminal->tui_readline((: 0 :)));
+    ASSERT(err != 0);  // an ordinary object must not take another player's input
+    ASSERT_EQ(0, terminal->tui_active());
+    terminal->tui_destroy();
+    ASSERT_EQ(80, terminal->tui_width());
+    ASSERT_EQ("", terminal->tui_term());
+    destruct(terminal);
+    terminal = new("/tests/tui_user");
+    terminal->window_size(90, 28);
+    ASSERT_EQ(90, terminal->query_temp("window_size/width"));
+    ASSERT_EQ(90, terminal->tui_width());
+    ASSERT_EQ(28, terminal->tui_height());
+    terminal->remove();
+    ASSERT(!terminal);
+}

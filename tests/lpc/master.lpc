@@ -2,6 +2,14 @@ inherit CORE_MASTER_OB;
 
 int failures;
 int checks;
+
+object connect(int port) {
+    mapping ports;
+
+    ports = json_decode(read_file("/network.json"));
+    if (port == ports["tuiPort"]) return new("/tests/tui_session");
+    return new(LOGIN_OB);
+}
 #ifdef HOST_UID_POLICY
 int deniedExports;
 int valid_seteuid(object caller, string euid) {
@@ -32,6 +40,7 @@ int valid_socket(object caller, string action, mixed *info) {
 }
 
 void error_handler(mapping details, int caught) {
+    if (!caught && strsrch(details["error"], "expected TUI callback failure") != -1) return;
     if (!caught)
         check(0, "uncaught: " + details["error"]);
 }
@@ -106,6 +115,13 @@ void run() {
         count++;
     }
     debug_message(sprintf("COMPILED: %d programs attempted", count));
+    foreach (file in get_dir("/tests/tui/*.lpc")) {
+        reset_eval_cost();
+        err = catch(load_object("/tests/tui/" + file)->do_tests());
+        check(!err, "TUI " + file + (err ? ": " + err : ""));
+    }
+    err = catch(load_object("/tests/sefun_probe")->run());
+    if (err) check(0, "simul efun regression: " + err);
     err = catch(load_object("/tests/regression")->run());
     if (err)
         check(0, "regression: " + err);
