@@ -1,12 +1,17 @@
-> 函数位置 range.c
+> 源码：[range.c](../../system/kernel/simul_efun/range.c)
 
 ### 语法
 
-    (int | float) range( int | float lower, int | float upper, int | float value )
+```c
+mixed range(mixed lower, mixed upper, mixed value);
+```
 
 ### 描述
 
-    Given a lower bound and upper bound, test the value. If the value is between
-    the ranges, return the value. If value is less than or equal to the lower
-    bound, return lower. If the value is greater than or equal to the upper
-    bound, return upper.
+将数值限制在指定范围内。按 `lower <= upper` 传入下限和上限：低于下限返回下限，高于上限返回上限，否则返回原值。三个参数都必须是整数或浮点数。
+
+```c
+range(0, 100, 120);  // 100
+range(0, 100, -5);   // 0
+range(0, 100, 50);   // 50
+```

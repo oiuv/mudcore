@@ -186,15 +186,15 @@ ansi|转换 $HIR$ 等为 ansi 颜色代码
 area_environment|比較二個对象是否處在相同的區域座標中
 area_move|將對象移動到指定區域的指定坐標位置
 area_move_side|將who移到與me同一格的區域坐標位置
-array_sum|返回数组元素的和
+[array_sum](docs/simul_efun/array_sum.md)|返回数组元素的和
 assure_file|建立文件目录
 atof|string 类型数字转 float 类型数字
-atoi|string 类型数字转 int 类型数字
+[atoi](docs/simul_efun/atoi.md)|将数字字符串或数值转为整数
 [base64encode / base64decode](docs/simul_efun/base64.md)|UTF-8 字符串的标准 Base64 编解码
-bitCheck|检查数值指定为是否为1
-bitClear|返回数值指定位为0的值
-bitmap_font|处理中英文字符并点阵输出
-bitSet|返回数值指定位为1的值
+[bitCheck](docs/simul_efun/bitCheck.md)|检查指定二进制位，返回位掩码或 0；位序从 1 开始
+[bitClear](docs/simul_efun/bitClear.md)|返回数值指定位为0的值
+[bitmap_font](docs/simul_efun/bitmap_font.md)|处理中英文字符并点阵输出
+[bitSet](docs/simul_efun/bitSet.md)|返回数值指定位为1的值
 break_string|根据指定宽度换行显示内容
 cat|输出文件内容到屏幕
 cecho|随机颜色显示内容到屏幕
@@ -214,29 +214,29 @@ expand_keys|把键为数组的映射展示
 file_exists|判断文件是否存在
 getcid|返回复制对象的ID
 graph_draw|自定义进度条绘图
-highest|返回一组数值的最大值
+[highest](docs/simul_efun/highest.md)|返回一组数值的最大值
 is_chinese|判断指定字符串是否为中文
 is_english|判断指定字符串是否为英文
 is_numeric|判断指定字符串是否为数字
 [json_encode / json_decode](docs/simul_efun/json.md)|JSON 编解码，支持 UTF-8 字符串和 buffer 输入
 log_file|记录日志到指定文件
 log_time|方便日志记录的 ctime 时间格式
-lowest|返回一组数值的最小值
+[lowest](docs/simul_efun/lowest.md)|返回一组数值的最小值
 msg|智能区域消息
 number_string|转化数字为科学计数法的字符串格式
 [percent](docs/simul_efun/percent.md)|返回数字占基数的百分比，支持整数和浮点数
 [percent_of](docs/simul_efun/percent.md)|返回基数的指定百分比，支持整数和浮点数
 [present_clone](docs/simul_efun/present_clone.md)|按来源文件查找容器中的第 n 个直属物品
-print_r|数组打印功能，格式化输出，开发调试用
+[print_r](docs/simul_efun/print_r.md)|数组打印功能，格式化输出，开发调试用
 process_bar|显示指定百分比的进度条
 pronoun|返回中文人称代词
-range|返回指定范围内符合条件的数值
+[range](docs/simul_efun/range.md)|将数值限制在指定上下限之间
 read_lines|返回有效行并保留前后空白，去掉 CRLF 行末 CR；跳过空白行及允许缩进的 `#`/`;` 注释行
 remove_ansi|清理 ansi 颜色代码
 sort_string|根据指定宽度换行显示内容，中文支持更友好
-sum|返回一组数值的和
+[sum](docs/simul_efun/sum.md)|返回一组数值的和
 tail|输出文件尾部最多10行内容到屏幕
-unicode|UNICODE编码转字符，如 unicode(65) 或 unicode(0x41) 返回值为 A
+[unicode](docs/simul_efun/unicode.md)|将 Unicode 码点转为字符，如 unicode(65) 返回 "A"
 
 ### 默认指令
 

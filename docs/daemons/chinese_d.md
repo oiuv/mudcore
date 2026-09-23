@@ -21,4 +21,4 @@ void add_translate(string key, string chn);
 void dump_translate();
 ```
 
-如果不需要框架提供的守护进程，可以自己定以 `CHINESE_D` 继承或覆盖。
+如果不需要框架提供的守护进程，可以自行定义 `CHINESE_D` 继承或覆盖。

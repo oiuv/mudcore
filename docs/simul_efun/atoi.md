@@ -1,9 +1,16 @@
-> 函数位置 atoi.c
+> 源码：[charset.c](../../system/kernel/simul_efun/charset.c)
 
 ### 语法
 
-    int atoi(string str);
+```c
+int atoi(mixed str);
+```
 
 ### 描述
 
-    转换 string 数字为 int 类型，常用于玩家指令处理。
+调用驱动的 `to_int()` 转为整数，常用于玩家指令中的数字参数；支持的输入类型与转换规则由 `to_int()` 决定。
+
+```c
+atoi("123");  // 123
+atoi(12.8);   // 12
+```

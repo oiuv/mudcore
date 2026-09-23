@@ -1,28 +1,36 @@
-
 点阵字体显示系统，可以在游戏中显示点阵文字。
 
 ### 核心方法
 
 ```c
-varargs string bitmap_font(string str, int size, string fill, string bg, string fcolor, string bgcolor);
+varargs string bitmap_font(
+    string str,
+    int size,
+    string fill,
+    string bg,
+    string fcolor,
+    string bgcolor
+);
 ```
 
 > 参数说明
 
     str     要显示的文字
-    size    字体大小，限制为12、14、16，如果省略，默认为12
-    fill    填充字符，如果省略默认为`88`
-    bg      背景字符，如果省略默认为`  `
+    size    字体大小，限制为12、14、16，省略或传入其他值时使用12
+    fill    填充字符，省略或为空时默认为 "8"
+    bg      背景字符，省略或为空时默认为 "-"
     fcolor  字符前景颜色，默认为空
     bgcolor 字符背景颜色，默认为空
 
+填充和背景字符串须有相同的显示宽度，否则两者都恢复为默认值。输入会转为 GBK 并从框架字库读取字形，因此不支持任意 Unicode 字符。16 点阵的中文字形会随机选择字体，示例外观可能不同。源码见 [bitmap_font.c](../../system/kernel/simul_efun/bitmap_font.c)。
+
 ### 示例
 
-example 1:
+示例 1：
 
-    printf("%s\n",bitmap_font("测试abc"));
+    printf("%s\n", bitmap_font("测试abc"));
 
-display:
+显示效果：
 
     8------8---8-----8------8-------------------------------
     -8-888888--8------8-----8-88------------88--------------
@@ -37,11 +45,11 @@ display:
     -8-8---8-8-8-----88-88----88----------------------------
     -88-------8----------------8----------------------------
 
-example 2:
+示例 2：
 
-    printf("%s\n",bitmap_font("测试abc", 16));
+    printf("%s\n", bitmap_font("测试abc", 16));
 
-display:
+显示效果：
 
     ------------88-----------88-8---------------------------
     -8--88888---88---88------88-88--------------------------
@@ -60,11 +68,11 @@ display:
     -8--8------88----------------8--------------------------
     --------------------------------------------------------
 
-example 3:
+示例 3：
 
-    printf("%s\n",bitmap_font("你好", 16, "HI", "  "));
+    printf("%s\n", bitmap_font("你好", 16, "HI", "  "));
 
-display:
+显示效果：
 
 ```
 

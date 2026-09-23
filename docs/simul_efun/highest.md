@@ -1,9 +1,15 @@
-> 函数位置 highest.c
+> 源码：[highest.c](../../system/kernel/simul_efun/highest.c)
 
 ### 语法
 
-    (int|float) highest( int|float num1, int|float num2, int|float numx... )
+```c
+mixed highest(mixed *numbers...);
+```
 
 ### 描述
 
-    Given a number of integers and/or floats, returns the highest value.
+返回参数中的最大值，保留被选中数值的类型。至少传入一个参数，且每项只能是整数或浮点数，否则报错。
+
+```c
+highest(1, 4, 2.5);  // 4
+```
