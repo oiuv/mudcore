@@ -1,0 +1,10 @@
+inherit "/tests/cmd_transport";
+
+protected void response(string result) { error("expected response failure\n"); }
+void run() {
+    mixed err;
+    fd_msg = ([ 42: "output" ]);
+    err = catch(on_close(42));
+    MASTER_OB->check(stringp(err) && undefinedp(fd_msg[42]),
+        "external command releases output before failed response callback");
+}

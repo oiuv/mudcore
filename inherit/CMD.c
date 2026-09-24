@@ -20,10 +20,13 @@ protected void on_write(int fd) {
 }
 
 protected void on_close(int fd) {
+    string result;
+
     // debug_message(sprintf("on_close: %d", fd));
-    socket_close(fd);
-    response(fd_msg[fd]);
+    result = fd_msg[fd];
     map_delete(fd_msg, fd);
+    socket_close(fd);
+    response(result);
 }
 
 // int external_start(int, string | string *, string | function, string | function, string | function | void);
@@ -34,6 +37,8 @@ object external_cmd(int cmd, mixed arg) {
     if (!arg)
         arg = "";
     fd = external_start(cmd, arg, "on_read", "on_write", "on_close");
+    if (fd < 0)
+        error(sprintf("external_start failed: %d\n", fd));
 
     if (!fd_msg) {
         fd_msg = ([]);

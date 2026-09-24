@@ -81,7 +81,7 @@ varargs mixed query(string prop, int raw) {
     mixed data;
 
     if (!mapp(dbase))
-        return 0;
+        dbase = ([]);
 
     if (undefinedp(dbase[prop]) && (strsrch(prop, '/') != -1))
         data = _query(dbase, explode(prop, "/"));

@@ -23,7 +23,7 @@
 - [可组合继承模块](inherit.md)
 - [登录与角色身份](daemons/login_d.md)、[角色初始化](daemons/char_d.md)
 - [命令查找与别名](daemons/command_d.md)、[虚拟对象](daemons/virtual_d.md)
-- [房间](inherit/room.md)、[玩家消息与分页](inherit/message.md)
+- [房间](inherit/room.md)、[区域地图与虚拟房间](inherit/area.md)、[玩家消息与分页](inherit/message.md)
 - [TUI 终端界面](TUI.md)：可选表格、菜单、输入编辑与全屏控件
 - [任务](quest.md)、[战斗接口](daemons/combat_d.md)
 

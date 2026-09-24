@@ -1,0 +1,101 @@
+#include <socket_err.h>
+
+private int nextFd = 40, connectResult = EESUCCESS;
+private int dataCalls;
+private mixed *resolvers = ({});
+varargs int fake_socket_create(int mode, mixed readCallback, mixed closeCallback) {
+    return nextFd++;
+}
+int fake_socket_close(int fd) { return EESUCCESS; }
+int fake_socket_bind(int fd, int port) { return EESUCCESS; }
+int fake_socket_listen(int fd, mixed callback) { return EESUCCESS; }
+int fake_socket_accept(int fd, mixed readCallback, mixed writeCallback) { return nextFd++; }
+string fake_socket_address(int fd) { return "127.0.0.1 12345"; }
+varargs int fake_socket_write(int fd, mixed data, string target) { return EESUCCESS; }
+int fake_socket_connect(int fd, string addr, mixed readCallback, mixed writeCallback) {
+    return connectResult;
+}
+int fake_resolve(string host, mixed callback) {
+    resolvers += ({ callback }); return sizeof(resolvers);
+}
+#define socket_create fake_socket_create
+#define socket_close fake_socket_close
+#define socket_bind fake_socket_bind
+#define socket_listen fake_socket_listen
+#define socket_accept fake_socket_accept
+#define socket_address fake_socket_address
+#define socket_write fake_socket_write
+#define socket_connect fake_socket_connect
+#define resolve fake_resolve
+#include "/mudcore/inherit/Socket.c"
+
+void check(int condition, string label) {
+    MASTER_OB->check(condition, "socket lifecycle: " + label);
+}
+void throw_callback(int fd, mixed *args...) { error("expected socket callback failure\n"); }
+void reopen_callback(int fd) { nextFd = fd; udp_server(0, this_object(), 0, 0); }
+void close_on_connect(int fd) { close(fd); }
+void received(int fd, mixed data) { dataCalls++; }
+void deliver_dns(int index, string host, string address) {
+    if (functionp(resolvers[index])) evaluate(resolvers[index], host, address, index + 1);
+    else handle_dns_resolve(host, address, index + 1);
+}
+
+void run() {
+    int fd, listener, resolverIndex;
+    mixed err;
+
+    SocketDnsCache["cached"] = "127.0.0.1";
+    fd = tcp_client("cached", 12345, this_object(), 0, 0, "throw_callback", 0);
+    err = catch(handle_close_callback(fd));
+    check(stringp(err) && !sizeof(get_info(fd)), "throwing close callback leaves no connection");
+    close(fd);
+
+    fd = tcp_client("cached", 12345, this_object(), 0, 0, "reopen_callback", 0);
+    handle_close_callback(fd);
+    check(get_info(fd)["protocol"] == PROTOCOL_UDP, "close callback can reopen the same fd");
+    close(fd);
+
+    connectResult = EEBADADDR;
+    err = catch(tcp_client("cached", 12345, this_object(), 0, 0, 0, "throw_callback"));
+    check(
+        stringp(err) && !sizeof(get_connections()),
+        "immediate connect failure cleans up before callback"
+    );
+    foreach (fd in keys(get_connections())) close(fd);
+    connectResult = EESUCCESS;
+
+    fd = tcp_client("unresolved", 12345, this_object(), 0, 0, 0, "throw_callback");
+    err = catch(deliver_dns(sizeof(resolvers) - 1, "unresolved", 0));
+    check(stringp(err) && !sizeof(get_info(fd)), "DNS failure cleans up before callback");
+    close(fd);
+
+    fd = udp_send("127.0.0.1", 12345, "probe", this_object(), "throw_callback");
+    err = catch(handle_udp_response(fd, "reply", "127.0.0.1 12345"));
+    check(stringp(err) && !sizeof(get_info(fd)), "one-shot UDP callback cannot leak its socket");
+    close(fd);
+
+    fd = tcp_client("cached", 12345, this_object(), "close_on_connect", "received", 0, 0);
+    handle_receive_callback(fd, "reply", 0);
+    check(!dataCalls, "connection closed by connect callback receives no stale data callback");
+
+    listener = tcp_server(0, this_object(), "throw_callback", 0, 0, 0);
+    err = catch(handle_accept_callback(listener));
+    check(stringp(err) && sizeof(get_connections()) == 1 && sizeof(get_info(listener)),
+        "throwing accept callback releases accepted connection only");
+    foreach (fd in keys(get_connections())) close(fd);
+
+    fd = tcp_client("retry", 12345, this_object(), 0, 0, 0, 0);
+    resolverIndex = sizeof(resolvers) - 1;
+    close(fd);
+    nextFd = fd;
+    tcp_client("retry", 12345, this_object(), 0, 0, 0, 0);
+    deliver_dns(resolverIndex, "retry", 0);
+    check(
+        get_state(fd) == SOCKET_STATE_RESOLVING,
+        "late DNS failure cannot close a replacement connection"
+    );
+    deliver_dns(resolverIndex + 1, "retry", "127.0.0.1");
+    check(get_state(fd) == SOCKET_STATE_CONNECTING, "replacement receives only its own DNS result");
+    close(fd);
+}

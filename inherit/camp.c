@@ -75,7 +75,7 @@ private string _mudcore_impl_get_camp_rank_name(string c) {
     if (value >= 15001 && value <= 35000)
         return "崇敬";
     if (value >= 35001)
-        return "崇敬";
+        return "崇拜";
 
     if (value <= -101 && value >= -6000)
         return "冷淡";
@@ -267,6 +267,7 @@ private int _mudcore_impl_adjust_camp_reputations(string c, int cnt) {
         );
 
     apply_reputation_delta(c, sign * value);
+    if (!value) return 1;
 
     // 友好與敵對的陣營也會跟著變動
 

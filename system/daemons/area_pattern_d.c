@@ -28,34 +28,23 @@ void scanPattern(string dir) {
 }
 private void _mudcore_impl_scan_patterns(string dir) {
     string file;
-    mixed *files, *dirent;
+    string *files, *nextPatterns;
 
-    files = get_dir(dir, -1);
-
-    if (!sizeof(files)) {
-        if (file_size(dir) == -2)
-            write("ERROR: Area_Pattern目錄是空的。 (" + dir + ")\n");
-        else
-            write("ERROR: 沒有這個目錄。 (" + dir + ")\n");
+    if (!stringp(dir) || dir == "") return;
+    if (dir[<1] != '/') dir += "/";
+    if (file_size(dir) != -2) {
+        write("ERROR: 沒有這個目錄。 (" + dir + ")\n");
         return;
     }
-
-    // write("掃瞄 Area_Pattern 中 " + dir + " ...\n\n");
-
-    foreach (dirent in files) {
-        file = dir + dirent[0];
-        // write( sprintf("%-60s", file) );
-
-        if (!_mudcore_call_named(file, "is_area_pattern", "isAreaPattern")) {
-            // write( " -> 非 Area_Pattern 檔.\n");
-            continue;
-        }
-
-        // write(" -> OK.\n");
-        patterns += ({ file });
-    }
-
-    // write("\n掃瞄完成。\n\n");
+    files = lpc_source_files(dir);
+    // 保留其他目录，只在本次扫描全部成功后替换此目录的索引。
+    nextPatterns = ({});
+    foreach (file in patterns)
+        if (file[0..strsrch(file, '/', -1)] != dir) nextPatterns += ({ file });
+    foreach (file in files)
+        if (_mudcore_call_named(file, "is_area_pattern", "isAreaPattern"))
+            nextPatterns += ({ file });
+    patterns = nextPatterns;
 }
 
 private string *_mudcore_impl_get_patterns();

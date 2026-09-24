@@ -9,11 +9,11 @@
 | 模块 / 源路径 | 必需组件、服务或宿主接口 | 可选协作 | 驱动能力 | 生命周期与宿主责任 |
 | --- | --- | --- | --- | --- |
 | ACTION / `inherit/action.c` | 行动计数及回调 | 宿主 busy/interrupt 闭包 | 基础、函数指针 | 宿主心跳调用 `continue_action()`，定义行动规则 |
-| AREA / `inherit/area/area.c` | `_CLEAN_UP/_DBASE/_NAME/_SAVE`、`AREA_MAP`、区域地图/样式 | 地图 NPC 任务提示调用 `QUEST_D` | 基础 | 设置尺寸、地形及区域坐标；使用区域接口进出，不是普通房间替身 |
+| AREA / `inherit/area/area.c` | `_CLEAN_UP/_DBASE/_NAME/_SAVE`、`AREA_MAP`、区域地图/样式 | 地图 NPC 任务提示调用 `QUEST_D` | 基础 | 设置尺寸、地形及区域坐标；使用区域接口进出，详见 [区域地图](inherit/area.md) |
 | ATTACK / `inherit/attack.c` | 属性、队伍/敌人接口、`COMBAT_D`、`msg()` 等 | 宿主战斗规则 | 基础 | 维护敌人状态并调度战斗；不适用于未提供这些接口的最小玩家 |
 | CAMP / `inherit/camp.c` | 属性、`CAMP_D`、阵营对象与 `msg()` | `CAMP_DIR` 宿主内容 | 基础 | 宿主定义阵营及关系，组件不生成游戏内容 |
 | CLEAN_UP / `inherit/clean_up.c` | 对象及物品的 `query()` | `no_clean_up`、日志目录 | 文件 | 驱动调用 `clean_up()`；宿主决定保留条件 |
-| CMD / `inherit/CMD.c` | `external_cmd_N` 驱动配置、回调 | 宿主指定可执行文件 | external、Socket | 显式 `external_cmd()`，处理输出/关闭；不预置业务命令 |
+| CMD / `inherit/CMD.c` | `external_cmd_N` 驱动配置、回调 | 宿主指定可执行文件 | external、Socket | 显式 `external_cmd()`；启动失败抛错，输出缓冲在 `response()` 前清理；不预置业务命令 |
 | COMMAND / `inherit/command.c` | 属性/临时属性、`COMMAND_D`（别名及 action 查找） | 选中的 EMOTE/CHANNEL/parser 阶段 | commands；parser 按选项 | 先设置 ID/名称，再 `enable_living()`；见下文 |
 | CONDITION_MOD / `inherit/condition_mod.c` | 状态定义、宿主作用对象、`msg()` 等 | 自定义开始/结束/心跳回调 | 基础 | 定义状态属性及效果；不独立调度 |
 | CONDITION / `inherit/condition.c` | 属性、状态文件的持续时间及回调接口 | 具体增益/减益效果 | 基础 | 宿主心跳更新；完整默认玩家提供调度 |
@@ -50,6 +50,16 @@ TUI 是额外组件组，入口与依赖在 `<tui.h>`，不由 `_USER_BASE` 自�
 
 不要在同一对象中无规划地混用 SAVE 与 DBSAVE 的同名方法。持久字段结构与恢复时机属于宿主契约，本轮不转换既有存档。
 
+## 模拟函数与原生 efun
+
+覆盖 efun 仅用于增强功能，原生参数、返回值、查找顺序、权限和错误行为必须保留。当前框架覆盖 `present` 和 `notify_fail`：
+
+- `present()` 在普通对象中委托原生 efun；隐式查找先背包，再环境本身和环境内对象。对象参数省略环境时返回其父对象，显式指定环境时返回对象本身。序号、非法参数和隐藏对象权限以驱动为准；AREA 的同格筛选见 [区域地图](inherit/area.md)。
+- 原生查找通过绑定给调用者的 efun 闭包执行，避免使用 simul efun 自身的隐藏权限。宿主自定义 `valid_bind()` 时需允许框架 simul efun 完成该绑定；框架默认 Root 策略已允许。不应通过放宽所有对象的绑定权限解决接入问题。
+- `notify_fail()` 接受字符串或函数，先交给驱动处理；函数保持延迟执行，不预先求值。当前玩家提供 `set_temp()` 时，额外记录原参数到 `notify_fail` 临时属性；该属性可能是函数，不能一律当作字符串拼接。
+
+核对顺序为本地 `fluffos/docs/efun/` → 有歧义时查 `fluffos/src/` 及测试；没有本地驱动源码时由 [官方文档索引](https://www.fluffos.info/llms.txt) 进入对应文档，再按需查官方源码。维护规则见 [AGENTS.md](../AGENTS.md#efun-兼容原则)。
+
 ## 命令
 
 `process_input(string)` 仍通过 `COMMAND_D->default_alias()` 处理输入；禁用 action 阶段并不会自动移除该别名依赖。`nomask int command_hook(string arg)` 接收当前命令参数，verb 来自驱动 `query_verb()`；不是任意对象可以调用的通用命令执行 API。
@@ -74,7 +84,7 @@ ROOM 已组合属性、命名与清理。设置 `exits` 后，实际离开仍由
 
 默认时序：认证成功 → `make_body()` 按宿主 UID 权限建体 → 新角色 `CHAR_D->init_player()` 或旧角色恢复 → `enter_world()` 转移连接、`USER_OB->setup()`、保存和入场。`setup()` 激活命令/心跳并调用 `CHAR_D->setup()`；已有在线对象重连走 `reconnect()`，不再次创建或调用这两个初始化钩子。断线对象保留有期限，保存时机见登录/玩家源码；不要假定继承 MOVE 的 `remove()` 会保存普通文件存档。
 
-名称提示/校验和性别选项可局部覆盖，详情见 [登录策略](daemons/login_d.md#角色创建策略钩子)。名称合法返回 `0`，非法返回错误字符串。性别选项含非空字符串 `key/label/value`，空数组表示不询问、不写入默认性别。内部收尾重新验证连接与认证；失败销毁未完成对象并恢复身份，不开放绕过认证的角色工厂，也不提供跨账号文件/姓名字典的事务回滚。
+名称提示/校验和性别选项可局部覆盖，详情见 [登录策略](daemons/login_d.md#角色创建策略钩子)。名称合法返回 `0`，非法返回错误字符串。性别选项含非空字符串 `key/label/value`，空数组表示不询问、不写入默认性别。内部收尾重新验证连接与认证；失败销毁未完成对象并恢复身份，再由 `NAME_D->assure_map_name(name)` 校验离线存档并 `save()` 姓名索引：未保存则释放姓名，已保存则保留占用，原始异常继续传播。不开放绕过认证的角色工厂，也不提供跨账号文件/姓名字典的事务回滚。
 
 初始属性由 [CHAR_D](daemons/char_d.md) 控制；覆盖时不调用默认 `init_player()` 即可不写入等级/经验/HP。最小组合不会替宿主删掉存档中已有字段。选择与重连均有真实 Telnet 测试，不只检查继承列表。
 

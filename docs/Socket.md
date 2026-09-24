@@ -206,6 +206,16 @@ int create_tls_connection(string host, int port) {
 
 **SNI 不等于证书主机名校验。** 当前验证的驱动只将 `SO_TLS_VERIFY_PEER` 用于验证证书链，并未将 `SO_TLS_SNI_HOSTNAME` 用于检查证书名称。隔离测试中的受信任错误主机名证书仍能握手成功；不能据此承诺完整的 HTTPS 身份验证。需要该保证的宿主必须使用提供主机名验证的驱动或传输实现。测试还覆盖了不可信证书被拒绝，且握手失败没有关闭回调时能按超时回收状态。
 
+### 框架回调与资源清理
+
+`close(fd)`、连接失败/超时、远端关闭和 `udp_send()` 收到首个响应时，先清理该连接及其计时器，再通知相应终止回调。终止回调内查旧 fd 会得到关闭状态；回调抛错不会留下旧记录，在回调内新建连接并复用相同 fd 也不会被后续清理误删。主动 `close()` 本身不触发宿主关闭回调。
+
+DNS 回调绑定具体连接，关闭后迟到的结果不会作用于后来复用该 fd 的连接。`udp_client()` 的地址解析也受 `set_connect_timeout()` 管理；就绪后此计时器结束，不是持续的收包超时。`udp_send()` 是单次响应接口，没有自动响应期限，无响应时由宿主定时调用 `close()`。
+
+`onAccept` 抛错时释放本次接受的连接，监听 socket 保留；其他业务处理回调抛错会传播，持续连接的后续业务恢复由宿主决定。连接回调主动关闭连接后，同一批接收数据不会继续交给旧数据回调。
+
+`send()` 沿用驱动写入返回码，不提供完整发送队列。`EECALLBACK` 表示驱动已接管待发送数据，不能将同一数据立即重发；需要持续大流量和背压通知时应扩展传输层或直接使用 Socket efun。
+
 ### 框架 HTTP 客户端
 
 业务代码继承 `CORE_HTTP`，使用 `get/post/head/ws`；详见 [HTTP 客户端接口](Http.md)。原有 `response(mixed data)` 仍逐块收到原始 HTTP 数据；需要并发关联时重写 `response_data(requestId, data)`，用 `response_complete(requestId)` 判断完整成功，`request_failed(requestId, message)` 处理失败。

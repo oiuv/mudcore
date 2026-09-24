@@ -1,0 +1,4 @@
+#undef LOGIN_OB
+#define LOGIN_OB "/tests/framework_broken_login"
+#include "/mudcore/system/kernel/master.c"
+object attempt_connect() { return connect(0); }

@@ -129,6 +129,7 @@ CORE_DB|/inherit/DB.c|数据库接口，按驱动可选包支持 MySQL、SQLite 
 CORE_DBASE|/inherit/dbase.c|数据存取功能接口，实现对象参数的增删改查功能
 CORE_DBSAVE|/inherit/dbsave.c|系统数据存取接口，配合 DBASE_D 使用
 CORE_HTTP|/inherit/Http.c|HTTP客户端，方便发起http请求
+CORE_HOST_POLICY|/inherit/host_policy.c|只读检查宿主权限方法的实现来源，不修改权限策略
 CORE_LIVING|/inherit/living.c|生物对象功能接口，所有生物对接可直接继承使用
 CORE_MESSAGE|/inherit/message.c|玩家信息处理功能接口，实现分页显示
 CORE_MOVE|/inherit/move.c|对象移动接口，由角色、物品对象继承，方便移动
@@ -143,7 +144,8 @@ CORE_UNIQUE|/inherit/unique.c|对象唯一性功能接口，注意和noclone不�
 CORE_USER_COMBAT_RECORD|/inherit/user_combat_record.c|玩家战斗记录功能，实现玩家战斗数据记录
 CORE_USER_GMCP|/inherit/user_gmcp.c|玩家GMCP功能接口，可配合mudlet客户端使用
 CORE_USER_QUEST|/inherit/user_quest.c|玩家任务功能接口，实现玩家任务记录与管理
-CORE_USER|/inherit/user.c|玩家对象功能接口
+CORE_USER_BASE|/inherit/user_base.c|最小玩家组合，保留属性、消息、移动、命令、行动与文件存档
+CORE_USER|/inherit/user.c|默认完整玩家组合，包含战斗、队伍、任务与 GMCP 等能力
 CORE_VERB|/inherit/verb.c|自然语法分析指令功能接口
 CORE_VRM|/inherit/vrm.c|随机迷宫功能接口，实现随机迷宫功能
 

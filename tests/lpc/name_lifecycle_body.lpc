@@ -1,0 +1,2 @@
+inherit CORE_LIVING;
+int restore() { error("expected player restore failure\n"); }

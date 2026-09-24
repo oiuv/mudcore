@@ -1,0 +1,16 @@
+inherit CORE_VRM;
+void create() {
+    set_maze_long(5);
+    set_inherit_room(CORE_ROOM);
+    set_entry_dir("north");
+    set_link_entry_dir("north");
+    set_link_exit_dir("south");
+    set_link_entry_room(CORE_VOID_OB);
+    set_link_exit_room(CORE_VOID_OB);
+    set_entry_short("entry");
+    set_entry_desc("entry\n");
+    set_exit_short("exit");
+    set_exit_desc("exit\n");
+    set_maze_room_short("maze");
+    set_maze_room_desc("maze\n");
+}

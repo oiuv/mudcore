@@ -1,0 +1,13 @@
+inherit CORE_AREA;
+
+void create() {
+    set("x_axis_size", 2);
+    set("y_axis_size", 2);
+    area = ({ ({ ([]), ([]) }), ({ ([]), ([]) }) });
+}
+string query_save_file() {
+    if (query_temp("save_failure") == "throw") error("expected area save failure\n");
+    if (query_temp("save_failure") == "return") return 0;
+    return DATA_DIR "framework_area_" + getcid();
+}
+void track_loaded(object ob) { area[0][0]["loaded"] = ([ "fixture": ob ]); }

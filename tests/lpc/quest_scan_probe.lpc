@@ -33,4 +33,12 @@ void run() {
     delete("information");
     destruct(unmarked);
     destruct(optedOut);
+    ordinary = new("/tests/framework_actor");
+    ordinary->set("status", "finish");
+    ordinary->set("finish_time", time() - 60);
+    add_quest(ordinary);
+    heart_beat();
+    check(ordinary->query_status() == "error", "expired finished quest reaches error state");
+    delete("information");
+    destruct(ordinary);
 }

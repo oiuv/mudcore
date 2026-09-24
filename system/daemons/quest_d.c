@@ -160,42 +160,38 @@ varargs void doScanQuest(string dir) {
 private varargs void _mudcore_impl_scan_quests(string dir) {
     string file;
     string *files;
+    mapping oldAssigner, oldRewarder;
+    mixed err;
 
-    if (!stringp(dir))
-        dir = QUEST_DIR;
-
-    files = lpc_source_files(dir);
-
-    if (!sizeof(files)) {
-        if (file_size(dir) == -2)
-            write("QUESTD: 任务目錄是空的。 (" + dir + ")\n");
-        else
-            write("QUESTD: 沒有这个任务目錄。 (" + dir + ")\n");
+    if (!stringp(dir)) dir = QUEST_DIR;
+    if (file_size(dir) != -2) {
+        write("QUESTD: 沒有这个任务目錄。 (" + dir + ")\n");
         return;
     }
-
-    // 清空，整个重掃
+    files = lpc_source_files(dir);
+    oldAssigner = assigner;
+    oldRewarder = rewarder;
     assigner = ([]);
     rewarder = ([]);
-
     write("掃瞄任务中 " + dir + " ...\n\n");
-
-    foreach (file in files) {
-        write(sprintf("%-60s", file));
-
-        if (!_mudcore_call_named(file, "is_quest", "isQuest")) {
-            write(" -> 非任务檔.\n");
-            continue;
+    err = catch {
+        foreach (file in files) {
+            write(sprintf("%-60s", file));
+            if (!_mudcore_call_named(file, "is_quest", "isQuest")) {
+                write(" -> 非任务檔.\n");
+                continue;
+            }
+            insert_assigner(_mudcore_call_named(file, "get_assigner", "getAssigner"), file);
+            insert_rewarder(_mudcore_call_named(file, "get_rewarder", "getRewarder"), file);
+            write(" -> OK.\n");
         }
-
-        insert_assigner(_mudcore_call_named(file, "get_assigner", "getAssigner"), file);
-        insert_rewarder(_mudcore_call_named(file, "get_rewarder", "getRewarder"), file);
-
-        write(" -> OK.\n");
+    };
+    if (err) {
+        assigner = oldAssigner;
+        rewarder = oldRewarder;
+        error(err);
     }
-
     write("\n掃瞄完成。\n\n");
-
     save();
 }
 

@@ -19,7 +19,8 @@ private object connect(int port) {
 
     if (err) {
         write("服务器维护中，请稍候……\n");
-        destruct(this_object());
+        debug_message("LOGIN_OB creation failed: " + err);
+        return 0;
     }
     return login_ob;
 }

@@ -1,0 +1,4 @@
+int fake_close(int fd) { return 1; }
+#define socket_close fake_close
+#include "/mudcore/inherit/CMD.c"
+#undef socket_close

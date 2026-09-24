@@ -67,7 +67,7 @@ string get_icon(int x, int y) {
 
 // 移除某座標圖樣
 int remove_icon(int x, int y) {
-    if (!undefinedp(icon[(string)x + "," + (string)y]))
+    if (undefinedp(icon[(string)x + "," + (string)y]))
         return 1;
     else if (map_delete(icon, (string)x + "," + (string)y))
         return 1;

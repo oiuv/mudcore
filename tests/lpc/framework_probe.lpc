@@ -1,0 +1,359 @@
+void check(int condition, string label) { MASTER_OB->check(condition, "framework: " + label); }
+
+void properties() {
+    object defaults, ob;
+    defaults = new(CORE_DBASE);
+    defaults->set("speed", 7);
+    ob = new(CORE_DBASE);
+    ob->set_default_object(defaults);
+    check(ob->query("speed") == 7, "fresh object reads default properties");
+    ob->set("speed", 0);
+    check(ob->query("speed") == 0, "explicit zero overrides default properties");
+    ob->delete("speed");
+    check(ob->query("speed") == 7, "deleted property reads default");
+    destruct(ob);
+    destruct(defaults);
+}
+
+void rooms() {
+    object room;
+    room = new(CORE_ROOM);
+    room->add_exit("east", "/missing/east");
+    check(room->query("exits/east") == "/missing/east", "first exit is stored");
+    room->set(
+        "exits",
+        ([
+            "north": "/missing/n",
+            "south": "/missing/s",
+            "east": "/missing/e",
+            "west": "/missing/w"
+        ])
+    );
+    room->set_area("test", 1, 2);
+    room->restrict_exits_to_bounds(4, 4, 1, 1);
+    check(
+        !room->query("exits/west") && room->query("exits/east"),
+        "reversed bounds trim west boundary only"
+    );
+    room->set_area("test", 4, 2);
+    room->restrict_exits_to_bounds(4, 4, 1, 1);
+    check(!room->query("exits/east"), "reversed bounds trim east boundary");
+    room->set_door("north", "door", "south", 5);
+    check(room->open_door("north") && room->query_door("north", "status") == 4,
+        "opening door preserves other status bits");
+    destruct(room);
+}
+
+void combat_and_teams() {
+    object ob, other;
+    mixed err;
+    int leader;
+    ob = new("/tests/framework_actor");
+    other = new("/tests/framework_actor");
+    ob->set_temp("groups", ({ ({ ob, ob, ob }), ({ other }), ({ other, other }) }));
+    check(sizeof(ob->enemy_team()) == 3, "largest enemy group can precede final pair");
+    ob->set_team(({}));
+    err = catch(leader = ob->is_team_leader());
+    check(!err && !leader, "empty team has no leader");
+    ob->set_team(({ other }));
+    destruct(other);
+    err = catch(ob->dismiss_team());
+    check(!err && !ob->query_team(), "dead-only team can be dismissed");
+    check(!ob->add_team_member(0), "destroyed member cannot join a team");
+    destruct(ob);
+}
+
+void area_indexes() {
+    object area, first, other;
+    int weight;
+    area = new("/tests/framework_area");
+    first = new("/tests/framework_actor");
+    other = new("/tests/framework_actor");
+    area->move_in(0, 0, first);
+    weight = area->query_icon()["0,0"];
+    area->move_out(0, 0, other);
+    check(area->query_icon()["0,0"] == weight, "untracked departure does not change cell icon");
+    area->set_icon_weight(0, 0, 1);
+    area->remove_icon(0, 0);
+    check(!area->check_icon(0, 0), "remove_icon clears existing icon");
+    area->reset();
+    check(member_array("0,0", area->query_object_locations()) >= 0,
+        "reset retains occupied-cell index");
+    destruct(first);
+    destruct(other);
+    destruct(area);
+}
+
+void area_save() {
+    object area, actor;
+    mapping cell;
+    mixed err;
+    int result;
+    string mode;
+    foreach (mode in ({ "return", "throw", "success" })) {
+        area = new("/tests/framework_area");
+        actor = new("/tests/framework_actor");
+        area->move_in(0, 0, actor);
+        area->track_loaded(actor);
+        cell = area->query_info(0, 0);
+        area->set_temp("save_failure", mode);
+        err = catch(result = area->save());
+        check(mode == "throw" ? stringp(err) : !err, mode + " area save propagates outcome");
+        check(mode == "success" ? result == 1 : result == 0, mode + " area save return value");
+        check(arrayp(cell["objects"]) && member_array(actor, cell["objects"]) >= 0 &&
+            mapp(cell["loaded"]) && cell["loaded"]["fixture"] == actor,
+            mode + " area save preserves live cell references");
+        check(
+            undefinedp(area->query_info(1, 1)["objects"]),
+            mode + " save keeps empty cell keys absent"
+        );
+        err = catch(area->move_in(1, 1, actor));
+        check(!err, mode + " area remains usable after save");
+        // Avoid fixture remove() owning the actor through its loaded index.
+        area->del_loaded(0, 0);
+        destruct(actor);
+        destruct(area);
+    }
+}
+
+void present_lookup() {
+    object actor, inventoryItem, groundItem, room, area, farItem;
+    mixed result, err;
+    actor = new("/tests/framework_actor");
+    inventoryItem = new("/tests/framework_actor");
+    groundItem = new("/tests/framework_actor");
+    room = new(CORE_ROOM);
+    actor->move(room);
+    inventoryItem->set("id", "token");
+    groundItem->set("id", "token");
+    inventoryItem->move(actor);
+    groundItem->move(room);
+    check(actor->find_implicit("token") == actor->native_find("token"),
+        "implicit present searches inventory before environment");
+    room->set("id", "room");
+    check(actor->find_implicit("room") == actor->native_find("room"),
+        "implicit present recognizes environment itself");
+    check(actor->find_implicit(inventoryItem) == actor->native_find(inventoryItem),
+        "implicit object present retains driver parent return convention");
+    area = new("/tests/framework_area");
+    area_move(area, actor, 0, 0);
+    area_move(area, groundItem, 0, 0);
+    farItem = new("/tests/framework_actor");
+    farItem->set("id", "distant");
+    area_move(area, farItem, 1, 1);
+    check(!actor->find_implicit("distant"), "implicit area lookup stays in current cell");
+    err = catch(result = actor->find_explicit(groundItem, area));
+    check(!err && result == groundItem, "explicit area present supports object argument");
+    err = catch(result = actor->find_explicit(farItem, area));
+    check(!err && !result, "explicit object lookup excludes other area cells");
+    inventoryItem->set("id", "inventory-only");
+    farItem->set("id", "token");
+    check(actor->find_implicit("token 1") == groundItem && !actor->find_implicit("token 2"),
+        "implicit area ordinal counts current-cell matches only");
+    check(actor->find_explicit("token 1", area) == groundItem &&
+        !actor->find_explicit("token 2", area),
+        "explicit area ordinal counts current-cell matches only");
+    destruct(inventoryItem);
+    destruct(groundItem);
+    destruct(farItem);
+    destruct(actor);
+    destruct(area);
+    destruct(room);
+}
+
+void area_movement() {
+    object area, target, actor;
+    mixed err;
+    int result;
+    string mode;
+    foreach (mode in ({ "return", "throw", "destruct" })) {
+        area = new("/tests/framework_area");
+        target = new("/tests/framework_area");
+        actor = new("/tests/framework_actor");
+        area_move(area, actor, 0, 0);
+        actor->set_temp("move_failure", mode);
+        err = catch(result = area_move(target, actor, 1, 1));
+        check(mode == "throw" ? stringp(err) : !err, mode + " movement reports expected outcome");
+        check(!result, mode + " failed movement is not successful");
+        check(
+            !sizeof(target->query_inventory(1, 1)),
+            mode + " failed movement removes destination index"
+        );
+        if (objectp(actor)) {
+            check(actor->query("area_info/x_axis") == 0 && actor->query("area_info/y_axis") == 0 &&
+                member_array(actor, area->query_inventory(0, 0)) >= 0,
+                mode + " failed movement restores previous position");
+            destruct(actor);
+        }
+        destruct(area);
+        destruct(target);
+    }
+}
+
+void movement_after_error() {
+    object area, target, actor, follower;
+    mixed err;
+    area = new("/tests/framework_area");
+    target = new("/tests/framework_area");
+    actor = new("/tests/framework_actor");
+    follower = new("/tests/framework_actor");
+    area_move(area, actor, 0, 0);
+    actor->set_temp("move_failure", "after");
+    err = catch(area_move(target, actor, 1, 1));
+    check(stringp(err) && environment(actor) == target &&
+        !sizeof(area->query_inventory(0, 0)) &&
+        member_array(actor, target->query_inventory(1, 1)) >= 0 &&
+        actor->query("area_info/x_axis_old") == 1,
+        "post-move error keeps actual destination and indexes");
+    check(area_move_side(follower, actor) && environment(follower) == target &&
+        member_array(follower, target->query_inventory(1, 1)) >= 0,
+        "area_move_side registers follower in leader cell");
+    destruct(follower);
+    destruct(actor);
+    destruct(area);
+    destruct(target);
+}
+
+void area_dimensions() {
+    object area;
+    area = new("/tests/framework_area");
+    area->set_temp("save_failure", "return");
+    area->setup();
+    check(area->query("x_axis_size") == 50 && area->query("y_axis_size") == 20 &&
+        area->check_scope(49, 19) && !area->check_scope(50, 20),
+        "default dimensions match allocated map and scope checks");
+    destruct(area);
+}
+
+void pattern_scan() {
+    object patterns;
+    string dir;
+    mixed err;
+    string *initial;
+    dir = "/data/patterns/";
+    mkdir(dir);
+    mkdir(dir + "folder.c");
+    write_file(dir + "README.md", "not LPC\n", 1);
+    write_file(dir + "basic.c", "int is_area_pattern() { return 1; }\n", 1);
+    write_file(dir + "basic.lpc", "int is_area_pattern() { return 1; }\n", 1);
+    patterns = new(CORE_AREA_PATTERN_D);
+    mkdir(dir + "nested");
+    write_file(dir + "nested/child.c", "int is_area_pattern() { return 1; }\n", 1);
+    patterns->scan_patterns(dir + "nested/");
+    initial = patterns->get_patterns();
+    err = catch(patterns->scan_patterns(dir));
+    check(!err && sizeof(patterns->get_patterns()) == sizeof(initial) + 1 &&
+        member_array(dir + "basic.lpc", patterns->get_patterns()) >= 0,
+        "pattern scanner ignores documents and directories and prefers .lpc");
+    patterns->scan_patterns(dir);
+    check(sizeof(patterns->get_patterns()) == sizeof(initial) + 1,
+        "pattern rescan avoids duplicate entries and retains other directories");
+    rm(dir + "basic.c");
+    rm(dir + "basic.lpc");
+    patterns->scan_patterns(dir);
+    check(sizeof(patterns->get_patterns()) == sizeof(initial), "rescan removes deleted patterns");
+    check(member_array(dir + "nested/child.c", patterns->get_patterns()) >= 0,
+        "parent rescan preserves separately scanned child directory");
+    destruct(patterns);
+}
+
+void efun_compatibility() {
+    object actor, room, first, second;
+    mixed *args, wrapped, nativeResult, err, nativeError;
+    actor = new("/tests/framework_actor");
+    room = new(CORE_ROOM);
+    first = new("/tests/framework_actor");
+    second = new("/tests/framework_actor");
+    first->set("id", "token");
+    second->set("id", "token");
+    actor->move(room);
+    first->move(room);
+    second->move(room);
+    foreach (args in ({ ({ "token" }), ({ "token 0" }), ({ "token 1" }), ({ "token 2" }),
+        ({ "token 3" }), ({ "" }), ({ second }), ({ second, room }), ({ "token", room }),
+        ({ "token", 0 }), ({ 0 }), ({ 42 }), ({}), ({ "token", room, room }) })) {
+        err = catch(wrapped = actor->find_args(args...));
+        nativeError = catch(nativeResult = actor->native_args(args...));
+        check(!!err == !!nativeError && (err || wrapped == nativeResult),
+            "present matches native arguments " + sprintf("%O", args));
+    }
+    second->hide_fixture();
+    actor->set_temp("cannot_see_hidden", 1);
+    check(actor->find_args("token") == actor->native_args("token") &&
+        actor->find_args(second, room) == actor->native_args(second, room),
+        "hidden object checks use caller permissions");
+    check(actor->find_args(second) == actor->native_args(second),
+        "implicit object lookup checks parent visibility like driver");
+    err = catch(wrapped = notify_fail((: "deferred failure" :)));
+    check(!err && wrapped == 0, "notify_fail accepts deferred function without a player");
+    err = catch(notify_fail(42));
+    check(stringp(err), "notify_fail retains native invalid-argument error");
+    destruct(first);
+    destruct(second);
+    destruct(actor);
+    destruct(room);
+}
+
+void quest_indexes() {
+    object quests;
+    string dir;
+    mixed err;
+    mapping before;
+    dir = "/data/quest_indexes/";
+    mkdir(dir);
+    write_file(dir + "first.lpc", "int is_quest() { return 1; }\n"
+        "string get_assigner() { return \"/npc/assigner\"; }\n"
+        "string get_rewarder() { return \"/npc/rewarder\"; }\n", 1);
+    quests = new("/tests/framework_quests");
+    quests->scan_quests(dir);
+    before = quests->get_assigner_index();
+    check(sizeof(before["/npc/assigner"]) == 1, "quest source scanned into assigner index");
+    write_file(dir + "broken.lpc", "int is_quest() { return 1; }\n"
+        "string get_assigner() { error(\"expected provider failure\\n\"); }\n", 1);
+    err = catch(quests->scan_quests(dir));
+    check(stringp(err) && quests->get_assigner_index() == before &&
+        sizeof(quests->get_rewarder_index()["/npc/rewarder"]) == 1,
+        "failed quest scan retains previously published indexes");
+    rm(dir + "first.lpc");
+    rm(dir + "broken.lpc");
+    quests->scan_quests(dir);
+    check(!sizeof(quests->get_assigner_index()) && !sizeof(quests->get_rewarder_index()),
+        "empty quest directory removes stale indexes");
+    destruct(quests);
+}
+
+void connection_failure() {
+    object probe;
+    mixed err, result;
+    probe = load_object("/tests/framework_connect");
+    err = catch(result = probe->attempt_connect());
+    check(!err && !result && objectp(probe), "failed login construction preserves master object");
+    if (probe) destruct(probe);
+}
+
+void maze_bounds() {
+    object maze, room;
+    string path;
+    mixed err;
+    maze = new("/tests/framework_maze");
+    foreach (path in ({ "99-0", "0-99", "1-2junk", "-1-0" })) {
+        err = catch(room = maze->query_maze_room(path));
+        check(!err && !room, "invalid maze coordinate rejected: " + path);
+        if (room) destruct(room);
+    }
+    room = maze->query_maze_room("1-1");
+    check(objectp(room), "valid maze coordinate still creates a room");
+    if (room) destruct(room);
+    destruct(maze);
+}
+
+void run() {
+    string group;
+    mixed err;
+    foreach (group in ({ "properties", "rooms", "combat_and_teams", "area_indexes", "area_save",
+        "present_lookup", "area_movement", "movement_after_error", "area_dimensions",
+        "pattern_scan", "quest_indexes", "efun_compatibility", "connection_failure", "maze_bounds" })) {
+        err = catch(call_other(this_object(), group));
+        check(!err, group + " completed" + (err ? ": " + err : ""));
+    }
+}

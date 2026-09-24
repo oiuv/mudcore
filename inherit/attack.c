@@ -119,8 +119,10 @@ object *enemy_team() {
     if (sizeof(team) == 1)
         return team[0];
     if (sizeof(team) > 1) {
+        tm = team[0];
         for (i = 1; i < sizeof(team); i++) {
-            tm = sizeof(team[i]) > sizeof(team[i - 1]) ? team[i] : team[i - 1];
+            if (sizeof(team[i]) > sizeof(tm))
+                tm = team[i];
         }
         return tm;
     }

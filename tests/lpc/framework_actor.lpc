@@ -1,0 +1,21 @@
+inherit CORE_LIVING;
+
+varargs int move(mixed dest, int raw) {
+    if (query_temp("move_failure") == "return") return 0;
+    if (query_temp("move_failure") == "throw") error("expected move failure\n");
+    if (query_temp("move_failure") == "destruct") { destruct(this_object()); return -1; }
+    if (query_temp("move_failure") == "after") {
+        ::move(dest, raw);
+        error("expected post-move failure\n");
+    }
+    return ::move(dest, raw);
+}
+mixed enemy_teams() { return query_temp("groups"); }
+object find_implicit(mixed arg) { return present(arg); }
+object find_explicit(mixed arg, object dest) { return present(arg, dest); }
+object native_find(mixed arg) { return efun::present(arg); }
+string query_status() { return query("status"); }
+void change_status(string value) { set("status", value); }
+varargs object find_args(mixed *args...) { return present(args...); }
+varargs object native_args(mixed *args...) { return evaluate((: efun::present :), args...); }
+void hide_fixture() { set_hide(1); }

@@ -1,6 +1,6 @@
 inherit CORE_MASTER_OB;
 
-private int failures, checks, deniedExports, policyCalls, failedCreations;
+private int failures, checks, deniedExports, policyCalls, failedCreations, failedEntries;
 
 void check(int condition, string label) {
     checks++;
@@ -30,6 +30,10 @@ int valid_write(string file, mixed user, string func) { policyCalls++; return 1;
 void error_handler(mapping details, int caught) {
     if (!caught && strsrch(details["error"], "expected character hook exception") != -1) {
         failedCreations++;
+        return;
+    }
+    if (!caught && strsrch(details["error"], "expected movement exception after save") != -1) {
+        failedEntries++;
         return;
     }
     if (!caught) check(0, "uncaught: " + details["error"]);
@@ -195,9 +199,25 @@ void finish(object player) {
     check(!find_player("blockedbyhost"), "denied registration leaves no active body");
     check(failedCreations == 1 && !find_player("failedbyhook"),
         "creation hook exception propagates without a living body");
+    check(failedEntries == 1 && !find_player("failedaftersave"),
+        "post-save movement exception propagates without a living body");
     check(sizeof(filter(children(USER_OB), (: clonep($1) :))) == 1,
         "failed registration leaves no inactive player clones");
     check(!NAME_D->query("I/Interrupted"), "failed creation removes its name mapping");
+    check(file_size(DATA_DIR "user/failedbyhook" + __SAVE_EXTENSION__) < 0,
+        "creation hook failure leaves no player save");
+    check(file_size(DATA_DIR "user/failedaftersave" + __SAVE_EXTENSION__) > 0,
+        "movement failure happens after the player is saved");
+    check(NAME_D->query("P/Preserved") == "failedaftersave",
+        "post-save failure retains its name mapping");
+    check(NAME_D->restore(), "name index can be restored after failed registration");
+    check(!NAME_D->query("I/Interrupted") && !NAME_D->invalid_new_name("Interrupted"),
+        "unsaved name is released on disk and can be reused");
+    check(NAME_D->query("P/Preserved") == "failedaftersave" &&
+        stringp(NAME_D->invalid_new_name("Preserved")),
+        "saved name remains reserved on disk and offline duplicate checks reject it");
+    check(sizeof(filter(children(USER_OB), (: clonep($1) :))) == 1,
+        "offline name verification leaves no player clones");
     check(geteuid(load_object(LOGIN_D)) == ROOT_UID, "login daemon identity restored");
     check(!find_object(VERB_D) && !find_object(EMOTE_D) && !find_object(CHANNEL_D),
         "disabled services were never loaded");

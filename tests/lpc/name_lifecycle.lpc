@@ -1,0 +1,48 @@
+#undef LOGIN_OB
+#define LOGIN_OB "/tests/framework_actor"
+#undef LOGIN_D
+#define LOGIN_D "/tests/name_lifecycle"
+#undef DATA_DIR
+#define DATA_DIR "/data/name_lifecycle/"
+#include "/mudcore/system/daemons/name_d.c"
+
+object temporary_body;
+int fail_make;
+
+object make_body(object login) {
+    if (fail_make) error("expected body failure\n");
+    temporary_body = new("/tests/name_lifecycle_body");
+    return temporary_body;
+}
+void check(int condition, string label) { MASTER_OB->check(condition, "name lifecycle: " + label); }
+void run() {
+    object actor;
+    mixed err;
+    int before;
+
+    set("新/新名字", "offline");
+    before = sizeof(children(LOGIN_OB));
+    err = catch(assure_map_name("新名字"));
+    check(stringp(err) && !temporary_body, "failed restore releases temporary body and propagates");
+    check(sizeof(children(LOGIN_OB)) == before, "failed restore releases temporary login");
+    fail_make = 1;
+    err = catch(assure_map_name("新名字"));
+    check(stringp(err) && sizeof(children(LOGIN_OB)) == before,
+        "failed construction releases temporary login and propagates");
+    fail_make = 0;
+    actor = new(LOGIN_OB);
+    actor->set("id", "renamed");
+    actor->set("name", "旧名字");
+    map_name("旧名字", "renamed");
+    err = catch(change_name(actor, "新名字"));
+    check(stringp(err) && query("旧/旧名字") == "renamed" && actor->name(1) == "旧名字",
+        "validation error preserves original name and index");
+    check(stringp(change_name(actor, "东方")) && query("旧/旧名字") == "renamed",
+        "ordinary validation rejection preserves original index");
+    check(!change_name(actor, "旧名字") && query("旧/旧名字") == "renamed",
+        "unchanged name retains own index");
+    check(!change_name(actor, "好名字") && !query("旧/旧名字") &&
+        query("好/好名字") == "renamed" && actor->name(1) == "好名字",
+        "successful rename updates both indexes");
+    destruct(actor);
+}

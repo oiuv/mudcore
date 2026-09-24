@@ -189,8 +189,10 @@ void addExit(string dir, mixed dest) {
 }
 private void _mudcore_impl_add_exit(string dir, mixed dest) {
     mapping exits = query("exits");
-    if (!mapp(exits))
+    if (!mapp(exits)) {
         exits = ([]);
+        set("exits", exits);
+    }
     if (!exits[dir])
         exits[dir] = dest;
 }
@@ -339,8 +341,8 @@ private void _mudcore_impl_restrict_exits_to_bounds(int x1, int y1, int x2, int 
     int ty2 = max(({ y1, y2 }));
     remove_horizontal_boundary_exits(ty2, tx1, tx2);
     remove_horizontal_boundary_exits(ty1 - 1, tx1, tx2);
-    remove_vertical_boundary_exits(x1, y1, y2);
-    remove_vertical_boundary_exits(x2 + 1, y1, y2);
+    remove_vertical_boundary_exits(tx1, ty1, ty2);
+    remove_vertical_boundary_exits(tx2 + 1, ty1, ty2);
 }
 
 // 查询光亮级别
@@ -441,7 +443,7 @@ varargs int open_door(string dir, int from_other_side) {
             return 0;
     }
 
-    doors[dir]["status"] &= (!DOOR_CLOSED);
+    doors[dir]["status"] &= ~DOOR_CLOSED;
     return 1;
 }
 

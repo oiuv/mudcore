@@ -196,9 +196,8 @@ void reset_callout(int temp) {
 }
 
 void reset() {
-    // 清空LOO座標集
-    LOO = ({});
-
+    // 刷新载入物不改变现有对象的位置索引。
+    remove_call_out("reset_callout");
     // 对象載入集有資料, 遞迴延遲呼叫產生mob以免cost過多
     call_out("reset_callout", 1, 0);
     return;
@@ -254,47 +253,26 @@ void remove() {
 }
 
 int save() {
-    int i, j, x_size, y_size;
-    mapping LOADED_BAK, OBJECTS_BAK;
-    mixed *AREA_BAK;
+    mixed *liveArea, *row;
+    mapping cell;
+    mixed err;
+    int result;
 
-    // 存檔前將不需要儲取的變數清空，以免往後發生無法預期的錯誤
-    AREA_BAK = area;
-
-    LOADED_BAK = ([]);
-    OBJECTS_BAK = ([]);
-
-    x_size = this_object()->query("x_axis_size");
-    y_size = this_object()->query("y_axis_size");
-
-    // 每格座標中的暫時變數也要清空, 並暫存起來
-    for (i = 0; i < y_size; i++) {
-        if (undefinedp(LOADED_BAK[i]))
-            LOADED_BAK[i] = ([]);
-        if (undefinedp(OBJECTS_BAK[i]))
-            OBJECTS_BAK[i] = ([]);
-        for (j = 0; j < x_size; j++) {
-            LOADED_BAK[i][j] = area[i][j]["loaded"];
-            OBJECTS_BAK[i][j] = area[i][j]["objects"];
-            map_delete(area[i][j], "loaded");  // loaded -> mapping
-            map_delete(area[i][j], "objects");  // objects -> array
-        }
-    }
-
-    if (::save()) {
-        // 儲存完便還原
-        area = AREA_BAK;
-
-        for (i = 0; i < y_size; i++) {
-            for (j = 0; j < x_size; j++) {
-                area[i][j]["loaded"] = LOADED_BAK[i][j];
-                area[i][j]["objects"] = OBJECTS_BAK[i][j];
+    // 在副本中去除运行时索引；成功、返回失败或抛错都保留原始对象引用。
+    liveArea = area;
+    area = copy(area);
+    err = catch {
+        foreach (row in area) {
+            foreach (cell in row) {
+                map_delete(cell, "loaded");
+                map_delete(cell, "objects");
             }
         }
-        return 1;
-    }
-
-    return 0;
+        result = ::save();
+    };
+    area = liveArea;
+    if (err) error(err);
+    return result ? 1 : 0;
 }
 
 void setup() {
@@ -315,6 +293,8 @@ void setup() {
         if (!x_size || x_size < AREA_XAXIS_MIN || x_size > AREA_XAXIS_MAX)
             x_size = DEFAULT_XAXIS_SIZE;
 
+        set("x_axis_size", x_size);
+        set("y_axis_size", y_size);
         // 要求記憶體
         area = allocate(y_size);
         for (i = 0; i < sizeof(area); i++) {

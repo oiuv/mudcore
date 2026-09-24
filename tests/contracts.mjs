@@ -103,6 +103,9 @@ async function exercise(port, custom) {
         client.close();
         await register('failedbyhook', 'Interrupted');
         await client.expectCreationFailure();
+        await register('failedaftersave', 'Preserved');
+        await client.expect(/CONTRACT READY/);
+        await client.expectCreationFailure();
         await register('contractone', 'Traveler');
         await client.expect(/ROOM: \/world\/contract_start/);
         await state(1);

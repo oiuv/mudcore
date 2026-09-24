@@ -1,0 +1,17 @@
+#undef CAMP_D
+#define CAMP_D "/tests/framework_camp"
+#include "/mudcore/inherit/camp.c"
+
+string get_camp_file(string c) { return __FILE__; }
+string get_camp_name(string c) { return c; }
+string *get_friendly_camps(string c) { return ({ "friend" }); }
+string *get_hostile_camps(string c) { return ({ "enemy" }); }
+void run() {
+    add_camp("main");
+    adjust_camp_reputations("main", 0);
+    MASTER_OB->check(!has_camp("friend") && !has_camp("enemy"),
+        "zero reputation delta leaves related camps unchanged");
+    adjust_camp_reputation("main", 35001);
+    MASTER_OB->check(get_camp_rank_name("main") == "崇拜" && get_camp_rank("main") == 4,
+        "highest friendly reputation has positive rank name");
+}

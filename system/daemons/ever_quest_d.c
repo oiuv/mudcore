@@ -358,7 +358,7 @@ protected void heart_beat() {
                     break;
 
                 case QUEST_FINISH:
-                    if (t->query("finish_time") > QUEST_FINISH_PERIOD)
+                    if (t - key->query("finish_time") > QUEST_FINISH_PERIOD)
                         // 结束任务超过有效时间了
                         key->change_status(QUEST_ERROR);
                     break;

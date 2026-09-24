@@ -92,6 +92,7 @@ private int really_exist(string name, string id) {
     object ob;
     object user;
     int result;
+    mixed err;
 
     if (!stringp(id))
         return 0;
@@ -105,18 +106,16 @@ private int really_exist(string name, string id) {
     }
 
     // read the data of user object
-    ob = new(LOGIN_OB);
-    ob->set("id", id);
-    user = LOGIN_D->make_body(ob);
-    destruct(ob);
-
-    if (!objectp(user))
-        // no such user
-        return 0;
-
-    result = user->restore() && (user->name(1) == name);
-    destruct(user);
-
+    err = catch {
+        ob = new(LOGIN_OB);
+        ob->set("id", id);
+        user = LOGIN_D->make_body(ob);
+        if (objectp(user))
+            result = user->restore() && (user->name(1) == name);
+    };
+    if (objectp(ob)) destruct(ob);
+    if (objectp(user)) destruct(user);
+    if (err) error(err);
     return result;
 }
 
@@ -166,21 +165,22 @@ public string invalid_new_name(string name) {
 
 // change a user's name
 public varargs string change_name(object me, string new_name, int force) {
-    string result;
+    string result, oldName;
     mapping dbase;
 
-    if (stringp(me->name(1))) {
-        remove_name(me->name(1), me->query("id"));
-        result = invalid_new_name(new_name);
-    } else
-        result = 0;
-
+    oldName = me->name(1);
+    if (oldName == new_name) {
+        map_name(oldName, me->query("id"));
+        return 0;
+    }
+    // 校验可能加载离线存档并抛错，成功前保留旧名称索引。
+    result = invalid_new_name(new_name);
     if (force || !result) {
+        if (stringp(oldName)) remove_name(oldName, me->query("id"));
         dbase = me->query_entire_dbase();
         dbase["name"] = new_name;
+        map_name(new_name, me->query("id"));
     }
-
-    map_name(me->name(1), me->query("id"));
     return result;
 }
 

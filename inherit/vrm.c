@@ -827,11 +827,15 @@ nomask object query_maze_room(string str) {
     if (idx == -1)
         return 0;
 
+    if (!sizeof(regexp(({ str }), "^[0-9]+-[0-9]+$")))
+        return 0;
     if (!sscanf(str[0..idx - 1], "%d", x))
         return 0;
     if (!sscanf(str[idx + 1..], "%d", y))
         return 0;
 
+    if (x < 0 || y < 0 || x >= l || y >= l)
+        return 0;
     if (!exits = all[x][y])
         return 0;
 

@@ -8,3 +8,9 @@ void gmcp(string request) {
     ::gmcp(request);
 }
 #endif
+
+varargs int move(mixed dest, int raw) {
+    if (query("id") == "failedaftersave")
+        error("expected movement exception after save\n");
+    return ::move(dest, raw);
+}

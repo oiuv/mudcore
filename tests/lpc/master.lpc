@@ -101,7 +101,7 @@ void finish() {
 }
 
 void run() {
-    string file;
+    string file, fixture;
     mixed err;
     int count;
     object database;
@@ -130,9 +130,17 @@ void run() {
     if (err) check(0, "hot reload regression: " + err);
     err = catch(load_object("/tests/command_baseline")->run());
     if (err) check(0, "command baseline: " + err);
+    err = catch(load_object("/tests/framework_probe")->run());
+    if (err) check(0, "framework regression: " + err);
     err = catch(load_object("/tests/regression")->run());
     if (err)
         check(0, "regression: " + err);
+    foreach (fixture in ({ "name_lifecycle", "cmd_lifecycle", "framework_camp" })) {
+        err = catch(load_object("/tests/" + fixture)->run());
+        if (err) check(0, fixture + ": " + err);
+    }
+    err = catch(load_object("/tests/socket_lifecycle")->run());
+    if (err) check(0, "socket lifecycle regression: " + err);
     err = catch(load_object("/tests/socket_probe")->run());
     if (err)
         check(0, "socket startup: " + err);
@@ -194,4 +202,9 @@ void restart_intermud() {
         INTERMUD_D->start("127.0.0.1", ports["udpPort"], ports["intermudPort"]),
         "Intermud restart with numeric peer"
     );
+}
+
+int valid_hide(object ob) {
+    if (function_exists("query_temp", ob) && ob->query_temp("cannot_see_hidden")) return 0;
+    return ::valid_hide(ob);
 }

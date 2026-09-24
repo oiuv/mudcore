@@ -18,149 +18,129 @@ int area_environment(object ob1, object ob2) {
     return 1;
 }
 
-// 將who移到與me同一格的位置
-int area_move_side(object who, object me) {
-    int env_area = 0, x, y;
-    object area;
-    mapping who_info;
-
-    if (!objectp(who) || !objectp(me))
-        return 0;
-    if (!environment(me))
-        return 0;
-    if (!environment(me)->is_area())
-        return 0;
-
-    if (environment(who) && environment(who)->is_area()) {
-        who_info = who->query("area_info");
-        env_area = 1;
-    }
-
-    // 已經在同一個位置了
-    if (environment(me) == environment(who) &&
-        me->query("area_info/x_axis") == who->query("area_info/x_axis") &&
-        me->query("area_info/y_axis") == who->query("area_info/y_axis"))
-        return 1;
-
-    area = environment(me);
-    x = me->query("area_info/x_axis");
-    y = me->query("area_info/y_axis");
-
-    // 如果who移到area中失敗
-    if (!area->move_in(x, y, who)) {
-        return 0;
-    }
-
-    who->set("area_info/x_axis", x);
-    who->set("area_info/y_axis", y);
-
-    // 成功移入area, move() 會自動從舊area裡移出
-    if (who->move(area)) {
-        who->set("area_info/x_axis_old", x);
-        who->set("area_info/y_axis_old", y);
-        return 1;
-    } else {
-        // 將先前移到新的area再做移出
-        area->move_out(x, y, who);
-        if (env_area) {
-            // 設回先前的 x, y
-            who->set("area_info/x_axis", who_info["x_axis_old"]);
-            who->set("area_info/y_axis", who_info["y_axis_old"]);
-            if (!environment(who)->move_in(who_info["x_axis_old"], who_info["y_axis_old"])) {
-                tell_object(who, "因為某種原因，你的角色在區域移動時產生了錯誤...\n");
-                destruct(who);
-                return 0;
-            }
-        }
-    }
-}
-
 int area_move(object area, object who, int x, int y) {
-    mapping info;
-    int env_area = 0;
+    mapping oldInfo;
+    object oldArea;
+    mixed err;
+    int result, arrived;
 
-    if (!objectp(who) || !objectp(area))
+    if (!objectp(who) || !objectp(area) || !area->is_area())
         return 0;
+    oldArea = environment(who);
+    oldInfo = who->query("area_info");
+    if (mapp(oldInfo)) oldInfo = copy(oldInfo);
 
-    if (environment(who) && environment(who)->is_area()) {
-        info = who->query("area_info");
-        env_area = 1;
-    }
-
-    // 已經在同一個位置了
-    if (area == environment(who) &&
-        x == who->query("area_info/x_axis") &&
-        y == who->query("area_info/y_axis"))
+    if (area == oldArea && mapp(oldInfo) && x == oldInfo["x_axis"] && y == oldInfo["y_axis"])
         return 1;
-
-    // 如果who move_in到新的area中失敗
     if (!area->move_in(x, y, who))
         return 0;
 
     who->set("area_info/x_axis", x);
     who->set("area_info/y_axis", y);
-    // 成功移入area, move() 會自動從area裡移出
-    if (who->move(area)) {
+    err = catch(result = who->move(area));
+    // init/GMCP/look 可能在实际移动后抛错，保留已经发生的位置变更。
+    arrived = objectp(who) && environment(who) == area && (result > 0 || area != oldArea);
+    if (arrived) {
         who->set("area_info/x_axis_old", x);
         who->set("area_info/y_axis_old", y);
-        return 1;
-    }
-    // 移入area失敗，如果原本是在area環境中，必須再移入一次
-    else {
-        // 將先前移到新的area再做移出
+    } else {
         area->move_out(x, y, who);
-        if (env_area) {
-            // 設回先前的 x, y
-            who->set("area_info/x_axis", info["x_axis_old"]);
-            who->set("area_info/y_axis", info["y_axis_old"]);
-            if (!environment(who)->move_in(info["x_axis_old"], info["y_axis_old"])) {
-                tell_object(who, "因為某種原因，你的角色在區域移動時產生了錯誤...\n");
-                destruct(who);
-                return 0;
-            }
+        if (objectp(who)) {
+            if (mapp(oldInfo)) who->set("area_info", oldInfo);
+            else who->delete("area_info");
+            if (objectp(oldArea) && oldArea->is_area() && environment(who) == oldArea && mapp(oldInfo))
+                oldArea->move_in(oldInfo["x_axis"], oldInfo["y_axis"], who);
+        } else if (objectp(oldArea) && oldArea->is_area() && mapp(oldInfo)) {
+            oldArea->move_out(oldInfo["x_axis"], oldInfo["y_axis"], 0);
         }
+    }
+    if (err) error(err);
+    return arrived && result > 0;
+}
+
+// 將who移到與me同一格的位置，复用同一套索引及异常处理。
+int area_move_side(object who, object me) {
+    object area;
+
+    if (!objectp(who) || !objectp(me) || !objectp(area = environment(me)) || !area->is_area())
+        return 0;
+    return area_move(area, who, me->query("area_info/x_axis"), me->query("area_info/y_axis"));
+}
+
+private object present_in_area(mixed arg, object area, object caller, function native) {
+    object actor, candidate;
+    object *contents;
+    mapping info;
+    string suffix;
+    int split, index, i;
+
+    actor = caller;
+    if (environment(actor) != area && objectp(this_player()) && environment(this_player()) == area)
+        actor = this_player();
+    if (environment(actor) != area || !function_exists("query", actor)) return 0;
+    info = actor->query("area_info");
+    if (!mapp(info)) return 0;
+    contents = area->query_inventory(info["x_axis"], info["y_axis"]);
+    if (!arrayp(contents)) return 0;
+    if (objectp(arg))
+        return environment(arg) == area && member_array(
+            arg,
+            contents
+        ) >= 0 ? evaluate(native, arg, area) : 0;
+    if (!stringp(arg) || arg == "") return 0;
+
+    index = 1;
+    split = strsrch(arg, ' ', -1);
+    if (split >= 0) {
+        suffix = arg[split + 1..];
+        if (sizeof(regexp(({ suffix }), "^[0-9]+$"))) {
+            index = to_int(suffix);
+            if (index < 1) index = 1;
+            arg = split ? arg[0..split - 1] : "";
+        }
+    }
+    // 与驱动 inventory 的查找顺序一致：后移入的对象优先。
+    for (i = sizeof(contents) - 1; i >= 0; i--) {
+        candidate = contents[i];
+        if (!objectp(candidate) || environment(candidate) != area) continue;
+        if (candidate->query("area_info/x_axis") != info["x_axis"] ||
+            candidate->query("area_info/y_axis") != info["y_axis"]) continue;
+        if (candidate->id(arg) && objectp(candidate) && --index == 0)
+            return evaluate(native, candidate, area);
+        if (!objectp(candidate)) return 0;
     }
     return 0;
 }
 
-// 重写驱动 present函数（优化对象参数检查逻辑）
-object present(mixed arg, object ob) {
-    object caller = previous_object() || this_player();
-    object env = environment(caller);
-    // 处理无第二个参数的情况：根据arg类型区分查找范围
-    if (!objectp(ob)) {
-        if (stringp(arg)) {
-            // arg是字符串：在caller的环境中查找（模拟原生行为）
-            return efun::present(arg, env ? env : caller);
-        } else if (objectp(arg)) {
-            // 用原生函数检检查对象arg是否在caller的物品栏或其环境中
-            if (efun::present(arg, caller) || (env && efun::present(arg, env))) {
-                return environment(arg);  // 两种情况统一返回父对象
-            }
-            return 0;  // 不在范围内
+// 普通环境遵循驱动语义，区域环境的查找限制在当前坐标。
+varargs object present(mixed *args...) {
+    object caller, env, found;
+    function native;
+    mixed arg;
+
+    caller = previous_object();
+    // 原生 efun 必须在原调用者上下文运行，保留隐藏对象权限及 id() 的驱动调用语义。
+    native = objectp(caller) ? bind((: efun::present :), caller) : (: efun::present :);
+    if (!objectp(caller) || sizeof(args) < 1 || sizeof(args) > 2)
+        return evaluate(native, args...);
+    arg = args[0];
+    if ((!stringp(arg) && !objectp(arg)) || (sizeof(args) == 2 && !objectp(args[1])))
+        return evaluate(native, args...);
+    env = sizeof(args) == 2 ? args[1] : environment(caller);
+    if (!objectp(env) || !function_exists("is_area", env) || !env->is_area())
+        return evaluate(native, args...);
+
+    if (sizeof(args) == 1) {
+        found = evaluate(native, arg);
+        if (objectp(arg)) {
+            if (found == caller) return found;
+            return found && area_environment(caller, arg) ? found : 0;
         }
-        return 0;  // 非字符串/对象类型
+        if (objectp(found) && (found == env || environment(found) == caller)) return found;
+        // 环境内的序号必须在当前格重新计数，不能沿用整张地图的第 N 个。
+        if (!objectp(caller) || environment(caller) != env) return 0;
     }
-
-    // 处理有第二个参数的情况（保持原逻辑）
-    if (ob->is_area()) {
-        int p = 0, index;
-        object *obs, t;
-        mapping area_info;
-
-        area_info = caller->query("area_info");
-        if (sscanf(arg, "%s %d", arg, index) != 2)
-            index = 1;
-
-        obs = ob->query_inventory(area_info["x_axis"], area_info["y_axis"]);
-        foreach (t in obs) {
-            if (objectp(t) && t->id(arg) && ++p == index)
-                return t;
-        }
-        return 0;
-    } else {
-        return efun::present(arg, ob);
-    }
+    return present_in_area(arg, env, caller, native);
 }
 
 // 针对area模式的tell_room

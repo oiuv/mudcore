@@ -1,0 +1,2 @@
+inherit CORE_QUEST_D;
+string query_save_file() { return DATA_DIR "framework_quests"; }

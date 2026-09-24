@@ -488,7 +488,11 @@ private void complete_character(object ob, string gender) {
         map_delete(loginIds, ob);
         if (objectp(user)) destruct(user);
         if (objectp(ob)) destruct(ob);
-        catch(NAME_D->remove_name(name, playerId));
+        // 入场可能在保存后失败，按实际存档校验姓名，避免释放已保存角色的名字。
+        catch {
+            NAME_D->assure_map_name(name);
+            NAME_D->save();
+        };
         error(err);
     }
     write("\n");

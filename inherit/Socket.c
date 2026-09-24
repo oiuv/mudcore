@@ -42,6 +42,13 @@ class socket_connection {
     int last_active;
 }
 
+protected varargs void handle_dns_resolve(
+    string host,
+    string addr,
+    int key,
+    class socket_connection expected
+);
+
 // 存储连接信息
 nosave mapping SocketConnections = ([]);
 nosave mapping SocketDnsCache = ([]);
@@ -136,6 +143,23 @@ protected void connect_timeout(int fd, class socket_connection expected) {
         call_other(conn->callbacks["object"], conn->callbacks["error"], fd, "Connection timed out");
 }
 
+// 先释放旧连接，再通知宿主；通知可能抛错或复用同一 fd。
+private void fail_connection(int fd, class socket_connection conn, string message) {
+    if (SocketConnections[fd] != conn) return;
+    close(fd);
+    if (conn->callbacks["error"] && conn->callbacks["object"])
+        call_other(conn->callbacks["object"], conn->callbacks["error"], fd, message);
+}
+
+private void resolve_connection(int fd, class socket_connection conn) {
+    int key;
+    mixed err;
+
+    err = catch(key = resolve(conn->host, (: handle_dns_resolve($1, $2, $3, $(conn)) :)));
+    if (err || key < 0)
+        fail_connection(fd, conn, err ? "DNS解析失败: " + err : "DNS解析无法启动");
+}
+
 // 创建TCP客户端连接
 public varargs int tcp_client(
     string host,
@@ -205,20 +229,12 @@ public varargs int tcp_client(
         if (result != EESUCCESS) {
             conn->state = SOCKET_STATE_ERROR;
             trace("tcp:失败", ([ "fd": fd, "error": socket_error(result) ]));
-            if (conn->callbacks["error"] && conn->callbacks["object"]) {
-                call_other(
-                    conn->callbacks["object"],
-                    conn->callbacks["error"],
-                    fd,
-                    socket_error(result)
-                );
-            }
-            close(fd);
+            fail_connection(fd, conn, socket_error(result));
         }
     } else {
         conn->state = SOCKET_STATE_RESOLVING;
         trace("tcp_connect:开始DNS解析", ([ "host": host ]));
-        resolve(host, "handle_dns_resolve");
+        resolve_connection(fd, conn);
     }
 
     return fd;
@@ -274,11 +290,13 @@ public int udp_client(
     conn->last_active = time();
 
     SocketConnections[fd] = conn;
+    connectTimers[fd] = call_out("connect_timeout", connectTimeoutSeconds, fd, conn);
     trace("udp:连接", ([ "fd": fd, "host": host, "port": port ]));
 
     if (SocketDnsCache[host]) {
         conn->remote_addr = SocketDnsCache[host];
         conn->state = SOCKET_STATE_CONNECTED;
+        clear_connect_timer(fd);
         trace("dns:缓存命中", ([ "host": host, "addr": SocketDnsCache[host] ]));
         if (conn->callbacks["data"] && conn->callbacks["object"]) {
             call_other(conn->callbacks["object"], conn->callbacks["data"], fd, "UDP已就绪");
@@ -286,7 +304,7 @@ public int udp_client(
     } else {
         conn->state = SOCKET_STATE_RESOLVING;
         trace("dns:解析", ([ "host": host ]));
-        resolve(host, "handle_dns_resolve");
+        resolve_connection(fd, conn);
     }
 
     return fd;
@@ -541,12 +559,11 @@ protected void handle_udp_response(int fd, mixed data, string addr) {
     class socket_connection conn = SocketConnections[fd];
     if (!conn) return;
 
+    // 单次请求在通知前结束，回调可抛错或立即建立下一条连接。
+    close(fd);
     if (conn->callbacks["data"] && conn->callbacks["object"]) {
         call_other(conn->callbacks["object"], conn->callbacks["data"], fd, data, addr);
     }
-
-    // 用完即弃，自动清理
-    close(fd);
 }
 
 // 获取所有连接
@@ -559,7 +576,13 @@ public mapping get_connections() {
 }
 
 // DNS解析回调
-protected void handle_dns_resolve(string host, string addr, int key) {
+protected varargs void handle_dns_resolve(
+    string host,
+    string addr,
+    int key,
+    class socket_connection expected
+) {
+    if (expected && SocketConnections[expected->fd] != expected) return;
     trace("dns:完成", ([ "host": host, "addr": addr ]));
 
     if (addr) {
@@ -568,7 +591,7 @@ protected void handle_dns_resolve(string host, string addr, int key) {
 
         foreach (int fd, class socket_connection conn in SocketConnections) {
             int result;
-            if (conn->host == host && conn->state == SOCKET_STATE_RESOLVING) {
+            if ((!expected || conn == expected) && conn->host == host && conn->state == SOCKET_STATE_RESOLVING) {
                 conn->remote_addr = addr;
                 trace("dns:处理连接", ([ "fd": fd, "protocol": conn->protocol ]));
 
@@ -585,18 +608,11 @@ protected void handle_dns_resolve(string host, string addr, int key) {
                     if (result != EESUCCESS) {
                         conn->state = SOCKET_STATE_ERROR;
                         trace("tcp:失败", ([ "fd": fd, "error": socket_error(result) ]));
-                        if (conn->callbacks["error"] && conn->callbacks["object"]) {
-                            call_other(
-                                conn->callbacks["object"],
-                                conn->callbacks["error"],
-                                fd,
-                                socket_error(result)
-                            );
-                        }
-                        close(fd);
+                        fail_connection(fd, conn, socket_error(result));
                     }
                 } else if (conn->protocol == PROTOCOL_UDP) {
                     conn->state = SOCKET_STATE_CONNECTED;
+                    clear_connect_timer(fd);
                     trace("udp:已建立", ([ "fd": fd ]));
                     if (conn->callbacks["data"] && conn->callbacks["object"]) {
                         call_other(
@@ -612,12 +628,9 @@ protected void handle_dns_resolve(string host, string addr, int key) {
     } else {
         trace("dns:失败", ([ "host": host ]));
         foreach (int fd, class socket_connection conn in SocketConnections) {
-            if (conn->host == host && conn->state == SOCKET_STATE_RESOLVING) {
+            if ((!expected || conn == expected) && conn->host == host && conn->state == SOCKET_STATE_RESOLVING) {
                 trace("dns:失败", ([ "fd": fd ]));
-                if (conn->callbacks["error"] && conn->callbacks["object"]) {
-                    call_other(conn->callbacks["object"], conn->callbacks["error"], fd, "DNS解析失败");
-                }
-                close(fd);
+                fail_connection(fd, conn, "DNS解析失败");
             }
         }
     }
@@ -644,6 +657,7 @@ protected void handle_receive_callback(int fd, mixed data, string addr) {
         }
     }
 
+    if (SocketConnections[fd] != conn) return;
     if (conn->callbacks["data"] && conn->callbacks["object"]) {
         trace(
             "callback:data",
@@ -684,6 +698,7 @@ protected void handle_accept_callback(int fd) {
     class socket_connection serverConn;
     int newFd;
     class socket_connection newConn;
+    mixed err;
 
     serverConn = SocketConnections[fd];
     if (!serverConn) {
@@ -710,7 +725,15 @@ protected void handle_accept_callback(int fd) {
 
     if (serverConn->callbacks["accept"] && serverConn->callbacks["object"]) {
         trace("accept:回调", ([ "fd": newFd, "callback": serverConn->callbacks["accept"] ]));
-        call_other(serverConn->callbacks["object"], serverConn->callbacks["accept"], newFd);
+        err = catch(call_other(
+            serverConn->callbacks["object"],
+            serverConn->callbacks["accept"],
+            newFd
+        ));
+        if (err) {
+            if (SocketConnections[newFd] == newConn) close(newFd);
+            error(err);
+        }
     }
 }
 
@@ -724,10 +747,9 @@ protected void handle_close_callback(int fd) {
 
     conn->state = SOCKET_STATE_CLOSED;
     trace("close:连接", ([ "fd": fd, "protocol": conn->protocol ]));
+    close(fd);
     if (conn->callbacks && conn->callbacks["close"] && conn->callbacks["object"]) {
         trace("callback:close", ([ "fd": fd, "callback": conn->callbacks["close"] ]));
         call_other(conn->callbacks["object"], conn->callbacks["close"], fd);
     }
-
-    close(fd);
 }

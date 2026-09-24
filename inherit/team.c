@@ -33,6 +33,7 @@ int follow_me(object ob, string dir) {
     if (!living(me) || ob == me)
         return 0;
 
+    clean_up_team();
     if (ob == leader) {
         return follow_path(dir);
     } else if (arrayp(team) && team[0] == ob)
@@ -41,9 +42,10 @@ int follow_me(object ob, string dir) {
 }
 
 int add_team_member(object ob) {
-    if (ob == this_object())
+    if (!objectp(ob) || ob == this_object())
         return 0;
 
+    clean_up_team();
     if (arrayp(team)) {
         team -= ({ 0 });
         if (member_array(ob, team) == -1) {
@@ -60,17 +62,20 @@ int add_team_member(object ob) {
 }
 
 int is_team_leader() {
+    clean_up_team();
     return arrayp(team) && team[0] == this_object();
 }
 
 int set_team(object *t) {
     team = t;
+    clean_up_team();
     return 1;
 }
 
 varargs int dismiss_team(object ob) {
     int i;
 
+    clean_up_team();
     if (!arrayp(team))
         return 0;
 
@@ -98,6 +103,8 @@ object *query_team() {
 
 // 清理队伍中的离线玩家
 void clean_up_team() {
-    if (arrayp(team))
+    if (arrayp(team)) {
         team -= ({ 0 });
+        if (!sizeof(team)) team = 0;
+    }
 }

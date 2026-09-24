@@ -299,6 +299,8 @@ int move_in(int x, int y, object ob) {
 
 // 对象移出某座標處理
 int move_out(int x, int y, object ob) {
+    object remaining;
+
     // 超出區域大小範圍
     if (!check_scope(x, y))
         return 0;
@@ -307,15 +309,15 @@ int move_out(int x, int y, object ob) {
     if (undefinedp(area[y][x]["objects"]))
         return 1;
 
-    // 改變即時的圖示
-    set_icon_weight(x, y, -get_icon_weight(ob));
-
     // 对象不存在於对象集(objects)中，就不需要再移出对象集
     if (member_array(ob, area[y][x]["objects"]) == -1)
         return 1;
 
-    // 对象移出对象集
-    area[y][x]["objects"] -= ({ ob });
+    // 已销毁的对象只剩 0，按剩余对象重算，避免残留或重复扣减图示权重。
+    area[y][x]["objects"] -= ({ ob, 0 });
+    remove_icon(x, y);
+    foreach (remaining in area[y][x]["objects"])
+        set_icon_weight(x, y, get_icon_weight(remaining));
 
     // 座標完全沒对象時，刪除对象集
     if (sizeof(area[y][x]["objects"]) < 1) {
