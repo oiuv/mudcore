@@ -262,6 +262,8 @@ void run() {
     test_percent();
     debug_message("SEFUN: Base64");
     test_base64();
+    debug_message("SEFUN: Decimal");
+    "/tests/decimal"->do_tests();
     debug_message("SEFUN: Json");
     test_json();
     debug_message("SEFUN: PresentClone");
