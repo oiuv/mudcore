@@ -51,6 +51,13 @@ private int _add_checked(int a, int b) {
     return r;
 }
 
+private int _sub_checked(int a, int b) {
+    // Check before subtracting: -MIN_INT cannot be represented as an int.
+    if ((b > 0 && a < (-MAX_INT - 1) + b) || (b < 0 && a > MAX_INT + b))
+        error("decimal: integer overflow.\n");
+    return a - b;
+}
+
 private int *_make(int mant, int scale) {
     if (scale < 0 || scale > DECIMAL_MAX_SCALE)
         error("decimal: illegal scale " + scale + ".\n");
@@ -113,7 +120,7 @@ int *decimal_add(int *a, int *b) {
 
 int *decimal_sub(int *a, int *b) {
     mixed *x = _align(a, b);
-    return _make(_add_checked(x[0], -x[1]), x[2]);
+    return _make(_sub_checked(x[0], x[1]), x[2]);
 }
 
 int *decimal_mul(int *a, int *b) {
@@ -144,7 +151,7 @@ int *decimal_mod(int *a, int *b) {
 }
 
 int *decimal_neg(int *a) {
-    return _make(-a[DEC_MANT], a[DEC_SCALE]);
+    return _make(_sub_checked(0, a[DEC_MANT]), a[DEC_SCALE]);
 }
 
 // -1 / 0 / 1

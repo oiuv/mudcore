@@ -44,10 +44,13 @@ decimal_to_string(decimal_div(to_decimal(1), to_decimal(3)));  // "0.33333333333
 - 除法按 `max(a 的小数位数, b 的小数位数, 12)` 计算并向零截断，再移除结果末尾的小数零。例如 `5 / 2` 输出 `"2.5"`，`1 / 3` 输出 `"0.333333333333"`。没有自动四舍五入到金额位数的功能。
 - 字符串支持正负号、小数点、前导空格/制表符与分组下划线（如 `"1_000.00"`）；不支持科学计数法、逗号或尾部空白。浮点输入先按 12 位小数格式化。
 - 非法输入、超出支持的小数位数、除零和检测到的整数溢出会抛错；调用方按业务需要用 `catch()` 处理，不将异常当作零值。
+- 减法和取负在运算前检查尾数范围。令 `minimum = to_decimal(-MAX_INT - 1)`，`decimal_neg(minimum)` 和 `decimal_sub(to_decimal(0), minimum)` 抛出 `decimal: integer overflow.`，`decimal_sub(minimum, minimum)` 正常返回零。规则同样适用于带小数位的极值尾数，成功或失败均不修改输入。
 
 ## 来源与验证
 
-移植自 FluffOS `testsuite/std/decimal.lpc`，保留公开接口和算法，仅适配框架注册、排版及变量声明位置。对应官方测试移植到 `tests/lpc/decimal.lpc`，由框架回归入口执行：
+移植自 FluffOS `testsuite/std/decimal.lpc`，保留公开接口，适配框架注册、排版及变量声明位置。在移植版本上补充减法和取负的整数极值修复，避免先对最小整数取负导致回绕或误报溢出；同一修复及用例也在宿主的 FluffOS 本地修复分支维护，不表示已被上游合并。
+
+对应官方测试移植到 `tests/lpc/decimal.lpc`，覆盖普通运算、整数上下界、相减抵消、小数位保留、溢出错误和输入不变性，由框架回归入口执行：
 
 ```sh
 node tests/run.mjs <driver路径>

@@ -7,6 +7,8 @@
 // Tests for the std/decimal library (exact fixed-point decimal in LPC).
 void do_tests() {
     int *a;
+    int *minimum, *maximum, *zero, *scaled;
+    int min_int = -MAX_INT - 1;
 
     // Construction + round-trip formatting (scale preserved).
     ASSERT_EQ("12.34", decimal_to_string(to_decimal("12.34")));
@@ -65,4 +67,43 @@ void do_tests() {
     // Bad input errors cleanly.
     ASSERT(catch(to_decimal("1.2.3")));
     ASSERT(catch(to_decimal("abc")));
+
+    // Signed integer boundaries: subtraction must not negate its RHS first.
+    minimum = to_decimal(min_int);
+    maximum = to_decimal(MAX_INT);
+    zero = to_decimal(0);
+    ASSERT_EQ("*decimal: integer overflow.\n", catch(decimal_neg(minimum)));
+    ASSERT_EQ("*decimal: integer overflow.\n", catch(decimal_sub(zero, minimum)));
+    ASSERT_EQ("0", decimal_to_string(decimal_sub(minimum, minimum)));
+    ASSERT_EQ(min_int, decimal_sub(minimum, zero)[0]);
+    ASSERT_EQ(min_int + 1, decimal_sub(minimum, to_decimal(-1))[0]);
+    ASSERT_EQ(MAX_INT, decimal_sub(to_decimal(-1), minimum)[0]);
+    ASSERT_EQ(min_int, decimal_sub(to_decimal(-1), maximum)[0]);
+    ASSERT_EQ("0", decimal_to_string(decimal_sub(maximum, maximum)));
+    ASSERT_EQ(MAX_INT - 1, decimal_sub(maximum, to_decimal(1))[0]);
+    ASSERT_EQ(-MAX_INT, decimal_sub(zero, maximum)[0]);
+    ASSERT_EQ("*decimal: integer overflow.\n", catch(decimal_sub(minimum, to_decimal(1))));
+    ASSERT_EQ("*decimal: integer overflow.\n", catch(decimal_sub(maximum, to_decimal(-1))));
+    ASSERT_EQ("*decimal: integer overflow.\n", catch(decimal_sub(maximum, minimum)));
+    ASSERT_EQ("*decimal: integer overflow.\n", catch(decimal_sub(minimum, maximum)));
+    ASSERT_EQ("0", decimal_to_string(decimal_neg(zero)));
+    ASSERT_EQ(-MAX_INT, decimal_neg(maximum)[0]);
+    ASSERT_EQ(MAX_INT, decimal_neg(to_decimal(min_int + 1))[0]);
+
+    // Reach the minimum mantissa without parsing its positive magnitude.
+    scaled = decimal_sub(to_decimal("-92233720368547758.07"), to_decimal("0.01"));
+    ASSERT_EQ(min_int, scaled[0]);
+    ASSERT_EQ("*decimal: integer overflow.\n", catch(decimal_neg(scaled)));
+    ASSERT_EQ("*decimal: integer overflow.\n", catch(decimal_sub(zero, scaled)));
+    ASSERT_EQ("0.00", decimal_to_string(decimal_sub(scaled, scaled)));
+    ASSERT_EQ("92233720368547758.07", decimal_to_string(decimal_sub(to_decimal("-0.01"), scaled)));
+    ASSERT_EQ("-92233720368547758.08", decimal_to_string(decimal_sub(scaled, zero)));
+
+    // Successful and rejected operations leave both operands unchanged.
+    ASSERT_EQ(min_int, minimum[0]);
+    ASSERT_EQ(0, minimum[1]);
+    ASSERT_EQ(MAX_INT, maximum[0]);
+    ASSERT_EQ(0, maximum[1]);
+    ASSERT_EQ(min_int, scaled[0]);
+    ASSERT_EQ(2, scaled[1]);
 }
