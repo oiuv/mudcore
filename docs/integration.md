@@ -14,14 +14,14 @@ mudcore 可以作为新 MUD 的基础，也可以为已有 MUD 提供部分模�
 
 ## 新项目的最小接入
 
-已有模板可直接沿用相应文件。手工创建宿主时，至少准备以下结构：
+已有模板可直接沿用相应文件名，无需批量改名。手工创建宿主时，LPC 新文件优先 `.lpc`，至少准备以下结构：
 
 ```text
 项目根目录/
 ├── config.cfg
 ├── include/globals.h
-├── system/kernel/master.c
-├── system/kernel/simul_efun.c
+├── system/kernel/master.lpc
+├── system/kernel/simul_efun.lpc
 ├── data/
 ├── log/
 └── mudcore/
@@ -50,12 +50,12 @@ simulated efun file : /system/kernel/simul_efun
 两个入口文件分别继承框架实现：
 
 ```c
-// system/kernel/master.c
+// system/kernel/master.lpc
 inherit CORE_MASTER_OB;
 ```
 
 ```c
-// system/kernel/simul_efun.c
+// system/kernel/simul_efun.lpc
 inherit CORE_SIMUL_EFUN_OB;
 ```
 
@@ -82,7 +82,7 @@ inherit CORE_SIMUL_EFUN_OB;
 ```
 
 ```c
-// 宿主 inherit/project_dbase.c
+// 宿主 inherit/project_dbase.lpc
 inherit CORE_DBASE;
 
 string query_project_name() {
@@ -120,7 +120,7 @@ string query_project_name() {
 #include <mudcore.h>
 ```
 
-`/inherit/project_command.c` 只选择方向和 action：
+`/inherit/project_command.lpc` 只选择方向和 action：
 
 ```c
 inherit CORE_COMMAND;
@@ -130,7 +130,7 @@ protected string *query_command_handlers() {
 }
 ```
 
-`/system/project_char.c` 继承 `CORE_CHAR_D`，覆盖 `init_player(object user, mixed *data...)`，仅设置自己的属性；不调用父初始化即可不写入经验、等级、HP，见 [属性示例](daemons/char_d.md#非-rpg-属性与调用时序)。名称/性别可保持默认，或让 `LOGIN_D` 指向继承 `CORE_LOGIN_D` 的宿主策略，见 [登录示例](daemons/login_d.md#角色创建策略钩子)。宿主 daemon 路径还须满足自己的 master UID 规则。
+`/system/project_char.lpc` 继承 `CORE_CHAR_D`，覆盖 `init_player(object user, mixed *data...)`，仅设置自己的属性；不调用父初始化即可不写入经验、等级、HP，见 [属性示例](daemons/char_d.md#非-rpg-属性与调用时序)。名称/性别可保持默认，或让 `LOGIN_D` 指向继承 `CORE_LOGIN_D` 的宿主策略，见 [登录示例](daemons/login_d.md#角色创建策略钩子)。宿主 daemon 路径还须满足自己的 master UID 规则。
 
 准备真实 `/world/start` 房间，提供 `/cmds/basic/` 中的 `look`、`go` 等命令，接口为 `main(object me, string arg)`。不要不加检查地复制依赖战斗/队伍的整套游戏命令。默认移动对交互 living 玩家会执行 `look`，方向阶段会调用 `go`；虽然关闭了表情/频道/parser，`COMMAND_D` 别名与命令索引仍保留。
 
@@ -172,10 +172,23 @@ mapping inspect_current_policy() {
 
 ## 源文件与驱动能力
 
-框架生产源码默认保留 `.c`，测试文件可使用 `.lpc`。这避免单纯因扩展名使尚未升级驱动的旧 MUD 无法加载框架，不代表所有历史驱动都支持框架引用的 efun。宿主是否采用 `.lpc` 由宿主规范和实际驱动决定。
+Git 提交（commit）`fb1549ba83ac3219e91efdbf662dc4c9c2bf78ae` 之后的 mudcore 版本最低要求 UTF-8 FluffOS `v2026.0712.3`，不再支持更早的驱动。该提交及之前的框架版本仍保留原有的旧驱动兼容策略。
 
-对象引用优先不写扩展名。框架的 `lpc_file()`、`lpc_source_files()` 支持 `.c` / `.lpc`，同名时优先 `.lpc` 并去重；实际编译 `.lpc` 仍需要驱动支持，不应同时维护同名的两种源文件。
+[官方发布说明](https://github.com/fluffos/fluffos/releases/tag/v2026.0712.3)已列出 `.lpc` 源文件扩展名、现代编译器和原地重编译等能力。后续框架开发以此为驱动基线，不为旧驱动添加降级实现或兼容代码，也不因旧驱动限制新代码使用这些能力。
+
+老 MUD 按需集成的定位不变，可根据驱动升级计划选择：
+
+- 升级到受支持的驱动，使用后续框架版本并继续获取更新。
+- 保留旧驱动，将框架固定到上述 Git 提交或更早的提交，并按对应版本的文档接入。
+
+历史版本仍须按所选模块核对实际驱动能力并验证，不代表兼容任意旧驱动。固定历史版本不会自动获得后续更新，也不承诺向旧版本回移新功能或修复。以下开发规范适用于上述提交之后的框架版本。
+
+新建框架源码、示例和测试优先使用小写 `.lpc`，头文件使用 `.h`。已有 `.c` 文件仍可维护，本次规范调整不批量改名；文档中的现有源码路径保持真实。后续迁移扩展名时，需同步包含关系、目录扫描和测试，不应同时维护同路径同名的两种源文件。
+
+对象引用优先不写扩展名，`#include` 写实际文件名。框架的 `lpc_file()`、`lpc_source_files()` 继续识别 `.c` / `.lpc`，同名时优先 `.lpc` 并去重；这是对现存源码的支持，不是旧驱动兼容承诺。
+
+现代 FluffOS 的后续特性并非都存在于最低支持版本。引入新语法或 efun 时应核对其实际发布版本和编译选项：核心必需能力超出基线时同步提高最低驱动版本，可选模块写明额外要求；不要仅凭在线最新文档假定宿主已经具备能力。
 
 按所选模块检查驱动能力：默认对象流程使用 UID 等基础能力；parser 谓词需要相应 parser 支持；数据库需要 DB 包及指定后端；Socket、TLS、外部命令分别需要对应 efun 与宿主授权。HTTPS 的证书验证边界见 [Socket 文档](Socket.md#框架-tls-客户端)。
 
-[隔离回归测试](../tests/README.md) 编译全部框架程序，因此它的驱动要求高于仅接入少量模块的宿主；测试所需 Node.js 不是游戏运行依赖。
+[隔离回归测试](../tests/README.md) 编译全部框架程序，因此需要比少量模块接入更完整的驱动包；使用上述提交之后的框架版本时，无论整体采用还是按需集成，都须满足最低驱动要求。测试所需 Node.js 不是游戏运行依赖，支持范围也不代表其中每个驱动版本都已实测。

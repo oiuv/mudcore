@@ -1,6 +1,8 @@
 # 隔离回归测试
 
-需要 Node.js 18+ 和支持 `.lpc` 的 UTF-8 FluffOS，驱动启用 Socket/TLS、SQLite、parser、external 等框架引用的包。本仓库不下载驱动、不安装 npm 依赖。测试对 `.lpc` 的要求不改变框架生产源码默认使用 `.c` 的规则。
+需要 Node.js 18+ 和 UTF-8 FluffOS `v2026.0712.3` 或更新版本，驱动启用 Socket/TLS、SQLite、parser、external 等框架引用的包。本仓库不下载驱动、不安装 npm 依赖。框架生产代码、示例与测试均采用新文件 `.lpc` 优先规范，现有 `.c` 文件不批量改名；低于基线的驱动不在兼容测试范围内，详见 [驱动要求](../docs/integration.md#源文件与驱动能力)。
+
+记录每次回归实际使用的驱动版本/提交号及包配置；某一版本测试通过不代表支持范围内的所有版本均已验证。
 
 独立检出在 mudcore 根目录执行：
 
