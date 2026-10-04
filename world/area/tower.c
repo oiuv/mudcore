@@ -12,6 +12,18 @@
 
 inherit CORE_ROOM;
 
+object create_virtual_object(string key) {
+    int x, y, z;
+
+    if (!sizeof(regexp(({ key }), "^[+-]?[0-9]+,[+-]?[0-9]+(,[+-]?[0-9]+)?$")))
+        return 0;
+    if (sscanf(key, "%d,%d,%d", x, y, z) == 3)
+        return new(base_name(this_object()), x, y, z);
+    if (sscanf(key, "%d,%d", x, y) == 2)
+        return new(base_name(this_object()), x, y);
+    return 0;
+}
+
 varargs void create(int x, int y, int z) {
     set("short", "勇者之塔");
     set("long", "这里是勇者之塔第 " + z + " 层，塔内每一层都封印着一种魔物，成为勇者们试练的好地方，很多冒险者都来挑战记录，想成为传说中的勇者。");

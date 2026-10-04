@@ -5,5 +5,6 @@
 #define PRELOAD "/fixtures/preload.txt"
 #define VERB_DIR "/fixtures/verbs/"
 #define WORLD_DIR "/fixtures/virtual/"
+#define MOB_DIR "/fixtures/mob/"
 #include "overrides.h"
 #include <mudcore.h>

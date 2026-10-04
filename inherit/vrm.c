@@ -758,7 +758,7 @@ void set_extra_info(mixed info) {
 /**** 以上是预设迷宫参数的接口函数 ****/
 
 // 创造迷宫房间，由 VIRTUAL_D 调用。
-nomask object query_maze_room(string str) {
+nomask object create_virtual_object(string str) {
     int random_rate = 20;  // 房间内放置 npc 的可能性
     int idx, x, y, exits;
     object ob;
@@ -881,4 +881,9 @@ nomask object query_maze_room(string str) {
     }
 
     return ob;
+}
+
+// 历史公开入口；新宿主统一使用 create_virtual_object。
+nomask object query_maze_room(string str) {
+    return create_virtual_object(str);
 }

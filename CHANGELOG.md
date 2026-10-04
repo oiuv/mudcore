@@ -34,6 +34,7 @@
 
 #### 可选组件
 
+- 虚拟对象新增通用 `create_virtual_object(string key)` 协议，处理程序可位于世界/怪物目录之外；同步 CORE_VRM 与 tower 示例。保留旧目录优先级、VIRTUAL_D/地区/怪物宿主覆盖和 query_maze_room 入口，新接口拒绝/抛错不回退；修正旧怪物父路径的全局文本替换，驱动入口不再交付辅助方法的错误字符串。接口本身不改变虚拟路径或存档，见 [虚拟对象](docs/daemons/virtual_d.md)。
 - 接入 FluffOS TUI 输出、菜单、编辑器和全屏控件，使用 `.c` 与可覆盖的 `<tui.h>` 路径；提供中文 `tuidemo` 示例。交互按需继承，补充驱动能力检测、输入互斥、异常和断线清理，以及真实本机 Telnet 回归。来源及上游授权见 [TUI 文档](docs/TUI.md)。
 
 #### 可靠性与权限修复

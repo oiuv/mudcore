@@ -1,0 +1,99 @@
+void check(int ok, string label) { MASTER_OB->check(ok, "virtual: " + label); }
+
+void run() {
+    object daemon, blueprint, ob, other, provider;
+    string path, key;
+    mixed err, result;
+    int area_before, mob_before;
+
+    daemon = load_object(VIRTUAL_D);
+    foreach (path in ({ "/fixtures/providers/modern", "/fixtures/virtual/modern",
+        "/fixtures/mob/modern" })) {
+        provider = load_object(path);
+        foreach (key in ({ "7", "1,2", "1,2,3", "cloth" })) {
+            blueprint = load_object(path + "/" + key);
+            ob = new(path + "/" + key);
+            other = new(base_name(ob));
+            check(blueprint->query_key() == key && ob->query_key() == key,
+                "opaque suffix " + path + "/" + key);
+            check(!clonep(blueprint) && clonep(ob) && virtualp(ob) && virtualp(blueprint),
+                "blueprint and virtual clone flags");
+            check(base_name(ob) == path + "/" + key && base_name(other) == base_name(ob),
+                "canonical identity and reconstruction");
+            foreach (object item in ({ blueprint, ob, other })) {
+                check(item->query_creates() == 1 && item->query_starts() == 1,
+                    "one create and virtual_start");
+                check(item->query_final_name() == base_name(item) &&
+                    item->query_final_clone() == clonep(item) &&
+                    item->query_final_uid() == getuid(item) && getuid(item) == geteuid(item),
+                    "final identity available in virtual_start");
+            }
+            destruct(ob);
+            destruct(other);
+        }
+        foreach (key in ({ "reject", "9,9" })) {
+            check(!daemon->compile_object(path + "/" + key), "provider refusal");
+            result = 0;
+            err = catch(result = load_object(path + "/" + key));
+            check(!objectp(result) && !find_object(path + "/" + key),
+                "refusal produces no driver object");
+        }
+        foreach (key in ({ "throw", "bad", "self" })) {
+            err = catch(daemon->compile_object(path + "/" + key));
+            check(stringp(err), "provider fault rejected: " + key);
+        }
+        check(provider->query_legacy_calls() == 0, "new callback never falls back");
+    }
+    foreach (key in ({ "c", "lpc" })) {
+        ob = load_object("/fixtures/providers/only_" + key + "/ok");
+        check(ob->query_key() == "ok", "provider extension " + key);
+    }
+    check(load_object("/fixtures/providers/duplicate/key")->query_key() == "lpc",
+        "driver prefers lpc");
+    ob = daemon->compile_object("fixtures/providers/modern/no-leading-slash");
+    check(ob->query_key() == "no-leading-slash", "normalize driver path");
+    destruct(ob);
+    foreach (path in ({ "", "/", "/fixtures/providers/modern/", "/missing/key",
+        "/tests/virtual_result/key", "/fixtures/providers/old_grid/1,2" }))
+        check(!daemon->compile_object(path), "unsupported generic path: " + path);
+
+#ifdef HOST_UID_POLICY
+    area_before = daemon->query_area_calls();
+    mob_before = daemon->query_mob_calls();
+#endif
+    ob = load_object("/fixtures/virtual/old_grid/-3,2");
+    check(ob->query_values()[0] == -3 && ob->query_values()[2] == 0, "legacy 2D defaults");
+    ob = new("/fixtures/virtual/old_grid/1,2,3");
+    check(ob->query_values()[2] == 3, "legacy 3D");
+    destruct(ob);
+    check(load_object("/fixtures/virtual/old_maze/entry")->query_key() == "old:entry",
+        "legacy maze callback");
+    check(load_object("/fixtures/mob/old_mob/17")->marker() == 17, "legacy mob number");
+    check(load_object("/fixtures/mob/7/monster/7")->marker() == 7,
+        "repeated numeric path segment retained");
+    check(stringp(daemon->compile_mob("/missing/mob/1")), "legacy helper failure retained");
+    check(!daemon->compile_object("/fixtures/mob/missing/1"), "driver never receives error text");
+#ifdef HOST_UID_POLICY
+    check(daemon->query_area_calls() > area_before && daemon->query_mob_calls() > mob_before,
+        "host route overrides and parent calls");
+#endif
+    ob = "/tests/virtual_overlap"->compile_object("/fixtures/mob/old_maze/entry");
+    check(ob->query_key() == "old:entry", "world route precedes overlapping mob route");
+    destruct(ob);
+    ob = "/tests/virtual_unrouted"->compile_object("/fixtures/providers/modern/no-macros");
+    check(ob->query_key() == "no-macros", "generic provider needs no world or mob macro");
+    destruct(ob);
+
+    provider = load_object("/tests/framework_maze");
+    foreach (key in ({ "entry", "exit", "1-1" })) {
+        ob = load_object("/tests/framework_maze/" + key);
+        check(virtualp(ob) && !clonep(ob), "CORE_VRM virtual " + key);
+        other = provider->query_maze_room(key);
+        check(other->query("short") == ob->query("short"), "old VRM alias " + key);
+        destruct(other);
+    }
+    ob = load_object(CORE_DIR "world/area/tower/-1,2,3");
+    check(ob->query("zone")["z"] == 3, "default framework area route");
+    check(!daemon->compile_object(CORE_DIR "world/area/tower/1,2,3junk"),
+        "new coordinate provider rejects trailing text");
+}

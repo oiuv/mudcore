@@ -1,0 +1,22 @@
+private string key;
+private int starts, creates, final_clone;
+private string final_name, final_uid;
+
+void create(string value) {
+    creates++;
+    key = value;
+}
+
+void virtual_start() {
+    starts++;
+    final_name = base_name(this_object());
+    final_clone = clonep();
+    final_uid = getuid();
+}
+
+string query_key() { return key; }
+int query_starts() { return starts; }
+int query_creates() { return creates; }
+int query_final_clone() { return final_clone; }
+string query_final_name() { return final_name; }
+string query_final_uid() { return final_uid; }

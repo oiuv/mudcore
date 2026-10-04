@@ -38,7 +38,8 @@
 | USER / `inherit/user.c` | `_LIVING/_USER_COMBAT_RECORD/_USER_GMCP/_USER_QUEST` | 上述组件的协作者 | 所选组件能力 | 保留既有完整玩家组合；连接由 `USER_OB` 管理 |
 | USER_BASE / `inherit/user_base.c` | `_ACTION/_COMMAND/_DBASE/_MESSAGE/_MOVE/_NAME/_SAVE` | 移动的可选协作 | 所选命令阶段能力 | 显式选择最小组合；不是单独连接对象 |
 | VERB / `inherit/verb.c` | parser efun、谓词规则/回调 | 同义词 | parser | 创建时注册规则；关闭 parser 后不要预加载该组件/谓词 |
-| VRM / `inherit/vrm.c` | 房间模板/入口出口、`lpc_file()`；虚拟加载需 `VIRTUAL_D` 路径路由 | 怪物、`.map` 输出 | 基础、虚拟对象/文件 | 配置迷宫再按坐标生成；移除清理房间，见 [虚拟对象](daemons/virtual_d.md) |
+| VRM / `inherit/vrm.c` | 房间模板/入口出口、`lpc_file()`；虚拟加载需接入 master/VIRTUAL_D | 怪物、`.map` 输出 | 基础、虚拟对象/文件 | 配置迷宫后由 `create_virtual_object(key)` 生成；旧迷宫方法保留，移除清理房间，见 [虚拟对象](daemons/virtual_d.md) |
+| VIRTUAL_D / `system/daemons/virtual_d.c` | master 虚拟回调、`lpc_file/log_file`、处理程序 | 旧 WORLD_DIR/MOB_DIR 路由及宿主覆盖 | 对象、虚拟对象/文件 | 新接口原样接收末段，返回新克隆或 0；命名/UID/virtual_start 由驱动负责，无外部服务，见 [创建约定](daemons/virtual_d.md) |
 
 TUI 是额外组件组，入口与依赖在 `<tui.h>`，不由 `_USER_BASE` 自动携带。`TUI_PRINT`、`TUI_TERMINAL`、`TUI_APP` 的驱动能力、玩家组合、输入接管、退出和断线清理以 [TUI 手册](TUI.md) 为准。Intermud 是 daemon 而非继承组件，按 [显式启停契约](dependency-boundary.md#迁移调整) 接入。
 

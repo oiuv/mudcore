@@ -7,6 +7,7 @@ import { startNetworkFixtures, exerciseLogin } from './network-fixtures.mjs';
 import assert from 'node:assert/strict';
 import { exerciseTui } from './tui-network.mjs';
 import { prepareNamingFixtures } from './naming-fixtures.mjs';
+import { prepareVirtualFixtures } from './virtual-fixtures.mjs';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const driver = process.argv[2];
@@ -38,12 +39,13 @@ for (const mode of ['default', 'overrides']) {
     for (const dir of sourceDirs) cpSync(join(root, dir), join(sandbox, 'mudcore', dir), { recursive: true });
     cpSync(join(root, 'tests', 'lpc'), join(sandbox, 'tests'), { recursive: true });
     prepareNamingFixtures(sandbox);
+    prepareVirtualFixtures(sandbox);
     for (const dir of ['log', 'data', 'fixtures/commands', 'fixtures/verbs/group', 'fixtures/preload', 'fixtures/virtual']) {
         mkdirSync(join(sandbox, dir), { recursive: true });
     }
     const put = (path, text) => writeFileSync(join(sandbox, path), text, 'utf8');
     put('tests/overrides.h', mode === 'overrides'
-        ? '#define _DBASE "/tests/override_dbase"\n#define ENV_D "/tests/override_env"\n#define HOST_UID_POLICY 1\n' : '');
+        ? '#define _DBASE "/tests/override_dbase"\n#define ENV_D "/tests/override_env"\n#define VIRTUAL_D "/tests/override_virtual"\n#define HOST_UID_POLICY 1\n' : '');
     put('manifest.txt', programs.join('\n') + '\n');
     put('fixtures/commands/modern.lpc', 'int main(object me, string arg) { return 1; }\n');
     put('fixtures/commands/legacy.c', 'int main(object me, string arg) { return 1; }\n');

@@ -35,6 +35,8 @@ LPMUD游戏开发框架核心代码，仅仅包括核心代码，可以在此基
 
 ## 框架使用说明
 
+虚拟对象统一使用 `/处理程序/标识` 与 `create_virtual_object(string key)`，可用于房间、物品或 NPC，不必增加守护精灵类型分支。已有目录路由和迷宫入口保留兼容，详见 [虚拟对象创建约定](docs/daemons/virtual_d.md)。
+
 LPC 函数统一使用 `snake_case`，例如 `bit_check()`、`set_connection()`。历史公开名称保留兼容入口，新代码不再使用驼峰函数名；继承覆盖和回调迁移见 [函数命名规范](docs/function-naming.md)。
 
 新项目推荐从 [minimud 基础模板](https://github.com/mudcore/mud) 开始：

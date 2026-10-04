@@ -26,6 +26,8 @@ FluffOS STD 中的通用 sefun 应由框架提供，新增接入优先沿用官�
 
 ## 组件契约与选择性接入
 
+虚拟对象新开发统一实现 `create_virtual_object(string key)`，使用 `/处理程序/标识` 路径。daemon 不解释新接口的业务参数；未知键返回 0，异常不转旧式重试，命名/UID/virtual_start 仍由驱动负责。框架保留已公开旧入口及宿主覆盖，具体约定见 `docs/daemons/virtual_d.md`。
+
 以 `docs/architecture.md` 与 `docs/module-contracts.md` 为架构和公共组件规范。新增/修改组件时同步依赖矩阵，明确必需组件、daemon/simul efun、宿主方法、可选协作、驱动包、输入/返回/错误及初始化和清理责任。仍有组合依赖的实现不得宣称完全独立。
 
 机制与宿主策略分离：命令定制使用受控阶段及 protected 钩子，名称/性别策略不改认证状态所有权，初始属性使用 `CHAR_D`。保留默认完整 `_USER`；最小组合由宿主显式选择 `_USER_BASE` 并配套命令/parser/属性策略，不自动迁移玩家存档或热切换组合。权限来源诊断不是安全认证，也不自动修改 master 权限。

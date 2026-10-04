@@ -135,7 +135,12 @@ void run() {
     err = catch(load_object("/tests/regression")->run());
     if (err)
         check(0, "regression: " + err);
-    foreach (fixture in ({ "name_lifecycle", "cmd_lifecycle", "framework_camp" })) {
+    foreach (fixture in ({
+        "name_lifecycle",
+        "cmd_lifecycle",
+        "framework_camp",
+        "virtual_probe"
+    })) {
         err = catch(load_object("/tests/" + fixture)->run());
         if (err) check(0, fixture + ": " + err);
     }

@@ -1,0 +1,16 @@
+inherit CORE_VIRTUAL_D;
+
+private int area_calls, mob_calls;
+
+mixed compile_area(string file) {
+    area_calls++;
+    return ::compile_area(file);
+}
+
+mixed compile_mob(string file) {
+    mob_calls++;
+    return ::compile_mob(file);
+}
+
+int query_area_calls() { return area_calls; }
+int query_mob_calls() { return mob_calls; }
