@@ -3,6 +3,15 @@ inherit CORE_MASTER_OB;
 int failures;
 int checks;
 
+int valid_read(string file, mixed user, string func) {
+    if (strsrch(file, "read_denied.txt") != -1 && func == "read_file") return 0;
+    return ::valid_read(file, user, func);
+}
+int valid_write(string file, mixed user, string func) {
+    if (strsrch(file, "write_denied.txt") != -1) return 0;
+    return ::valid_write(file, user, func);
+}
+
 object connect(int port) {
     mapping ports;
 
@@ -88,6 +97,8 @@ void finish() {
         "login daemon identity restored after real login"
     );
     if (objectp(player)) {
+        err = catch(load_object("/tests/command_probe")->run_player(player));
+        if (err) check(0, "registered player update: " + err);
         player->save();
         destruct(player);
         check(
@@ -135,6 +146,8 @@ void run() {
     err = catch(load_object("/tests/regression")->run());
     if (err)
         check(0, "regression: " + err);
+    err = catch(load_object("/tests/command_probe")->run());
+    if (err) check(0, "command compatibility: " + err);
     foreach (fixture in ({
         "name_lifecycle",
         "cmd_lifecycle",

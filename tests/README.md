@@ -26,6 +26,8 @@ node mudcore/tests/run.mjs bin/driver.exe
 - 热更新顺序回归在临时目录驻留旧版谓词父程序，再替换源码；实际包含框架 look/go 源码，确认先编译子类会失败，父类先重载后编译及初始化成功，已有子对象仍持有旧父程序。预期的 `Undefined function set_*` 编译诊断不表示套件失败；不会销毁宿主对象，也不保证任意在线继承链可安全热迁移。
 - 编译全部独立框架程序（数量随源码变化，由运行器打印），检查固定业务地址没有重新引入。
 - `.c`/`.lpc` 扫描、命令别名、预加载、虚拟对象、存档清理和 `loadall` 去重优先级；隐藏目录、框架测试/文档/源码片段过滤。
+- `command_probe.lpc` 执行实际命令代码：update 的实体/虚拟蓝图、克隆拒绝、VOID 等价路径、内容与嵌套物品保全、移动拒绝/抛错/销毁/转移、回迁拒绝及编译失败；另复用 Telnet 注册后的真实玩家对象验证房间重载和背包实例保留。which 验证普通命令优先、宿主新旧谓词回调及异常；minimal/custom 在物理缺少 VERB_D 时执行查询。
+- 命令输出断言验证 loadall 本层统计与异步子目录分别报告、异常/空返回不计成功、驻留状态不重置；sa 的实体/虚拟/克隆信息；CRLF 的 cwd、同名文件隔离和读写拒绝（文件内容按原始字节验证）；检查命令及 go/look 的实体/虚拟成功和拒绝/抛错、诊断及玩家文本。原 loadall_probe 保留过滤和优先级断言。
 - 通用虚拟回调的原样后缀、目录外接入、无目录宏、扩展名优先级、拒绝/异常不回退、错误返回类型；真实蓝图/克隆身份、UID、virtual_start 次数；旧坐标/编号/迷宫、重叠目录优先级及 VIRTUAL_D 宿主覆盖/父调用。夹具仅写入临时 mudlib。
 - TUI 上游状态机/渲染/控件测试；缺少交互能力时的编译与拒绝调用、玩家继承组合，以及真实本机 Telnet 中文分包、控制键、菜单、回调串联/异常、窗口缩放、退出恢复和断线清理。TUI 移植测试的来源授权见 [组件说明](../inherit/tui/README.md)。
 - `decimal.lpc` 移植 FluffOS 官方 decimal 用例，通过全局 sefun 验证构造、精确运算、比较、转换、除零、乘法溢出及非法输入；补充取负/减法的整数上下界、相减抵消、小数位保留和输入不变性回归。来源与授权见 [decimal 文档](../docs/simul_efun/decimal.md)。
@@ -60,9 +62,17 @@ node mudcore/tests/contracts.mjs bin/driver.exe
 
 默认分派基线 `lpc/command_baseline.lpc` 包含实际生产 `command.c` 并替换 efun/service 边界以记录顺序；真实输入、认证和持久化另由 Telnet 测试验证。夹具中的宽松 master、测试状态命令和 shutdown 不得用于生产。
 
+`command-fixtures.mjs` 在临时宿主内包含实际命令源码，替换输出、测试角色的 wizardp 判断及 go/look 的当前角色来源，并禁止夹具注册全局谓词规则，以免影响真实 Telnet 套件；不修改生产命令的授权。仅 loadall 的“返回空对象”分支注入加载结果，其余对象创建、虚拟回调、移动、销毁和读写均使用真实驱动。此组不代替宿主权限验收或交互式管理员热更新验收。
+
+## 2026-10-05 命令兼容性验证环境
+
+使用 Windows `bin/driver.exe`，启动横幅版本为 `fluffos 20260929-5270e7d6-4dd319f0`（驱动内嵌标识；不以当前源码 HEAD 代替二进制版本）。驱动预定义包为 core、contrib、develop、uids、parser、sockets、external、db（SQLite）、async、compress、crypto、ffi、math、matrix、mudlib_stats、ops、pcre、sha1、trim；本机真实 TLS 握手另有断言。完整预定义及配置保存在每次临时目录的 `driver-output.txt`。
+
+运行 `node mudcore/tests/run.mjs bin/driver.exe` 退出 0：default 2303、overrides 2308、minimal 58、custom 59 项 LPC 检查全部通过，Node 本机通信断言通过；两组完整宿主各编译检查 159 个框架程序。本次修改的 18 个 LPC/头文件通过格式化检查，命名检查为 2177 个定义、229 个登记别名，无新增违规。只在此二进制上实测，不代表最低支持版本、裁剪驱动、其他操作系统或正式宿主已验证；本次没有迁移数据、重启正式服或部署框架。
+
 ## TLS 验证边界
 
-测试证书和公开测试私钥见 [fixtures](fixtures/README.md)。信任库仅用于测试 driver 子进程，不更改系统设置。当前本机驱动验证证书链，但接受受信任的错误主机名证书；运行器会明确打印 `TLS HOSTNAME CHECK` 的实测结果，不能把这一项当作完整 HTTPS 身份验证通过。详见 [TLS 说明](../docs/Socket.md#框架-tls-客户端)。
+测试证书和公开测试私钥见 [fixtures](fixtures/README.md)。信任库仅用于测试 driver 子进程，不更改系统设置。不同驱动构建的主机名验证行为可能不同：早期本机测试曾接受受信任的错误主机名证书，2026-10-05 上述构建实测拒绝；以每次 `TLS HOSTNAME CHECK` 输出为准，不把单一构建结果当作所有受支持驱动的保证。详见 [TLS 说明](../docs/Socket.md#框架-tls-客户端)。
 
 某些驱动在 TLS 握手失败时直接关闭 fd 而不通知 LPC，因此组件还需独立的请求/建连超时及描述符复用保护。测试不使用存在历史取参问题的 `socket_get_option()` 来代替真实握手。
 

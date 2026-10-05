@@ -41,7 +41,7 @@ void error_handler(mapping details, int caught) {
 void log_error(string file, string message) { debug_message(file + ": " + message); }
 
 private void command_tests() {
-    object actor;
+    object actor, which;
     string *selection;
     mixed err;
 
@@ -50,6 +50,18 @@ private void command_tests() {
     check(actor->command_hook("two words") == 1, "selected handler accepts");
     check(implode(actor->query_trace(), ",") == "channel,command", "host order and short circuit");
     check(actor->correct_arguments(), "hook receives actor, verb and arguments");
+    destruct(actor);
+    actor = new("/tests/which_actor");
+    which = load_object("/tests/which_probe");
+    check(which->main(actor, "missing_command") == 1 &&
+        strsrch(which->take_output(), "没有找到") != -1,
+        "which misses normally with parser service physically absent");
+    check(!find_object(VERB_D), "which does not load disabled parser");
+    which->main(actor, "contract");
+    check(
+        strsrch(which->take_output(), "/cmds/contract") != -1,
+        "which still finds ordinary commands"
+    );
     destruct(actor);
     actor = new("/tests/command_hooks");
     actor->configure(({ "emote", "command" }), ([ "emote": "declined\n", "command": 1 ]));

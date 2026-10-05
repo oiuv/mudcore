@@ -46,7 +46,7 @@ int main(object me, string dir) {
     if (!wizardp(me))
         return 0;
 
-    if (!dir)
+    if (!dir || dir == "")
         dir = "/";
     if (dir[<1] != '/')
         dir += "/";
@@ -54,20 +54,24 @@ int main(object me, string dir) {
         return notify_fail(dir + "目录不存在···\n");
     log_file("loadall", "\n#check dir : " + dir);
     write("check dir " + dir + "\n");
-    if (loadall(dir))
-        return 1;
+    loadall(dir);
+    return 1;
 }
 
 int loadall(string dir) {
     string file, err, *dirs;
+    object loaded;
+    int passed, failed;
 
     if (skip_load_dir(dir))
         return 1;
     if (dir[<1] != '/')
         dir += "/";
     dirs = get_dir(dir);
-    if (!arrayp(dirs))
-        return 1;
+    if (!arrayp(dirs)) {
+        write("无法读取目录：" + dir + "\n");
+        return 0;
+    }
 
     foreach (file in dirs) {
         if (file_size(dir + file) == -2 && !skip_load_dir(dir + file + "/"))
@@ -75,11 +79,16 @@ int loadall(string dir) {
     }
     foreach (file in lpc_source_files(dir)) {
         reset_eval_cost();
-        if (err = catch(load_object(file)))
-            log_file("loadall", "\n\tcheck : " + file + "\n" + err);
+        loaded = 0;
+        err = catch(loaded = load_object(file));
+        if (err || !objectp(loaded)) {
+            failed++;
+            log_file("loadall", "\n\tcheck : " + file + "\n" + (err || "加载未返回对象\n"));
+            write("加载失败：" + file + "，详情见 loadall 日志。\n");
+        } else passed++;
     }
-    write("check dir " + dir + " is ok.\n");
-    return 1;
+    write(sprintf("目录 %s：成功 %d，失败 %d（仅本层，子目录另行报告）。\n", dir, passed, failed));
+    return !failed;
 }
 
 int help(object me) {
@@ -88,6 +97,8 @@ int help(object me) {
 
     write(@HELP
 载入某个目录下的所有.c和.lpc文件(包含子目录) ，以查找所有可能的编译错误。
+updateall 是本指令的别名。已加载对象不会重新编译；这不是强制热更新。
+结果按目录报告，失败对象另记 loadall 日志；本层完成不代表子目录已完成。
 
 指令格式： loadall [dir]
     比如： loadall /cmds/

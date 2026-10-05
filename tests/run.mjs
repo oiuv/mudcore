@@ -8,6 +8,7 @@ import assert from 'node:assert/strict';
 import { exerciseTui } from './tui-network.mjs';
 import { prepareNamingFixtures } from './naming-fixtures.mjs';
 import { prepareVirtualFixtures } from './virtual-fixtures.mjs';
+import { prepareCommandFixtures } from './command-fixtures.mjs';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const driver = process.argv[2];
@@ -40,6 +41,7 @@ for (const mode of ['default', 'overrides']) {
     cpSync(join(root, 'tests', 'lpc'), join(sandbox, 'tests'), { recursive: true });
     prepareNamingFixtures(sandbox);
     prepareVirtualFixtures(sandbox);
+    prepareCommandFixtures(sandbox);
     for (const dir of ['log', 'data', 'fixtures/commands', 'fixtures/verbs/group', 'fixtures/preload', 'fixtures/virtual']) {
         mkdirSync(join(sandbox, dir), { recursive: true });
     }

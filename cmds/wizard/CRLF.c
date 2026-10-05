@@ -27,17 +27,19 @@ int main(object me, string arg) {
 
 int convert_file(object me, string file) {
     string msg;
+    mixed err;
+    int written;
 
+    file = resolve_path(me->query("cwd"), file);
     if (file_size(file) < 0) {
         write("没有" + file + "这个档案。\n");
         return 0;
     }
     me->set("cwf", file);
 
-    file = resolve_path(me->query("cwd"), file);
-    msg = read_file(file);
+    err = catch(msg = read_file(file));
 
-    if (!msg) {
+    if (err || !stringp(msg)) {
         write(sprintf("read file %s error!\n", file));
         return 0;
     }
@@ -45,5 +47,10 @@ int convert_file(object me, string file) {
     msg = replace_string(msg, CRLF, LF);
     // msg = replace_string(msg, LF, CR);
     // msg = replace_string(msg, CR, LF, 1);
-    return write_file(file, msg, 1);
+    err = catch(written = write_file(file, msg, 1));
+    if (err || !written) {
+        write("无法写入档案 " + file + "。\n");
+        return 0;
+    }
+    return 1;
 }

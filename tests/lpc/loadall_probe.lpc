@@ -46,6 +46,12 @@ void run() {
 
 void finish() {
     string file;
+    string output;
+
+    output = load_object("/tests/command_loadall")->take_output();
+    MASTER_OB->check(strsrch(output, "目录 /fixtures/cmd/batch/nested/：成功 1，失败 0") != -1 &&
+        objectp(find_object("/fixtures/cmd/batch/nested/ok")),
+        "loadall deferred child reports its own result");
 
     foreach (file in excluded)
         MASTER_OB->check(!objectp(find_object(file)), "loadall recursive path skipped: " + file);

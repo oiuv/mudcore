@@ -1,0 +1,18 @@
+inherit CORE_DBASE;
+inherit CORE_MOVE;
+
+void create() { set("name", "测试访客"); }
+string short() { return "测试访客"; }
+int is_area() { return 0; }
+void receive_message(string type, string text) {}
+void enter(object dest) { move_object(dest); }
+varargs int move(mixed dest, int raw) {
+    int result;
+    if (query("refuse_move")) return 0;
+    if (query("throw_move")) error("expected move refusal\n");
+    if (query("destroy_move")) { destruct(this_object()); return 0; }
+    if (query("refuse_return") && environment() == find_object(VOID_OB)) return 0;
+    result = ::move(dest, raw);
+    if (query("redirect")) ::move(query("redirect"), 1);
+    return result;
+}

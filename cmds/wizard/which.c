@@ -6,14 +6,17 @@ inherit _CLEAN_UP;
 int help(object me);
 
 int main(object me, string arg) {
-    object file;
+    mixed file;
     if (!wizardp(me))
         return 0;
 
     if (!arg)
         return help(me);
 
-    file = COMMAND_D->find_command(arg) || _mudcore_call_named(VERB_D, "get_verb", "getVerb", arg);
+    file = COMMAND_D->find_command(arg);
+#if MUDCORE_HAS_PARSER
+    if (!file) file = _mudcore_call_named(VERB_D, "get_verb", "getVerb", arg);
+#endif
     if (!file)
         write("没有找到 " + arg + " 这个命令。\n");
     else

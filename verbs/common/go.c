@@ -78,6 +78,7 @@ int do_go_str(string dir, string arg) {
     object me = this_player();
     object env = environment(me);
 
+    if (!objectp(env)) return notify_fail("四周灰蒙蒙的，暂时无法前行。\n");
     if (env->is_area())
         return do_area_move(me, env, arg);
     else
@@ -88,7 +89,7 @@ int do_room_move(object me, object env, string dir) {
     string dir_name, msg_in, msg_out;
     object obj;
     mapping exit;
-    mixed dest;
+    mixed dest, err;
     int result;
 
     if (!mapp(exit = env->query("exits")) || undefinedp(exit[dir])) {
@@ -105,16 +106,20 @@ int do_room_move(object me, object env, string dir) {
             obj = dest;
             break;
         case T_STRING:
-            if (!objectp(obj = load_object(dest))) {
-                return notify_fail(sprintf("目标环境异常，无法向 %s 移动。\n", dest));
+            err = catch(obj = load_object(dest));
+            if (err || !objectp(obj)) {
+                log_file("command", sprintf("go %O: %O\n", dest, err || "未找到出口对象"));
+                return notify_fail("前路暂时无法通行，请稍后再试。\n");
             }
             break;
         case T_MAPPING:
             if (undefinedp(dest["filename"]) || undefinedp(dest["x_axis"]) || undefinedp(dest["y_axis"])) {
                 return notify_fail(sprintf("目标方向异常，无法向 %s 移动。\n", dir));
             }
-            if (!objectp(obj = load_object(dest["filename"]))) {
-                return notify_fail(sprintf("目标环境异常，无法向 %s 移动。\n", dest["filename"]));
+            err = catch(obj = load_object(dest["filename"]));
+            if (err || !objectp(obj)) {
+                log_file("command", sprintf("go %O: %O\n", dest, err || "未找到出口对象"));
+                return notify_fail("前路暂时无法通行，请稍后再试。\n");
             }
             break;
             // case T_INT:

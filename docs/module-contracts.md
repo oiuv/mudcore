@@ -73,6 +73,8 @@ TUI 是额外组件组，入口与依赖在 `<tui.h>`，不由 `_USER_BASE` 自�
 
 `MUDCORE_ENABLE_PARSER` 默认 `1`，`MUDCORE_HAS_PARSER` 是内部能力检测结果，不应由宿主伪造。关闭时命令/登录不引用 parser efun，不加载 `VERB_D`；`master->refresh_parser()` 被显式调用时报告不可用。默认启用但驱动缺少所需 efun 时明确报错。显式选择 parser 不可用的组合也报错；这不保证直接加载 `_VERB` 在裁剪驱动上可用。
 
+内置 `which` 同样遵守 `MUDCORE_HAS_PARSER`：普通命令优先，关闭时不访问 `VERB_D`，启用后的服务异常仍传播。内置 `loadall`（含 `updateall` 别名）是逐目录加载检查，不是驻留对象的强制热更新；目录失败不计成功，详见 [命令边界](daemons/command_d.md#内置命令的对象与文件边界)。
+
 ## 移动与房间
 
 `varargs int move(mixed dest, int raw)` 接受对象或对象路径，调用驱动移动及 init，正常返回 `1`，对象被 init 销毁时返回 `-1`。目标必须提供对应环境契约；区域出入需要区域坐标与 `move_out()`。交互玩家若有 `gmcp()` 则发送 `Room.Info.Get`，没有时跳过；`raw == 0` 且玩家 living 时执行 `look`。选择的命令需满足自身依赖。
@@ -80,6 +82,10 @@ TUI 是额外组件组，入口与依赖在 `<tui.h>`，不由 `_USER_BASE` 自�
 `move_or_destruct(object dest)` 默认把玩家移到 `VOID_OB`，非玩家若提供且启用 `is_db_saved()` 则保存，返回 `1`；参数不改变默认玩家去向。`varargs void remove(string euid)` 调用可选 DB 存档及区域离开处理，本身不执行 `destruct()`。缺少可选协作可跳过；协作存在而抛错、必需属性/区域调用失败都传播，不保证移动事务回滚。
 
 ROOM 已组合属性、命名与清理。设置 `exits` 后，实际离开仍由宿主选择的移动命令及 `valid_leave(object, string)` 规则处理；直接 `move()` 不是出口授权检查器。`reset()` 按 `objects` 配置补充对象并移动进房间；`query_light()` 引入天气服务依赖。完整字段和方法见 [房间接口](inherit/room.md)。
+
+内置 `update` 对有内容的环境额外依赖可加载的 `VOID_OB` 和内容对象的 `move()`；安全移出失败不销毁旧环境，重载失败后仍存活的暂存内容留在安全地点。成功只回迁本次持有且未被宿主另行转移的对象。克隆实例与 VOID 的等价路径被拒绝；不恢复已销毁程序，不保证任意钩子或继承链事务。底层 MOVE 契约不变。
+
+内置 `go/look` 仅在出口目标加载边界捕获拒绝/异常并记录 `LOG_DIR "command"`，向玩家显示不含内部路径的提示；没有有效目标则不继续移动或观察。其他业务错误仍按原调用规则处理，不改 `valid_leave` 或虚拟对象创建协议。
 
 ## 玩家、登录与属性策略
 

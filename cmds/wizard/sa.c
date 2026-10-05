@@ -13,7 +13,8 @@ void show_info(object me, mapping coord) {
     int i;
     mixed type;
     mapping info;
-    string msg;
+    string msg, source;
+    object env;
 
     info = environment(me)->query_info(coord["x_axis"], coord["y_axis"]);
 
@@ -22,7 +23,10 @@ void show_info(object me, mapping coord) {
 
     msg = sprintf(HIW "========================= %-8s (%2d,%2d) =========================\n" NOR,
         environment(me)->query("name"), coord["x_axis"], coord["y_axis"]);
-    msg += BYEL "[檔案]" NOR + " " + file_name(environment(me)) + ".c\n";
+    env = environment(me);
+    msg += BYEL "[对象]" NOR + " " + file_name(env) + "\n";
+    source = virtualp(env) ? 0 : lpc_file(base_name(env));
+    msg += BYEL "[檔案]" NOR + " " + (virtualp(env) ? "虚拟对象，无同名独立源码" : (source || "源码不可用")) + "\n";
 
     foreach (type in keys(info))
         switch (type) {

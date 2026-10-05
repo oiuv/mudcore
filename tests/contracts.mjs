@@ -169,6 +169,12 @@ for (const profile of ['minimal', 'custom']) {
         cpSync(join(root, 'tests/contracts/lpc/room.lpc'), join(sandbox, `world/contract_${name}.lpc`));
     cpSync(join(root, 'tests/contracts/lpc/contract.lpc'), join(sandbox, 'cmds/contract.lpc'));
     const put = (name, text) => writeFileSync(join(sandbox, name), text, 'utf8');
+    mkdirSync(join(sandbox, 'mudcore/cmds/wizard'), { recursive: true });
+    cpSync(join(root, 'cmds/wizard/which.c'), join(sandbox, 'mudcore/cmds/wizard/which.c'));
+    for (const name of ['command_capture.h', 'command_capture_impl.h'])
+        cpSync(join(root, 'tests/lpc', name), join(sandbox, 'tests', name));
+    put('tests/which_probe.lpc', '#include "command_capture.h"\n#include "/mudcore/cmds/wizard/which.c"\n#include "command_capture_impl.h"\n');
+    put('tests/which_actor.lpc', 'int marker() { return 1; }\n');
     put('tests/profile.h', `#define CONTRACT_CUSTOM ${custom ? 1 : 0}\n`);
     put('cmds/look.alias', 'contract\n');
     put('cmds/go.alias', 'contract\n');

@@ -56,16 +56,26 @@ mixed do_look() {
 mixed do_look_at_str(string str, string arg) {
     object me = this_player();
     object env = environment(me);
-    mapping exits = env->query("exits");
+    mapping exits;
+    object dest;
+    mixed err;
+
+    if (!objectp(env)) return notify_fail("四周灰蒙蒙的，什么也看不清。\n");
+    exits = env->query("exits");
 
     if (str == "here") {
         return do_look();
     }
     // 查看出口方向
     if (mapp(exits)) {
-        if (stringp(exits[str]))
-            return look_room(me, load_object(exits[str]));
-        else if (mapp(exits[str])) {
+        if (stringp(exits[str])) {
+            err = catch(dest = load_object(exits[str]));
+            if (err || !objectp(dest)) {
+                log_file("command", sprintf("look %O: %O\n", exits[str], err || "未找到出口对象"));
+                return notify_fail("那边暂时看不清楚，请稍后再试。\n");
+            }
+            return look_room(me, dest);
+        } else if (mapp(exits[str])) {
             cecho("此方向是区域环境，无法观察。");
             return 0;
         }
@@ -124,6 +134,7 @@ int look_room(object me, object env) {
     string str, *dirs;
     mapping exits;
 
+    if (!objectp(env)) return notify_fail("四周灰蒙蒙的，什么也看不清。\n");
     if (env->is_area()) {
         return env->do_look(me);
     }

@@ -1,0 +1,329 @@
+private object player;
+object actor() { return player; }
+void check(int condition, string label) { MASTER_OB->check(condition, "command: " + label); }
+
+private void update_tests() {
+    object cmd, old, fresh, item, nested, provider, safe, clone, other;
+    string path, text;
+    mixed err;
+
+    cmd = load_object("/tests/command_update");
+    check(!cmd->main(player, "here"), "update here without environment");
+    cmd->take_output();
+    foreach (path in ({ "/fixtures/cmd/first.c", "/fixtures/cmd/second.lpc",
+        "/fixtures/cmd/second", "/fixtures/cmd/provider/room" })) {
+        old = load_object(path);
+        old->touch();
+        provider = load_object("/fixtures/cmd/provider");
+        player->enter(old);
+        player->set("kept", 73);
+        item = new("/tests/command_actor");
+        item->set("kept", 91);
+        item->enter(old);
+        nested = new("/tests/command_actor");
+        nested->set("kept", 123);
+        nested->enter(item);
+        cmd->main(player, path);
+        text = cmd->take_output();
+        fresh = find_object(path);
+        check(
+            !old && objectp(fresh) && !fresh->query_calls(),
+            "reload resets only target: " + path
+        );
+        check(strsrch(text, "编译成功") != -1, "update success feedback: " + path);
+        check(environment(player) == fresh && environment(item) == fresh &&
+            player->query("kept") == 73 && item->query("kept") == 91, "contents preserved: " + path);
+        check(provider == find_object("/fixtures/cmd/provider"), "provider is not reloaded");
+        check(environment(nested) == item && nested->query("kept") == 123,
+            "nested inventory preserved");
+        destruct(nested);
+        destruct(item);
+    }
+    clone = new("/fixtures/cmd/second");
+    old = find_object("/fixtures/cmd/second");
+    check(
+        !cmd->main(player, file_name(clone)) && objectp(clone) && objectp(old),
+        "clone rejected intact"
+    );
+    player->enter(clone);
+    check(
+        !cmd->main(player, "here") && objectp(clone),
+        "here never silently selects clone blueprint"
+    );
+    player->enter(old);
+    destruct(clone);
+    safe = load_object(VOID_OB);
+    foreach (path in ({ VOID_OB, VOID_OB + ".c", VOID_OB + ".lpc", VOID_OB + ".c.lpc",
+        replace_string(VOID_OB, "/system/", "/./system/"),
+        replace_string(VOID_OB, "/system/", "/system/../system//") }))
+        check(!cmd->main(player, path) && safe == find_object(VOID_OB), "void protection: " + path);
+    cmd->take_output();
+    item = new("/tests/command_actor");
+    item->enter(old);
+    item->set("refuse_move", 1);
+    cmd->main(player, file_name(old));
+    check(objectp(old) && environment(item) == old, "refused evacuation retains old room");
+    check(strsrch(cmd->take_output(), "更新失败") != -1, "refused evacuation reports failure");
+    item->delete("refuse_move");
+    player->enter(old);
+    cmd = load_object("/tests/command_update_no_void");
+    cmd->main(player, file_name(old));
+    check(objectp(old) && environment(player) == old, "missing safe room retains target");
+    cmd = load_object("/tests/command_update");
+    other = load_object("/fixtures/cmd/other");
+    item->set("redirect", other);
+    cmd->main(player, file_name(old));
+    check(!old && environment(item) == other, "do not reclaim hook-redirected object");
+    destruct(item);
+    foreach (string flag in ({ "throw_move", "destroy_move", "refuse_return" })) {
+        old = load_object("/fixtures/cmd/second");
+        player->enter(old);
+        item = new("/tests/command_actor");
+        item->enter(old);
+        item->set(flag, 1);
+        cmd->take_output();
+        err = catch(cmd->main(player, file_name(old)));
+        check(!err && strsrch(cmd->take_output(), "更新失败") != -1,
+            "move failure reported: " + flag);
+        if (flag == "refuse_return")
+            check(!old && objectp(item) && environment(item) == safe,
+                "failed return keeps surviving item safe");
+        else
+            check(objectp(old) && (flag == "destroy_move" ? !item : environment(item) == old),
+                "evacuation failure never destroys old room: " + flag);
+        if (item) destruct(item);
+    }
+    foreach (int mode in ({ 1, 2 })) {
+        old = load_object("/fixtures/cmd/provider/failure");
+        player->enter(old);
+        provider->set_mode(mode);
+        err = catch(cmd->main(player, file_name(old)));
+        text = cmd->take_output();
+        check(
+            !err && !old && environment(player) == safe,
+            "failed virtual reload keeps contents safe"
+        );
+        check(
+            strsrch(text, "更新失败") != -1 && !provider->query_legacy(),
+            "provider failure diagnosed without fallback"
+        );
+        provider->set_mode(0);
+    }
+    old = load_object("/fixtures/cmd/first");
+    player->enter(old);
+    write_file("/fixtures/cmd/first.c", "void create( {\n", 1);
+    cmd->take_output();
+    cmd->main(player, "/fixtures/cmd/first.c");
+    check(!old && environment(player) == safe && strsrch(cmd->take_output(), "更新失败") != -1,
+        "compile failure preserves evacuated contents");
+    write_file("/fixtures/cmd/first.c", "inherit \"/tests/command_room\";\n", 1);
+}
+
+private void query_tests() {
+    object cmd, service, room;
+    mixed err;
+    string text, path;
+    int calls;
+
+    cmd = load_object("/tests/command_which");
+    service = load_object("/tests/verb_lookup");
+    calls = service->query_calls();
+    cmd->main(player, "known");
+    check(service->query_calls() == calls && strsrch(cmd->take_output(), "command_room") != -1,
+        "which prefers ordinary commands");
+    cmd->main(player, "verb");
+    check(
+        strsrch(cmd->take_output(), "/fixtures/verbs/legacy") != -1,
+        "which accepts legacy host verb string"
+    );
+    err = catch(cmd->main(player, "throw"));
+    check(err && strsrch(err, "expected verb failure") != -1, "enabled verb failure is not a miss");
+    cmd = load_object("/tests/command_which_modern");
+    err = catch(cmd->main(player, "verb"));
+    check(!err && strsrch(cmd->take_output(), "/fixtures/verbs/modern") != -1,
+        "which prefers modern host callback over legacy");
+    foreach (path in ({ "modern", "legacy" })) {
+        service = load_object("/tests/command_skip_" + path);
+        check(service->loadall("/fixtures/cmd/skipme") && service->query_calls() > 0 &&
+            !find_object("/fixtures/cmd/skipme/ok"), "loadall host filter: " + path);
+    }
+    cmd = load_object("/tests/command_loadall");
+    room = load_object("/fixtures/cmd/batch/ok");
+    room->set_value(71);
+    check(!cmd->loadall("/fixtures/cmd/batch"), "batch failure return");
+    text = cmd->take_output();
+    check(strsrch(text, "成功 1，失败 2") != -1 && strsrch(text, "is ok") == -1,
+        "batch counts both compile error and zero result");
+    check(strsrch(text, "仅本层") != -1 && !find_object("/fixtures/cmd/batch/nested/ok"),
+        "batch reports local counts before deferred descendants");
+    check(room == find_object("/fixtures/cmd/batch/ok") && room->query_value() == 71,
+        "batch does not recompile resident objects");
+    cmd->help(player);
+    check(strsrch(cmd->take_output(), "别名") != -1, "batch documents alias");
+    cmd = load_object("/tests/command_sa");
+    foreach (path in ({
+        "/fixtures/cmd/first.c",
+        "/fixtures/cmd/second.lpc",
+        "/fixtures/cmd/provider/area"
+    })) {
+        room = load_object(path);
+        player->enter(room);
+        room->set("test_area", 1);
+        player->set("area_info", ([ "x_axis": 0, "y_axis": 0 ]));
+        cmd->main(player, 0);
+        text = cmd->take_output();
+        room->delete("test_area");
+        check(strsrch(text, file_name(room)) != -1, "sa reports runtime identity");
+        check(
+            strsrch(text, virtualp(room) ? "虚拟对象" : path) != -1,
+            "sa reports real source or virtual marker"
+        );
+        check(
+            strsrch(text, file_name(room) + ".c") == -1 || path[<2..] == ".c",
+            "sa does not invent c source"
+        );
+    }
+    room = new("/fixtures/cmd/second");
+    player->enter(room);
+    room->set("test_area", 1);
+    cmd->main(player, 0);
+    text = cmd->take_output();
+    check(strsrch(text, file_name(room)) != -1 && strsrch(text, "/fixtures/cmd/second.lpc") != -1 &&
+        strsrch(text, file_name(room) + ".c") == -1, "sa separates clone identity and source");
+    player->delete("area_info");
+    player->enter(load_object(VOID_OB));
+    destruct(room);
+}
+
+private void file_tests() {
+    object cmd;
+    cmd = load_object("/tests/command_CRLF");
+    player->set("cwd", "/fixtures/cmd/text");
+    check(cmd->convert_file(
+        player,
+        "example.txt"
+    ) && read_file("/fixtures/cmd/text/example.txt") == "first\nsecond\n",
+        "CRLF resolves cwd before existence check");
+    check(read_bytes("/example.txt") == "root stays\r\n", "CRLF leaves root namesake unchanged");
+    check(cmd->convert_file(player, "/fixtures/cmd/text/absolute.txt") &&
+        read_file("/fixtures/cmd/text/absolute.txt") == "absolute\n", "CRLF absolute file");
+    check(!cmd->convert_file(
+        player,
+        "missing.txt"
+    ) && !cmd->convert_file(player, "/fixtures/cmd/text"),
+        "CRLF rejects missing file and directory");
+    check(!cmd->convert_file(
+        player,
+        "read_denied.txt"
+    ) && !cmd->convert_file(player, "write_denied.txt"),
+        "CRLF read and write denial reported");
+    check(
+        read_bytes("/fixtures/cmd/text/write_denied.txt") == "keep\r\n",
+        "write denied data intact"
+    );
+    cmd->take_output();
+    cmd->main(player, "example.txt");
+    check(strsrch(cmd->take_output(), "成功转换") != -1 &&
+        read_bytes("/fixtures/cmd/text/example.txt") == "first\nsecond\n",
+        "CRLF command success reflects converted bytes");
+    cmd->main(player, "write_denied.txt");
+    check(strsrch(cmd->take_output(), "没有转换") != -1, "CRLF command failure is not success");
+    player->set("cwd", "/");
+}
+
+private void load_tests() {
+    object cmd, room, provider, go, look, original;
+    string name, path, text;
+    mixed err, result;
+
+    room = load_object("/fixtures/cmd/first");
+    player->enter(room);
+    provider = load_object("/fixtures/cmd/provider");
+    foreach (name in ({ "all_inventory", "call_other", "variables" })) {
+        cmd = load_object("/tests/command_" + name);
+        foreach (path in ({ "/fixtures/cmd/first.c", "/fixtures/cmd/second.lpc",
+            "/fixtures/cmd/provider/inspect", "/fixtures/cmd/provider/reject", "/fixtures/cmd/provider/throw" })) {
+            cmd->take_output();
+            err = catch(result = cmd->main(player, path + (name == "call_other" ? " touch" : "")));
+            text = cmd->take_output();
+            if (path == "/fixtures/cmd/provider/reject" || path == "/fixtures/cmd/provider/throw")
+                check(
+                    !err && !result && strsrch(text, "无法") != -1,
+                    name + " fails safely: " + path
+                );
+            else check(!err && result, name + " loads: " + path);
+        }
+    }
+    check(!provider->query_legacy(), "inspection failures never invoke old callback");
+    go = load_object("/tests/command_go");
+    look = load_object("/tests/command_look");
+    foreach (path in ({ "/fixtures/cmd/second.lpc", "/fixtures/cmd/provider/exit",
+        "/fixtures/cmd/provider/reject", "/fixtures/cmd/provider/throw" })) {
+        player->enter(room);
+        room->set("exits", ([ "east": path ]));
+        err = catch(result = look->do_look_at_str("east", "east"));
+        text = look->take_output();
+        if (path == "/fixtures/cmd/provider/reject" || path == "/fixtures/cmd/provider/throw") {
+            check(!err && !result && strsrch(text, "暂时") != -1 && strsrch(text, "/fixtures") == -1,
+                "look failure text is safe");
+            err = catch(result = go->do_room_move(player, room, "east"));
+            text = go->take_output();
+            check(!err && !result && environment(player) == room && strsrch(
+                text,
+                "/fixtures"
+            ) == -1,
+                "go failure keeps position and hides path");
+            room->set("exits", ([ "east": ([ "filename": path, "x_axis": 1, "y_axis": 1 ]) ]));
+            err = catch(result = go->do_room_move(player, room, "east"));
+            check(!err && !result && environment(player) == room, "mapping exit failure safe");
+            go->take_output();
+        } else {
+            check(!err && result, "look valid exit");
+            err = catch(result = go->do_room_move(player, room, "east"));
+            check(!err && result && environment(player) == find_object(path), "go valid exit");
+        }
+    }
+    check(!look->look_room(player, 0), "look rejects empty room");
+    original = player;
+    player = new("/tests/command_actor");
+    check(!go->do_go_str("east", "east") && !look->do_look() &&
+        !load_object("/tests/command_variables")->main(player, "here"),
+        "go look and variables reject absent environment");
+    destruct(player);
+    player = original;
+    check(strsrch(read_file(LOG_DIR "command"), "expected command provider failure") != -1,
+        "load errors retained in restricted diagnostics");
+}
+
+void run() {
+    player = new("/tests/command_actor");
+    update_tests();
+    query_tests();
+    file_tests();
+    load_tests();
+    destruct(player);
+}
+
+// Called after the existing real Telnet registration/reconnect test.
+void run_player(object user) {
+    object cmd, old, fresh, item, original;
+    mixed err;
+
+    check(userp(user), "update fixture uses the registered player object");
+    cmd = load_object("/tests/command_update");
+    original = environment(user);
+    old = load_object("/fixtures/cmd/provider/player_room");
+    user->move(old, 1);
+    user->set_temp("command_kept", 173);
+    item = new("/tests/command_actor");
+    item->set("kept", 291);
+    item->enter(user);
+    err = catch(cmd->main(user, "here"));
+    fresh = find_object("/fixtures/cmd/provider/player_room");
+    check(!err && !old && objectp(fresh) && environment(user) == fresh &&
+        user->query_temp("command_kept") == 173 && environment(item) == user &&
+        item->query("kept") == 291, "real player and carried item survive room reload");
+    user->move(original, 1);
+    user->delete_temp("command_kept");
+    destruct(item);
+}

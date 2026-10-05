@@ -1,0 +1,7 @@
+inherit CORE_ROOM;
+int calls;
+void create() { set("short", "测试小院"); set("long", "院中清静。\n"); }
+int touch() { return ++calls; }
+int query_calls() { return calls; }
+int is_area() { return query("test_area"); }
+mapping query_info(int x, int y) { return ([ "detail": ([ "石头": "石头" ]) ]); }
