@@ -1,3 +1,5 @@
+#include <ansi.h>
+
 void check(int value, string label) {
     MASTER_OB->check(value, "simul efun: " + label);
 }
@@ -22,6 +24,41 @@ private void test_percent() {
     check(
         catch(percent("1", 2)) != 0 && catch(percent_of(1, "2")) != 0,
         "percent rejects non-numeric input"
+    );
+}
+
+private void test_graph_draw() {
+    check(
+        graph_draw(
+            50,
+            100,
+            1,
+            0,
+            10
+        ) == BRED + "          " + NOR + RED + "　" + NOR + "        " + NOR,
+        "graph_draw keeps integer segment length"
+    );
+    check(
+        graph_draw(
+            33,
+            100,
+            1,
+            0,
+            10
+        ) == BRED + "      " + NOR + RED + "▎" + NOR + "            " + NOR,
+        "graph_draw keeps floor and partial segment"
+    );
+    check(
+        graph_draw(-1, 100, 1, 0, 10) == graph_draw(0, 100, 1, 0, 10),
+        "graph_draw clamps negative progress"
+    );
+    check(
+        graph_draw(100, 100, 1, 0, 10) == BRED + "                    " + NOR,
+        "graph_draw complete"
+    );
+    check(
+        graph_draw(101, 100, 1, 0, 10) == BRED + "                  >>" + NOR,
+        "graph_draw overflow marker"
     );
 }
 
@@ -260,6 +297,8 @@ private void test_present_clone() {
 void run() {
     debug_message("SEFUN: Percent");
     test_percent();
+    debug_message("SEFUN: GraphDraw");
+    test_graph_draw();
     debug_message("SEFUN: Base64");
     test_base64();
     debug_message("SEFUN: Decimal");

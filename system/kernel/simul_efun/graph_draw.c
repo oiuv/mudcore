@@ -30,7 +30,7 @@ varargs string graph_draw(int cur, int max, int fc, int bc, int length) {
     cur *= 1000;
     max *= 1000;
 
-    now_len = floor(cur / (max / to_float(length)));
+    now_len = to_int(floor(cur / (max / to_float(length))));
     last_len = cur % (max / length);
     last_len ? temp = last_len / ((max / length) / 8.) : 0.;
     if (cur)
