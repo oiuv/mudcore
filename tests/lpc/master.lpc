@@ -97,6 +97,8 @@ void finish() {
         "login daemon identity restored after real login"
     );
     if (objectp(player)) {
+        err = catch(load_object("/tests/quest_completion")->run_player(player));
+        if (err) check(0, "quest completion: " + err);
         err = catch(load_object("/tests/command_probe")->run_player(player));
         if (err) check(0, "registered player update: " + err);
         player->save();

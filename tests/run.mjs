@@ -46,6 +46,11 @@ for (const mode of ['default', 'overrides']) {
         mkdirSync(join(sandbox, dir), { recursive: true });
     }
     const put = (path, text) => writeFileSync(join(sandbox, path), text, 'utf8');
+    // Intentionally old host override: exercise compatibility without adding a new legacy API.
+    put('tests/quest_completion_override.lpc', 'inherit "/tests/quest_completion";\n'
+        + 'private int overrides;\nint query_overrides() { return overrides; }\n'
+        + 'protected int isReward(object npc, object player, string quest_file) {\n'
+        + '    overrides++;\n    return ::isReward(npc, player, quest_file);\n}\n');
     put('tests/overrides.h', mode === 'overrides'
         ? '#define _DBASE "/tests/override_dbase"\n#define ENV_D "/tests/override_env"\n#define VIRTUAL_D "/tests/override_virtual"\n#define HOST_UID_POLICY 1\n' : '');
     put('manifest.txt', programs.join('\n') + '\n');

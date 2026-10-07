@@ -1,0 +1,9 @@
+inherit "/tests/quest_reward_legacy";
+
+int try_reward(object player, object npc) {
+    add("checked_calls", 1);
+    if (query("outcome") == -1) error("expected reward refusal exception\n");
+    if (!query("outcome")) return 0;
+    player->set("quest_reward_received", 1);
+    return 1;
+}

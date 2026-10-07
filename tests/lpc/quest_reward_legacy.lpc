@@ -1,0 +1,8 @@
+inherit CORE_DBASE;
+
+int is_quest() { return 1; }
+mapping get_required_items() { return ([]); }
+mapping get_required_kills() { return ([]); }
+int check_completion_conditions(object player, object npc) { return 1; }
+string *get_reward_messages() { return ({}); }
+void reward(object player, object npc) { add("legacy_calls", 1); }

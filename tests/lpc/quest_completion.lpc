@@ -1,0 +1,63 @@
+inherit CORE_QUEST_D;
+
+string query_save_file() { return "/data/quest_completion_probe"; }
+void check(int ok, string label) { MASTER_OB->check(ok, "quest completion: " + label); }
+
+void exercise(object player) {
+    string path;
+    object provider;
+    mixed err;
+    int result;
+
+    path = "/tests/quest_reward_checked";
+    provider = load_object(path);
+    provider->delete("checked_calls");
+    provider->delete("legacy_calls");
+    provider->set("outcome", 0);
+    player->remove_solved(path);
+    player->set_todo(path);
+    rewarder = ([ get_item_file(player): ({ path }) ]);
+    check(!reward_quests(
+        player,
+        player
+    ) && mapp(player->get_todo(path)) && !player->is_solved(path),
+        "decline preserves incomplete state");
+    check(provider->query("checked_calls") == 1 && !provider->query("legacy_calls"),
+        "decline executes once without fallback");
+    provider->set("outcome", -1);
+    err = catch(result = doReward(player, player));
+    check(stringp(err) && mapp(player->get_todo(path)) && !player->is_solved(path),
+        "exception keeps pending and propagates through legacy public entry");
+    check(!provider->query("legacy_calls"), "exception does not run legacy reward");
+    provider->set("outcome", 1);
+    check(doReward(player, player) && !player->get_todo(path) && player->is_solved(path),
+        "retry success completes through old public alias");
+    check(provider->query("checked_calls") == 3 && !provider->query("legacy_calls") &&
+        player->query("quest_reward_received"), "checked reward only once per attempt");
+    check(!reward_quests(player, player) && provider->query("checked_calls") == 3,
+        "completed task does not repeat callback");
+
+    path = "/tests/quest_reward_legacy";
+    provider = load_object(path);
+    provider->delete("legacy_calls");
+    player->remove_solved(path);
+    player->set_todo(path);
+    rewarder = ([ get_item_file(player): ({ path }) ]);
+    check(reward_quests(player, player) && player->is_solved(path), "legacy task still completes");
+    check(provider->query("legacy_calls") == 1 && !reward_quests(player, player),
+        "legacy reward is neither skipped nor duplicated");
+}
+
+void run_player(object player) {
+    object quests;
+    quests = new("/tests/quest_completion");
+    quests->exercise(player);
+    destruct(quests);
+    quests = new("/tests/quest_completion_override");
+    quests->exercise(player);
+    check(
+        quests->query_overrides() == 4,
+        "legacy protected override and parent are both exercised"
+    );
+    destruct(quests);
+}

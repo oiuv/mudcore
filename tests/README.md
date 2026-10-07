@@ -71,6 +71,10 @@ node mudcore/tests/contracts.mjs bin/driver.exe
 
 运行 `node mudcore/tests/run.mjs bin/driver.exe` 退出 0：default 2303、overrides 2308、minimal 58、custom 59 项 LPC 检查全部通过，Node 本机通信断言通过；两组完整宿主各编译检查 159 个框架程序。本次修改的 18 个 LPC/头文件通过格式化检查，命名检查为 2177 个定义、229 个登记别名，无新增违规。只在此二进制上实测，不代表最低支持版本、裁剪驱动、其他操作系统或正式宿主已验证；本次没有迁移数据、重启正式服或部署框架。
 
+## 任务完成回调回归
+
+`lpc/quest_completion.lpc` 在 default / overrides 的真实连接玩家上验证新 `try_reward()` 的成功、拒绝、异常传播、重试及不重复发奖，同时验证旧 `reward()`。运行器只在临时目录生成旧 `isReward()` 宿主覆盖，调用父实现，确认公开旧名 `doReward()` 与 protected 兼容分派没有被绕过。测试存档属于临时宿主；具体游戏的实物交付和存档恢复由宿主回归另验。
+
 ## TLS 验证边界
 
 测试证书和公开测试私钥见 [fixtures](fixtures/README.md)。信任库仅用于测试 driver 子进程，不更改系统设置。不同驱动构建的主机名验证行为可能不同：早期本机测试曾接受受信任的错误主机名证书，2026-10-05 上述构建实测拒绝；以每次 `TLS HOSTNAME CHECK` 输出为准，不把单一构建结果当作所有受支持驱动的保证。详见 [TLS 说明](../docs/Socket.md#框架-tls-客户端)。

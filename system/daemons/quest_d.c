@@ -688,6 +688,12 @@ private int _mudcore_impl_try_complete_quest(object npc, object player, string q
     ))
         return 0;
 
+    // Opt-in rewards must succeed before completion is saved. Legacy tasks
+    // retain their reward() call after completion in reward_quests().
+    if (function_exists("try_reward", load_object(quest_file)) &&
+        !quest_file->try_reward(player, npc))
+        return 0;
+
     // 從任务表移除
     _mudcore_call_named(player, "del_todo", "delToDo", quest_file);
 
@@ -756,7 +762,8 @@ private int _mudcore_impl_reward_quests(object npc, object player) {
             continue;
 
         // 領取獎勵
-        quest_file[i]->reward(player, npc);
+        if (!function_exists("try_reward", load_object(quest_file[i])))
+            quest_file[i]->reward(player, npc);
 
         ok = 1;
     }

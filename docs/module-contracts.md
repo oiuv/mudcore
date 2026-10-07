@@ -35,6 +35,7 @@
 | USER_COMBAT_RECORD / `inherit/user_combat_record.c` | 无 daemon | 宿主战斗记录调用 | 基础 | 数据随持久字段保存，不自行记录战斗或存档 |
 | USER_GMCP / `inherit/user_gmcp.c` | GMCP/JSON；GUI/地图配置经 `env()` | MSP、客户端支持 | GMCP efun | 显式初始化/通知；组件不自行请求运营服务 |
 | USER_QUEST / `inherit/user_quest.c` | 任务对象 `is_quest/get_required_kills/get_required_items`、`QUEST_SIZE` | 宿主奖励/任务服务 | 基础 | 管理接受/完成记录，不自动调度或发奖 |
+| QUEST_D / `system/daemons/quest_d.c` | 任务条件/消息、玩家任务组件及 `save()`、索引存档 | 任务可选 `try_reward(player, npc)` | 基础、文件 | 新回调成功后完成并保存；缺席时保留旧 `reward()` 顺序。收集物品和异常副作用不自动回滚，见 [任务交付契约](quest.md#索引与交付顺序) |
 | USER / `inherit/user.c` | `_LIVING/_USER_COMBAT_RECORD/_USER_GMCP/_USER_QUEST` | 上述组件的协作者 | 所选组件能力 | 保留既有完整玩家组合；连接由 `USER_OB` 管理 |
 | USER_BASE / `inherit/user_base.c` | `_ACTION/_COMMAND/_DBASE/_MESSAGE/_MOVE/_NAME/_SAVE` | 移动的可选协作 | 所选命令阶段能力 | 显式选择最小组合；不是单独连接对象 |
 | VERB / `inherit/verb.c` | parser efun、谓词规则/回调 | 同义词 | parser | 创建时注册规则；关闭 parser 后不要预加载该组件/谓词 |
