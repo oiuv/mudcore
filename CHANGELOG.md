@@ -30,6 +30,7 @@
 
 #### 标准库函数
 
+- 同步 FluffOS 共享头文件，补充 FFI、PCRE2 选项、Promise、TLS 证书及运行时配置常量；`FFI_LONG` / `FFI_ULONG` 在 Windows 对应 32 位 C `long`，在 64 位 Unix 对应 64 位。
 - 接入 FluffOS STD decimal 的 15 个公开 sefun，提供精确定点小数运算、比较与转换；保留官方实现和测试，框架源码使用 `.c`，补充精度与截断规则的[使用说明](docs/simul_efun/decimal.md)。
 - 修复 decimal 取负和减法的整数极值处理：最小整数取负及 `0 - MIN_INT` 明确报溢出，`MIN_INT - MIN_INT` 正常返回零；保留公开接口、小数位和输入不变性，补充对应边界回归。
 

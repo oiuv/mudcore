@@ -1,18 +1,23 @@
-#ifndef SOCKET_H
-#define SOCKET_H
+/*
+ * socket.h -- socket mode and option constants for LPC
+ */
 
-// socket_mode
-#define MUD                 0   // for sending LPC data types using TCP protocol.
-#define STREAM              1   // for sending raw data using TCP protocol.
-#define DATAGRAM            2   // for using UDP protocol.
-#define STREAM_BINARY       3
-#define DATAGRAM_BINARY     4
-#define STREAM_TLS          5
-#define STREAM_TLS_BINARY   6
+#ifndef _SOCKET_H_
+#define _SOCKET_H_
 
-// socket_option
-#define SO_INVALID          0
-#define SO_TLS_VERIFY_PEER  1
+/* Socket modes */
+#define MUD 0
+#define STREAM 1
+#define DATAGRAM 2
+#define STREAM_BINARY 3
+#define DATAGRAM_BINARY 4
+#define STREAM_TLS 5
+#define STREAM_TLS_BINARY 6
+
+/* Socket options */
+#define SO_TLS_VERIFY_PEER 1
 #define SO_TLS_SNI_HOSTNAME 2
+#define SO_TLS_CERT 3
+#define SO_TLS_KEY 4
 
-#endif          /* SOCKET_H */
+#endif /* _SOCKET_H_ */

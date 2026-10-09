@@ -133,6 +133,8 @@ void run() {
         err = catch(load_object("/tests/tui/" + file)->do_tests());
         check(!err, "TUI " + file + (err ? ": " + err : ""));
     }
+    err = catch(load_object("/tests/ffi_probe")->run());
+    if (err) check(0, "FFI header regression: " + err);
     err = catch(load_object("/tests/sefun_probe")->run());
     if (err) check(0, "simul efun regression: " + err);
     err = catch(load_object("/tests/naming_probe")->run());

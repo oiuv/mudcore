@@ -36,6 +36,9 @@
 #define __GLOBAL_INCLUDE_FILE__ CFG_STR(13)
 #define __MUD_IP__ CFG_STR(14)
 #define __RC_WEBSOCKET_HTTP_DIR__ CFG_STR(15)
+#define __FFI_ALLOWED_LIBRARIES__ CFG_STR(16)
+#define __OS_ENV_READABLE__ CFG_STR(17)
+#define __OS_ENV_WRITABLE__ CFG_STR(18)
 
 #define RC_LAST_CONFIG_STR CFG_STR(255)
 /*
@@ -53,7 +56,7 @@
 #define __EVALUATOR_STACK_SIZE__ CFG_INT(6)
 #define __INHERIT_CHAIN_SIZE__ CFG_INT(7)
 #define __MAX_EVAL_COST__ CFG_INT(8)
-#define __MAX_LOCAL_VARIABLES__ CFG_INT(9)
+#define __RC_INT_9__ CFG_INT(9) /* retired: was 'maximum local variables' */
 #define __MAX_CALL_DEPTH__ CFG_INT(10)
 #define __MAX_ARRAY_SIZE__ CFG_INT(11)
 #define __MAX_BUFFER_SIZE__ CFG_INT(12)
@@ -73,8 +76,11 @@
 #define __RC_SANE_EXPLODE_STRING__ CFG_INT(26)
 #define __RC_REVERSIBLE_EXPLODE_STRING__ CFG_INT(27)
 #define __RC_SANE_SORTING__ CFG_INT(28)
-#define __RC_WARN_TAB__ CFG_INT(29)
-#define __RC_WOMBLES__ CFG_INT(30)
+#define __RC_INT_29__ \
+  CFG_INT(29) /* was __RC_WARN_TAB__; retired, see rc.cc obsolete-line warning */
+#define __RC_INT_30__                                                         \
+  CFG_INT(30) /* was __RC_WOMBLES__; retired, see rc.cc obsolete-line warning \
+               */
 #define __RC_CALL_OTHER_TYPE_CHECK__ CFG_INT(31)
 #define __RC_CALL_OTHER_WARN__ CFG_INT(32)
 #define __RC_MUDLIB_ERROR_HANDLER__ CFG_INT(33)
@@ -108,6 +114,11 @@
 #define __RC_ENABLE_ZMP__ CFG_INT(61)
 #define __RC_ENABLE_MSSP__ CFG_INT(62)
 #define __RC_ENABLE_MSP__ CFG_INT(63)
+#define __RC_ENABLE_MSDP__ CFG_INT(64)
+#define __RC_DISPLAY_PRELOAD_PROGRESS__ CFG_INT(65)
+#define __RC_MAX_SUSPENDED_ASYNC__ CFG_INT(66)
+#define __RC_ASYNC_DRAIN_EVAL_BUDGET__ CFG_INT(67)
+#define __RC_MAX_PENDING_DELIVERIES__ CFG_INT(68)
 
 #define RC_LAST_CONFIG_INT CFG_INT(255)
 #endif /* RUNTIME_CONFIG_H */
